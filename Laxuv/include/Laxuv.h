@@ -3,6 +3,6 @@
 
 #pragma once
 
-#include <iostream>
+#define GLFW_INCLUDE_NONE
 
-// TODO: Reference additional headers your program requires here.
+#include <Window.h>
