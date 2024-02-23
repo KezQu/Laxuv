@@ -4,6 +4,9 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+#include <Toolbar.h>
+#include <Explorer.h>
+#include <Log.h>
 
 class Window{
 private:
@@ -15,6 +18,7 @@ public:
 	~Window();
 	void EventLoop();
 	void Refresh();
+	void Render();
 	static void GLFWErrorCallback(int error, const char* description);
 	static void GLFWFrameBufferResizeCallback(GLFWwindow* window, int width, int height);
 	static void GLFWKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);

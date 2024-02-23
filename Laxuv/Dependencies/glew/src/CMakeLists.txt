@@ -1,7 +1,3 @@
-
-set(GLEW_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
-set(GLEW_INC_DIR ${PROJECT_SOURCE_DIR}/include)
-
 add_library(glew ${GLEW_SRC_DIR}/glew.c)
 
 find_package(OpenGL REQUIRED)

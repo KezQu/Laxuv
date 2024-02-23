@@ -12,6 +12,7 @@ endif()
 project ("Laxuv")
 
 # Include sub-projects.
-add_subdirectory (${PROJECT_NAME}/Dependencies/glfw)
 add_subdirectory (${PROJECT_NAME}/Dependencies/glew)
+add_subdirectory (${PROJECT_NAME}/Dependencies/glfw)
+add_subdirectory (${PROJECT_NAME}/Dependencies/imgui)
 add_subdirectory (${PROJECT_NAME})
