@@ -7,6 +7,7 @@
 #include <Toolbar.h>
 #include <Explorer.h>
 #include <Log.h>
+#include <IndexBuffer.h>
 
 class Window{
 private:
@@ -19,6 +20,7 @@ public:
 	void EventLoop();
 	void Refresh();
 	void Render();
+	void FramebufferResizeCheck();
 	static void GLFWErrorCallback(int error, const char* description);
 	static void GLFWFrameBufferResizeCallback(GLFWwindow* window, int width, int height);
 	static void GLFWKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
