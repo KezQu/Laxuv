@@ -12,20 +12,26 @@ Window::Window(std::pair<int, int> const& windowSize, std::string const& windowT
 	else {
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
-		_window = glfwCreateWindow(_windowSize.first, _windowSize.second, _windowTitle.c_str(), glfwGetPrimaryMonitor(), nullptr);
+		_window = glfwCreateWindow(_windowSize.first, _windowSize.second, _windowTitle.c_str(), nullptr, nullptr);
+		//_window = glfwCreateWindow(_windowSize.first, _windowSize.second, _windowTitle.c_str(), glfwGetPrimaryMonitor(), nullptr);
 		if (_window == nullptr) {
-			std::cerr << "Unable to create window" << std::endl;
 			throw std::runtime_error("Unable to create window");
 		}
 		glfwMakeContextCurrent(_window);
-		glfwSwapInterval(1);
+		//glfwSwapInterval(1);
 
 		GLenum errorCode = glewInit();
 		if (errorCode != GLEW_OK) {
 			std::cerr << "Unable to initialize OpenGL glewInit failed" << std::endl;
 			throw std::runtime_error((const char*)(glewGetErrorString(errorCode)));
 		}
+		Log() << "OpenGL version : " << glGetString(GL_VERSION);
+		glEnable(GL_DEBUG_OUTPUT);
+		_(glDebugMessageCallback(Window::OpenGLErrorCallback, nullptr));
 		glfwSetFramebufferSizeCallback(_window, Window::GLFWFrameBufferResizeCallback);
 		glfwSetKeyCallback(_window, Window::GLFWKeyCallback);
 
@@ -50,21 +56,22 @@ Window::~Window()
 	glfwTerminate();
 }
 void Window::EventLoop() {
-	Log() << "Performs basic arithmetic operations between two durations or between a duration and a tick count.\
-\
-		1) Converts the two durations to their common type and creates a duration whose tick count is the sum of the tick counts after conversion.\
-		2) Converts the two durations to their common type and creates a duration whose tick count is the rhs number of ticks subtracted from the lhs number of ticks after conversion.";
+	VertexArray va(VertexBufferData{ {0, 1, 2}, { -0.5f, -0.5f, 0.0f, 0.5f, 0.5f, 0.0f, 0.5f, -0.5f, 0.0f }, {255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255} });
+	va.Bind();
+	va.Unbind();
 	while (glfwWindowShouldClose(_window) == GLFW_FALSE) {
 		Refresh();
-		ImGui::ShowDemoWindow(); // Show demo window! :)
+		//ImGui::ShowDemoWindow();
 		Toolbar(ImVec2{ (float)(_windowSize.first),20 }, ImVec2{ 0,0 }).Generate();
 		Explorer(ImVec2{ _windowSize.first / 4.f,(float)(_windowSize.first) - 20 }, ImVec2{ 0,20 }).Generate();
 		Log(ImVec2{ 3 * _windowSize.first / 4.f, 200 }, ImVec2{ _windowSize.first / 4.f, (float)(_windowSize.second - 200) }).Generate();
+
 		Render();
 	}
 }
 void Window::Refresh() {
 	glfwPollEvents();
+	FramebufferResizeCheck();
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
@@ -77,10 +84,17 @@ void Window::Render() {
 
 	glfwSwapBuffers(_window);
 }
+void Window::FramebufferResizeCheck() {
+	glfwGetFramebufferSize(_window, &_windowSize.first, &_windowSize.second);
+}
 
 void Window::GLFWErrorCallback(int error, const char* description){
 	std::cerr << "Error " << error << ": " << description << std::endl;
 }
+void Window::OpenGLErrorCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
+	Log() << "OpenGL Error :" <<  std::string(message, length) << " - source : " << std::hex << source << std::endl;
+}
+
 void Window::GLFWFrameBufferResizeCallback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
