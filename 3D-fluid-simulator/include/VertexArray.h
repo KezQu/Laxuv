@@ -14,7 +14,7 @@ struct Vertex {
 	GLubyte color[4];
 };
 class VertexArray {
-private:
+public:
 	using type = VertexBufferData;
 	type _data;
 	GLuint _id;

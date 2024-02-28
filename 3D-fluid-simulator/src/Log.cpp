@@ -5,8 +5,8 @@ std::deque<std::ostringstream> Log::logHistory = {};
 Log::Log()
 	:Interface({ 0,0 }, { 0,0 }, 0)
 {
-	logHistory.push_front({});
-	if (logHistory.size() > 20) logHistory.pop_back();
+	logHistory.push_back({});
+	if (logHistory.size() > 20) logHistory.pop_front();
 }
 
 Log::Log(ImVec2 const& size, ImVec2 const& position)

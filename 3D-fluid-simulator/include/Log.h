@@ -25,6 +25,6 @@ template<is_streamable T>
 inline std::ostringstream& Log::operator<<(T const& LogMessage)
 {
 	auto timestamp = std::chrono::system_clock().now();
-	logHistory.front() << "[" << std::format("{:%T}", std::chrono::floor<std::chrono::seconds>(timestamp)) << "] " << LogMessage;
-	return logHistory.front();
+	logHistory.back() << "[" << std::format("{:%T}", std::chrono::floor<std::chrono::seconds>(timestamp)) << "] " << LogMessage;
+	return logHistory.back();
 }

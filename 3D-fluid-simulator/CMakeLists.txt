@@ -10,9 +10,9 @@ set(GLFW_INC_DIR ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/Dependencies/glfw/include
 # Add source to this project's executable.
 file(GLOB SRC_FILES ${SRC_DIR}/*.cpp)
 
-add_executable (Laxuv ${SRC_FILES})
+add_executable (3D-fluid-simulator ${SRC_FILES})
 
-set_property(TARGET Laxuv PROPERTY CXX_STANDARD 20)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
 # target_link_libraries(${PROJECT_NAME} PUBLIC glfw)
 target_link_libraries(${PROJECT_NAME} PUBLIC glew)
