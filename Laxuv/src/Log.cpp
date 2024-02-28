@@ -1,17 +1,19 @@
 #include "Log.h"
 
-std::ostringstream Log::LogHistory = {};
+std::deque<std::ostringstream> Log::logHistory = {};
 
 Log::Log()
 	:Interface({ 0,0 }, { 0,0 }, 0)
-{}
+{
+	logHistory.push_front({});
+	if (logHistory.size() > 20) logHistory.pop_back();
+}
 
 Log::Log(ImVec2 const& size, ImVec2 const& position)
 	:Interface(size, position, ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoScrollbar |
-		ImGuiWindowFlags_NoDecoration |
+		ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_AlwaysAutoResize)
 {}
 
@@ -21,21 +23,12 @@ void Log::Generate()
 	ImGui::SetNextWindowSize(_size);
 	
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0,0 });
-	if (ImGui::Begin("##LogConsole", nullptr, _flags)) {
-		ImGui::TextWrapped(LogHistory.str().c_str());
+	if (ImGui::Begin("##LogConsole", nullptr, _flags)){
+		std::string logOutput{};
+		for (auto& log : logHistory)
+			logOutput += log.str();
+		ImGui::TextWrapped(logOutput.c_str());
 	}
 	ImGui::End();
 	ImGui::PopStyleVar();
-}
-
-Log& Log::operator<<(std::string const& LogMessage)
-{
-	auto timestamp = std::chrono::system_clock().now();
-	LogHistory << "[" << std::format("{:%T}", std::chrono::floor<std::chrono::seconds>(timestamp)) << "] " << LogMessage << std::endl;
-	return *this;
-}
-
-Log::operator std::ostringstream&()
-{
-	return LogHistory;
 }

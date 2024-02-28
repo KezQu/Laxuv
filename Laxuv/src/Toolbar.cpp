@@ -17,6 +17,7 @@ void Toolbar::Generate() {
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0,0 });
 	if (ImGui::Begin("##Toolbar", nullptr, _flags)) {
+		ImGui::Text("%.0f", ImGui::GetIO().Framerate);
 		ImGui::SameLine(_size.x - 100);
 		if (ImGui::Button("_##Minimize", { 30, 20 })) {
 			glfwIconifyWindow(glfwGetCurrentContext());

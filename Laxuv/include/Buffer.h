@@ -1,40 +1,68 @@
 #pragma once
 
-#include <array>
+#include <vector>
 #include <GL/glew.h>
+#include <Debug.h>
 
-template<GLenum Target, typename T, std::size_t N>
+template<GLenum Target, typename T>
 class Buffer {
 protected:
-	std::array<T,N> _data;
-	GLuint _buffer{ 0 };
+	std::vector<T> _data;
+	GLuint _id{ 0 };
+public:
+	GLenum target{ Target };
 protected:
-	Buffer(T const (&data)[N]);
+	Buffer();
+	Buffer(std::initializer_list<T> data);
 	virtual ~Buffer();
 public:
 	void Bind() const;
 	void Unbind() const;
+	void Update(std::initializer_list<T> data);
+	void Add(std::initializer_list<T> data);
+	std::size_t Size() const;
 };
 
-template<GLenum Target, typename T, std::size_t N>
-inline Buffer<Target, T, N>::Buffer(T const (&data)[N])
-	:_data(std::to_array(data))
+template<GLenum Target, typename T>
+inline Buffer<Target, T>::Buffer()
 {
-	glGenBuffers(1, &_buffer);
-	glBindBuffer(Target, _buffer);
-	glBufferData(Target, N, _data.data(), GL_STATIC_DRAW);
+	glCreateBuffers(1, &_id);
+}
+
+template<GLenum Target, typename T>
+inline Buffer<Target, T>::Buffer(std::initializer_list<T> data)
+	:_data(data)
+{
+	glCreateBuffers(1, &_id);
+	glNamedBufferData(_id, _data.size(), _data.data(), GL_STATIC_DRAW);
+}
+template<GLenum Target, typename T>
+inline Buffer<Target, T>::~Buffer()
+{
+	glDeleteBuffers(1, &_id);
+}
+template<GLenum Target, typename T>
+inline void Buffer<Target, T>::Bind() const {
+	glBindBuffer(Target, _id);
+}
+template<GLenum Target, typename T>
+inline void Buffer<Target, T>::Unbind() const {
 	glBindBuffer(Target, 0);
 }
-template<GLenum Target, typename T, std::size_t N>
-inline Buffer<Target, T, N>::~Buffer()
-{
-	glDeleteBuffers(1, &_buffer);
+template<GLenum Target, typename T>
+inline void Buffer<Target, T>::Update(std::initializer_list<T> data) {
+	glNamedBufferData(_id, _data.size(), nullptr, GL_STATIC_DRAW);
+	_data.clear();
+	_data.insert(std::end(_data), std::begin(data), std::end(data));
+	glNamedBufferData(_id, _data.size(), _data.data(), GL_STATIC_DRAW);
 }
-template<GLenum Target, typename T, std::size_t N>
-inline void Buffer<Target, T, N>::Bind() const {
-	glBindBuffer(Target, _buffer);
+template<GLenum Target, typename T>
+inline void Buffer<Target, T>::Add(std::initializer_list<T> data){
+	glNamedBufferData(_id, _data.size(), nullptr, GL_STATIC_DRAW);
+	_data.insert(std::end(_data), std::begin(data), std::end(data));
+	glNamedBufferData(_id, _data.size(), _data.data(), GL_STATIC_DRAW);
 }
-template<GLenum Target, typename T, std::size_t N>
-inline void Buffer<Target, T, N>::Unbind() const {
-	glBindBuffer(Target, 0);
+template<GLenum Target, typename T>
+inline std::size_t Buffer<Target, T>::Size() const {
+	return _data.size();
 }

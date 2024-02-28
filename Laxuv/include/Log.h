@@ -3,14 +3,28 @@
 #include <Interface.h>
 #include <sstream>
 #include <chrono>
+#include <deque>
+
+template<typename T>
+concept is_streamable = requires(std::ostringstream stream, T value) {
+	stream << value << std::endl;
+};
 
 class Log : public Interface{
 private:
-	static std::ostringstream LogHistory;
+	static std::deque<std::ostringstream> logHistory;
 public:
 	Log();
 	Log(ImVec2 const& size, ImVec2 const& position);
 	void Generate() override;
-	Log& operator<<(std::string const& LogMessage);
-	operator std::ostringstream&();
+	template<is_streamable T>
+	std::ostringstream& operator<<(T const& LogMessage);
 };
+
+template<is_streamable T>
+inline std::ostringstream& Log::operator<<(T const& LogMessage)
+{
+	auto timestamp = std::chrono::system_clock().now();
+	logHistory.front() << "[" << std::format("{:%T}", std::chrono::floor<std::chrono::seconds>(timestamp)) << "] " << LogMessage;
+	return logHistory.front();
+}
