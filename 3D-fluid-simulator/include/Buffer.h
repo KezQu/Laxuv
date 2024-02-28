@@ -18,6 +18,8 @@ protected:
 public:
 	void Bind() const;
 	void Unbind() const;
+	T const* Data();
+	T const* const Data() const;
 	void Update(std::initializer_list<T> data);
 	void Add(std::initializer_list<T> data);
 	std::size_t Size() const;
@@ -48,6 +50,14 @@ inline void Buffer<Target, T>::Bind() const {
 template<GLenum Target, typename T>
 inline void Buffer<Target, T>::Unbind() const {
 	glBindBuffer(Target, 0);
+}
+template<GLenum Target, typename T>
+inline T const* Buffer<Target, T>::Data() {
+	return _data.data();
+}
+template<GLenum Target, typename T>
+inline T const* const Buffer<Target, T>::Data() const {
+	return _data.data();
 }
 template<GLenum Target, typename T>
 inline void Buffer<Target, T>::Update(std::initializer_list<T> data) {

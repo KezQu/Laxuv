@@ -14,7 +14,7 @@ Window::Window(std::pair<int, int> const& windowSize, std::string const& windowT
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		//glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+		glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
 		_window = glfwCreateWindow(_windowSize.first, _windowSize.second, _windowTitle.c_str(), nullptr, nullptr);
 		//_window = glfwCreateWindow(_windowSize.first, _windowSize.second, _windowTitle.c_str(), glfwGetPrimaryMonitor(), nullptr);
@@ -29,8 +29,13 @@ Window::Window(std::pair<int, int> const& windowSize, std::string const& windowT
 			std::cerr << "Unable to initialize OpenGL glewInit failed" << std::endl;
 			throw std::runtime_error((const char*)(glewGetErrorString(errorCode)));
 		}
-		Log() << "OpenGL version : " << glGetString(GL_VERSION);
+		Log() << "OpenGL version : " << glGetString(GL_VERSION) << std::endl;
+		
 		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_SCISSOR_TEST);
+		glViewport(_windowSize.first / 4.f, 200, 3.f * _windowSize.first / 4.f, _windowSize.second - 220);
+		glScissor(_windowSize.first / 4.f, 200, 3.f * _windowSize.first / 4.f, _windowSize.second - 220);
+
 		_(glDebugMessageCallback(Window::OpenGLErrorCallback, nullptr));
 		glfwSetFramebufferSizeCallback(_window, Window::GLFWFrameBufferResizeCallback);
 		glfwSetKeyCallback(_window, Window::GLFWKeyCallback);
@@ -57,14 +62,13 @@ Window::~Window()
 }
 void Window::EventLoop() {
 	VertexArray va(VertexBufferData{ {0, 1, 2}, { -0.5f, -0.5f, 0.0f, 0.5f, 0.5f, 0.0f, 0.5f, -0.5f, 0.0f }, {255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255} });
-	va.Bind();
-	va.Unbind();
 	while (glfwWindowShouldClose(_window) == GLFW_FALSE) {
 		Refresh();
 		//ImGui::ShowDemoWindow();
 		Toolbar(ImVec2{ (float)(_windowSize.first),20 }, ImVec2{ 0,0 }).Generate();
 		Explorer(ImVec2{ _windowSize.first / 4.f,(float)(_windowSize.first) - 20 }, ImVec2{ 0,20 }).Generate();
 		Log(ImVec2{ 3 * _windowSize.first / 4.f, 200 }, ImVec2{ _windowSize.first / 4.f, (float)(_windowSize.second - 200) }).Generate();
+
 
 		Render();
 	}
@@ -78,7 +82,10 @@ void Window::Refresh() {
 }
 
 void Window::Render() {
-	glClear(GL_COLOR_BUFFER_BIT);
+	static int b = 0;
+	b = (b + 1) % 255;
+	glClearColor(1.f, 1.f, b / 255.f, 1.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -96,7 +103,10 @@ void Window::OpenGLErrorCallback(GLenum source, GLenum type, GLuint id, GLenum s
 }
 
 void Window::GLFWFrameBufferResizeCallback(GLFWwindow* window, int width, int height) {
-	glViewport(0, 0, width, height);
+	if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_FALSE) {
+		glViewport(width / 4.f, 200, 3.f * width / 4.f, height - 220);
+		glScissor(width / 4.f, 200, 3.f * width / 4.f, height - 220);
+	}
 }
 void Window::GLFWKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
