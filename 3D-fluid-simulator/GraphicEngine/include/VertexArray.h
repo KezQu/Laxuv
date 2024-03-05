@@ -9,20 +9,26 @@ struct VertexBufferData {
 	VertexBuffer<GLubyte, 4> colorBuffer;
 };
 struct Vertex {
-	GLuint indice;
 	GLfloat coordinate[3];
 	GLubyte color[4];
 };
 class VertexArray {
 public:
 	using type = VertexBufferData;
+private:
 	type _data;
-	GLuint _id;
+	GLuint _id{ 0 };
 public:
 	VertexArray();
-	VertexArray(type && vertices);
+	VertexArray(type&& vertexBufferData);
+	VertexArray(std::initializer_list<Vertex> vertices, IndexBuffer&& idxBuffer);
+	VertexArray(VertexArray const& objCopy) = delete;
+	VertexArray(VertexArray&& objMove);
+	VertexArray& operator=(VertexArray const& objCopy) = delete;
+	VertexArray& operator=(VertexArray&& objMove);
 	~VertexArray();
 	void Bind() const;
 	void Unbind() const;
-	void AppendVertex(Vertex const& vertex);
+	std::size_t Size() const;
+	GLenum IndexBufferType() const;
 };

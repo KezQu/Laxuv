@@ -12,7 +12,4 @@ endif()
 project ("3D-fluid-simulator")
 
 # Include sub-projects.
-add_subdirectory (${PROJECT_NAME}/Dependencies/glew)
-add_subdirectory (${PROJECT_NAME}/Dependencies/glfw)
-add_subdirectory (${PROJECT_NAME}/Dependencies/imgui)
 add_subdirectory (${PROJECT_NAME})

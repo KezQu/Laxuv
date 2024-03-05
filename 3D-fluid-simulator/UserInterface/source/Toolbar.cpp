@@ -26,7 +26,7 @@ void Toolbar::Generate() {
 		ImGui::SameLine(_size.x - 65);
 		if (ImGui::Button("m##Fullscreen", { 30, 20 })) {
 			GLFWmonitor* currentMonitor = _fullscreen ? nullptr : glfwGetPrimaryMonitor();
-			glfwSetWindowMonitor(glfwGetCurrentContext(), currentMonitor, 100, 100, 1920, 1080, 60);
+			glfwSetWindowMonitor(glfwGetCurrentContext(), currentMonitor, 0, 0, 1920, 1080, 60);
 			_fullscreen = !_fullscreen;
 		}
 

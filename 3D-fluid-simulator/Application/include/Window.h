@@ -1,13 +1,11 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include <iostream>
 
+#include <Quadrilateral.h>
 #include <Toolbar.h>
 #include <Explorer.h>
 #include <Log.h>
-#include <VertexArray.h>
 
 class Window{
 private:

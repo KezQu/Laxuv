@@ -1,7 +1,4 @@
-﻿// Laxuv.cpp : Defines the entry point for the application.
-//
-
-#include "Laxuv.h"
+﻿#include <3D-fluid-simulator.h>
 
 int main()
 {

@@ -1,4 +1,4 @@
-#include "Window.h"
+#include <Window.h>
 
 Window::Window(std::pair<int, int> const& windowSize, std::string const& windowTitle)
 	:_windowSize{windowSize},
@@ -61,20 +61,21 @@ Window::~Window()
 	glfwTerminate();
 }
 void Window::EventLoop() {
-	VertexArray va(VertexBufferData{ {0, 1, 2}, { -0.5f, -0.5f, 0.0f, 0.5f, 0.5f, 0.0f, 0.5f, -0.5f, 0.0f }, {255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255} });
 	while (glfwWindowShouldClose(_window) == GLFW_FALSE) {
 		Refresh();
 		//ImGui::ShowDemoWindow();
 		Toolbar(ImVec2{ (float)(_windowSize.first),20 }, ImVec2{ 0,0 }).Generate();
 		Explorer(ImVec2{ _windowSize.first / 4.f,(float)(_windowSize.first) - 20 }, ImVec2{ 0,20 }).Generate();
 		Log(ImVec2{ 3 * _windowSize.first / 4.f, 200 }, ImVec2{ _windowSize.first / 4.f, (float)(_windowSize.second - 200) }).Generate();
-
+		
+		Quadrilateral().Draw();
 
 		Render();
 	}
 }
 void Window::Refresh() {
-	glfwPollEvents();
+	glClearColor(1.f, 1.f, 1.f, 1.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	FramebufferResizeCheck();
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -82,14 +83,11 @@ void Window::Refresh() {
 }
 
 void Window::Render() {
-	static int b = 0;
-	b = (b + 1) % 255;
-	glClearColor(1.f, 1.f, b / 255.f, 1.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 	glfwSwapBuffers(_window);
+	glfwPollEvents();
 }
 void Window::FramebufferResizeCheck() {
 	glfwGetFramebufferSize(_window, &_windowSize.first, &_windowSize.second);

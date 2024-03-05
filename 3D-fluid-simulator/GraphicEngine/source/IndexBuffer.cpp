@@ -8,3 +8,4 @@ IndexBuffer::IndexBuffer(std::initializer_list<type> data)
 {}
 IndexBuffer::~IndexBuffer()
 {}
+ 
