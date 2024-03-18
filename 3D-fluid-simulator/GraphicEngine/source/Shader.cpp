@@ -20,7 +20,7 @@ Shader::~Shader()
 		_(glDeleteShader(_id));
 	}
 }
-GLuint const& Shader::ID() const {
+GLuint const Shader::ID() const {
 	return _id;
 }
 

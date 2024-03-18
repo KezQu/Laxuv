@@ -20,6 +20,7 @@ public:
 	bool isLinked() const;
 	void Bind() const;
 	void Unbind() const;
+	GLuint const ID() const;
 private:
 	void AttachShaders() const;
 	void DetachShaders() const;

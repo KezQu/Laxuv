@@ -64,3 +64,6 @@ std::size_t VertexArray::Size() const {
 GLenum VertexArray::IndexBufferType() const {
 	return GL_UNSIGNED_INT;
 }
+GLuint const VertexArray::ID() const {
+	return _id;
+}

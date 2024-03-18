@@ -2,6 +2,7 @@
 
 #include <IndexBuffer.h>
 #include <VertexBuffer.h>
+#include <glm/matrix.hpp>
 
 struct VertexBufferData {
 	IndexBuffer indexBuffer;
@@ -9,8 +10,8 @@ struct VertexBufferData {
 	VertexBuffer<GLubyte, 4> colorBuffer;
 };
 struct Vertex {
-	GLfloat coordinate[3];
-	GLubyte color[4];
+	glm::vec3 coordinate;
+	glm::uvec4 color{ 127, 127, 127, 127 };
 };
 class VertexArray {
 public:
@@ -31,4 +32,5 @@ public:
 	void Unbind() const;
 	std::size_t Size() const;
 	GLenum IndexBufferType() const;
+	GLuint const ID() const;
 };

@@ -1,7 +1,8 @@
 #pragma once
 
-#include <vector>
+#include <GL/glew.h>
 #include <Debug.h>
+#include <vector>
 
 template<GLenum Target, typename T>
 class Buffer {
@@ -27,6 +28,7 @@ public:
 	void UpdateData(std::initializer_list<T> data);
 	void Add(std::initializer_list<T> data);
 	std::size_t Size() const;
+	GLuint const ID() const;
 };
 
 template<GLenum Target, typename T>
@@ -96,4 +98,8 @@ inline void Buffer<Target, T>::Add(std::initializer_list<T> data){
 template<GLenum Target, typename T>
 inline std::size_t Buffer<Target, T>::Size() const {
 	return _data.size();
+}
+template<GLenum Target, typename T>
+inline GLuint const Buffer<Target, T>::ID() const {
+	return _id;
 }

@@ -1,6 +1,6 @@
 ﻿#include "Toolbar.h"
 
-bool Toolbar::_fullscreen = true;
+bool Toolbar::_fullscreen = false;
 
 Toolbar::Toolbar(ImVec2 const& size, ImVec2 const& position)
 	:Interface(size, position, ImGuiWindowFlags_NoMove |

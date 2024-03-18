@@ -58,6 +58,9 @@ void Program::Bind() const{
 void Program::Unbind() const {
 	_(glUseProgram(0));
 }
+GLuint const Program::ID() const {
+	return _id;
+}
 
 void Program::AttachShaders() const
 {

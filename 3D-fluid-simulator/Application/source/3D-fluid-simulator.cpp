@@ -3,7 +3,7 @@
 int main()
 {
 	try {
-		Window mainWindow({ 1920, 1080 }, "Laxuv");
+		Window mainWindow({ 1280, 720 }, "Laxuv");
 		mainWindow.EventLoop();
 	}
 	catch(std::exception const& e){
