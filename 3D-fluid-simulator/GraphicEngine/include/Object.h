@@ -9,7 +9,7 @@ class Object {
 protected:
 	VertexArray _vertexArray;
 	Program _renderer;
-	glm::vec3 _translation{ 0.f }, _scale{ 1.f }, _rotation{ 0.f }, _normal{ 0.f };
+	glm::vec3 _translation{ 0.f }, _scale{ 1.f }, _rotation{ 0.f }, _normal{ 0.f }, _center{ 0.f };
 public:
 	GLenum primitive = P;
 protected:
@@ -48,10 +48,16 @@ inline void Object<P>::Draw() const
 	GLint modelLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "model");
 	GLint viewLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "view");
 	GLint projectionLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "projection");
+	GLint centerLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "center");
 	
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(Model()));
-	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(Camera::GetCamera().View()));
-	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(Camera::GetCamera().Projection()));
+	if(modelLocation != -1)
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(Model()));
+	if (viewLocation != -1)
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(Camera::GetCamera().View()));
+	if (projectionLocation != -1)
+		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(Camera::GetCamera().Projection()));
+	if (centerLocation != -1)
+		glUniform3fv(centerLocation, 1, glm::value_ptr(_center));
 
 	glDrawElements(primitive, _vertexArray.Size(), _vertexArray.IndexBufferType(), nullptr);
 }

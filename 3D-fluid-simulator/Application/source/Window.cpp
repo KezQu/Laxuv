@@ -71,8 +71,8 @@ Window::~Window()
 }
 void Window::EventLoop() {
 	//Square test{ { { 0, 0, 0 } }, 300 };
-	Qube qube1{ { { -1050, 0, 0 } }, 300 };
 	Sphere sphere1{ { { 0, 0, 0 } }, 150 };
+	Qube qube1{ { { -1050, 0, 0 } }, 300 };
 	WorldAxes Axes{};
 	while (glfwWindowShouldClose(_window) == GLFW_FALSE) {
 		Refresh();

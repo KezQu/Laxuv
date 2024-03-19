@@ -5,25 +5,26 @@ Sphere::Sphere()
 {}
 
 Sphere::Sphere(Vertex center, float radius)
-	:Object(Program({
-		{ GL_VERTEX_SHADER, "/shaders/Object.vert" },
-		{ GL_VERTEX_SHADER, "/shaders/CalculateNDC.vert" },
-		{ GL_TESS_CONTROL_SHADER, "/shaders/Object.tesc" },
-		{ GL_TESS_EVALUATION_SHADER, "/shaders/Object.tese" },
-		{ GL_FRAGMENT_SHADER, "/shaders/Object.frag" } }), 
+	:Object(
+		Program({
+			{ GL_VERTEX_SHADER, "/shaders/Sphere.vert" },
+			{ GL_TESS_CONTROL_SHADER, "/shaders/Sphere.tesc" },
+			{ GL_TESS_EVALUATION_SHADER, "/shaders/Sphere.tese" },
+			{ GL_TESS_EVALUATION_SHADER, "/shaders/CalculateNDC.glsl" },
+			{ GL_FRAGMENT_SHADER, "/shaders/Sphere.frag" } }), 
 		VertexArray({
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 0, glm::golden_ratio<float>(), -1 } },
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 0, glm::golden_ratio<float>(), 1 } },
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ -glm::golden_ratio<float>(), 1, 0 } },
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ glm::golden_ratio<float>(), 1, 0 } },
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ -1, 0, -glm::golden_ratio<float>() } },
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 1, 0, -glm::golden_ratio<float>() } },
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ -1, 0, glm::golden_ratio<float>() } },
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 1, 0, glm::golden_ratio<float>() } },
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ -glm::golden_ratio<float>(), -1, 0 } },
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ glm::golden_ratio<float>(), -1, 0 } },
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 0, -glm::golden_ratio<float>(), -1 } },
-			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 0, -glm::golden_ratio<float>(), 1 } },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 0, glm::golden_ratio<float>(), -1 } , center.color },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 0, glm::golden_ratio<float>(), 1 }  , center.color },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ -glm::golden_ratio<float>(), 1, 0 } , center.color },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ glm::golden_ratio<float>(), 1, 0 }  , center.color },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ -1, 0, -glm::golden_ratio<float>() }, center.color },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 1, 0, -glm::golden_ratio<float>() } , center.color },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ -1, 0, glm::golden_ratio<float>() } , center.color },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 1, 0, glm::golden_ratio<float>() }  , center.color },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ -glm::golden_ratio<float>(), -1, 0 }, center.color },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ glm::golden_ratio<float>(), -1, 0 } , center.color },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 0, -glm::golden_ratio<float>(), -1 }, center.color },
+			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 0, -glm::golden_ratio<float>(), 1 } , center.color },
 			},
 			{ 0,1,2,
 			  0,2,4,
@@ -40,4 +41,6 @@ Sphere::Sphere(Vertex center, float radius)
 			5,10,9,5,4,10,
 			4,8,10,4,2,8,
 			2,6,8,2,1,6}))
-{}
+{
+	_center = center.coordinate;
+}
