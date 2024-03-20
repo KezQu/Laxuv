@@ -7,11 +7,11 @@ Sphere::Sphere()
 Sphere::Sphere(Vertex center, float radius)
 	:Object(
 		Program({
-			{ GL_VERTEX_SHADER, "/shaders/Sphere.vert" },
-			{ GL_TESS_CONTROL_SHADER, "/shaders/Sphere.tesc" },
-			{ GL_TESS_EVALUATION_SHADER, "/shaders/Sphere.tese" },
-			{ GL_TESS_EVALUATION_SHADER, "/shaders/CalculateNDC.glsl" },
-			{ GL_FRAGMENT_SHADER, "/shaders/Sphere.frag" } }), 
+			{ GL_VERTEX_SHADER, "/Sphere/Sphere.vert" },
+			{ GL_TESS_CONTROL_SHADER, "/Sphere/Sphere.tesc" },
+			{ GL_TESS_EVALUATION_SHADER, "/CalculateNDC.glsl" },
+			{ GL_TESS_EVALUATION_SHADER, "/Sphere/Sphere.tese" },
+			{ GL_FRAGMENT_SHADER, "/Sphere/Sphere.frag" } }), 
 		VertexArray({
 			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 0, glm::golden_ratio<float>(), -1 } , center.color },
 			{ (center.coordinate) + (radius / 2.f) * glm::vec3{ 0, glm::golden_ratio<float>(), 1 }  , center.color },
@@ -43,4 +43,15 @@ Sphere::Sphere(Vertex center, float radius)
 			2,6,8,2,1,6}))
 {
 	_center = center.coordinate;
+}
+
+void Sphere::BindUniforms() const {
+	Object<GL_PATCHES>::BindUniforms();
+	GLint centerLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "center");
+	GLint subdivisionLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "subdivision");
+	
+	if (centerLocation != -1)
+		glUniform3fv(centerLocation, 1, glm::value_ptr(_center));
+	if (subdivisionLocation != -1)
+		glUniform1i(subdivisionLocation, 10);
 }

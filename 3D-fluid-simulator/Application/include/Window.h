@@ -4,6 +4,7 @@
 
 #include <Qube.h>
 #include <Sphere.h>
+#include <Sun.h>
 #include <Square.h>
 #include <WorldAxes.h>
 #include <Toolbar.h>

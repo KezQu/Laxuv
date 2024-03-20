@@ -70,7 +70,7 @@ Window::~Window()
 	glfwTerminate();
 }
 void Window::EventLoop() {
-	//Square test{ { { 0, 0, 0 } }, 300 };
+	Sun sun;
 	Sphere sphere1{ { { 0, 0, 0 } }, 150 };
 	Qube qube1{ { { -1050, 0, 0 } }, 300 };
 	WorldAxes Axes{};
@@ -84,6 +84,7 @@ void Window::EventLoop() {
 		Axes.Draw();
 		qube1.Draw();
 		sphere1.Draw();
+		sun.Draw();
 		Render();
 	}
 }
@@ -127,17 +128,25 @@ void Window::ProcessKeyInputs() {
 	if (ImGui::IsKeyPressed(ImGuiKey_Q)) {
 		Camera::GetCamera().Move(ImGuiKey_Q);
 	}
-	if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+	if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
 		if (ImGui::IsMouseHoveringRect({ _windowSize.x / 4.f, 20 }, { _windowSize.x, _windowSize.y - 200 }, false)) {
-			//auto mouseDeltaPos = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
-			auto mouseDeltaPos = ImGui::GetIO().MouseDelta;
-			if (mouseDeltaPos.x || mouseDeltaPos.y) {
-				auto viewportSize = CalculateViewport(_windowSize);
-				Log() << mouseDeltaPos.x << ',' << mouseDeltaPos.y << std::endl;
-				Camera::GetCamera().Rotate({ mouseDeltaPos.x, mouseDeltaPos.y, 0.f });
-			}
-			//ImGui::SetCursorPos(initPosition);
+			glfwSetInputMode(glfwGetCurrentContext(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
+	}
+	else if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+		if (glfwGetInputMode(glfwGetCurrentContext(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+			static glm::dvec2 mousePosPrev{ 0.0 }, mousePosCurr{ 0.0 }, mouseDeltaPos{ 0.0 };
+			glfwGetCursorPos(glfwGetCurrentContext(), &mousePosCurr.x, &mousePosCurr.y);
+			mousePosCurr;
+			mouseDeltaPos = mousePosCurr - mousePosPrev;
+
+			auto viewportSize = CalculateViewport(_windowSize);
+			Camera::GetCamera().Rotate({ mouseDeltaPos.x, mouseDeltaPos.y, 0.f });
+			mousePosPrev = mousePosCurr;
+		}
+	}
+	else {
+		glfwSetInputMode(glfwGetCurrentContext(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 }
 void Window::GLFWErrorCallback(int error, const char* description){

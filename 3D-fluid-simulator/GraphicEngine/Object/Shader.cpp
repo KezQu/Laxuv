@@ -47,7 +47,7 @@ bool Shader::isCompiled() const {
 void Shader::AddSource(GLenum type, std::string const& filepath)
 {
 	std::filesystem::path filePath(__FILE__);
-	std::ifstream shaderFile(filePath.parent_path().string() + filepath);
+	std::ifstream shaderFile(filePath.parent_path().parent_path().string() + "/shaders" + filepath);
 	if (!shaderFile.is_open()) {
 		Log() << "Unable to open shader : " << filepath << std::endl;
 	}

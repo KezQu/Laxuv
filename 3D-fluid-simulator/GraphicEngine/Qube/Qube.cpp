@@ -19,9 +19,9 @@ Qube::Qube(Vertex center, float edgeLength)
 Qube::Qube(Vertex v0, Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5, Vertex v6, Vertex v7)
 	:Object(
 		Program({
-			{ GL_VERTEX_SHADER, "/shaders/Object.vert" },
-			{ GL_VERTEX_SHADER, "/shaders/CalculateNDC.glsl" },
-			{ GL_FRAGMENT_SHADER, "/shaders/Object.frag" }}),
+			{ GL_VERTEX_SHADER, "/CalculateNDC.glsl" },
+			{ GL_VERTEX_SHADER, "/Qube/Qube.vert" },
+			{ GL_FRAGMENT_SHADER, "/Qube/Qube.frag" }}),
 		VertexArray({ v0,v1,v2,v3,v4,v5,v6,v7 }, 
 			{ 0,1,2,1,3,2,
 			  5,4,6,7,5,6,

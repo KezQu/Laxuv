@@ -18,6 +18,7 @@ protected:
 	Object(Program&& renderer);
 public:
 	void Draw() const;
+	virtual void BindUniforms() const;
 	Object& Move(glm::vec3 translation);
 	Object& Scale(glm::vec3 scale);
 	Object& Rotate(glm::vec3 rotation);
@@ -45,22 +46,24 @@ inline void Object<P>::Draw() const
 		_renderer.Link();
 	_renderer.Bind();
 
+	BindUniforms();
+
+	glDrawElements(primitive, _vertexArray.Size(), _vertexArray.IndexBufferType(), nullptr);
+}
+template<GLenum P>
+inline void Object<P>::BindUniforms() const {
 	GLint modelLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "model");
 	GLint viewLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "view");
 	GLint projectionLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "projection");
-	GLint centerLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "center");
-	
-	if(modelLocation != -1)
+
+	if (modelLocation != -1)
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(Model()));
 	if (viewLocation != -1)
 		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(Camera::GetCamera().View()));
 	if (projectionLocation != -1)
 		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(Camera::GetCamera().Projection()));
-	if (centerLocation != -1)
-		glUniform3fv(centerLocation, 1, glm::value_ptr(_center));
-
-	glDrawElements(primitive, _vertexArray.Size(), _vertexArray.IndexBufferType(), nullptr);
 }
+
 template<GLenum P>
 inline Object<P>& Object<P>::Move(glm::vec3 translation) {
 	_translation = translation;
