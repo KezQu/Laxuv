@@ -16,6 +16,9 @@ WorldAxes::WorldAxes()
 	_axisY.Scale({ 1200, 1200, 1200 });
 	_axisZ.Scale({ 1200, 1200, 1200 });
 	_floor.Scale({ 1200, 1200, 1200 });
+	_axisX.EnableLight(false);
+	_axisY.EnableLight(false);
+	_axisZ.EnableLight(false);
 }
 void WorldAxes::Draw() const {
 	_axisY.Draw();

@@ -70,10 +70,10 @@ Window::~Window()
 	glfwTerminate();
 }
 void Window::EventLoop() {
-	Sun sun;
-	Sphere sphere1{ { { 0, 0, 0 } }, 150 };
-	Qube qube1{ { { -1050, 0, 0 } }, 300 };
 	WorldAxes Axes{};
+		Sphere sphere1{ { { 0, 0, 0 }, {255, 120, 50, 255} }, 150 };
+		Qube qube1{ { { -1050, 0, 0 } }, 300 };
+
 	while (glfwWindowShouldClose(_window) == GLFW_FALSE) {
 		Refresh();
 		//ImGui::ShowDemoWindow();
@@ -81,10 +81,9 @@ void Window::EventLoop() {
 		Explorer(ImVec2{ _windowSize.x / 4.f, _windowSize.x - 20 }, ImVec2{ 0,20 }).Generate();
 		Log(ImVec2{ 3 * _windowSize.x / 4.f, 200 }, ImVec2{ _windowSize.x / 4.f, _windowSize.y - 200 }).Generate();
 		
-		Axes.Draw();
 		qube1.Draw();
 		sphere1.Draw();
-		sun.Draw();
+		Axes.Draw();
 		Render();
 	}
 }

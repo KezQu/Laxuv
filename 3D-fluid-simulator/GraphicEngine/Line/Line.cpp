@@ -1,9 +1,7 @@
 #include "Line.h"
 
-Line::Line(Vertex p1, Vertex p2)
-	:Object<GL_LINES>(Program{
-		{ GL_VERTEX_SHADER, "/CalculateNDC.glsl" },
-		{ GL_VERTEX_SHADER, "/Object/Object.vert" },
-		{ GL_FRAGMENT_SHADER, "/Object/Object.frag" } },
-		VertexArray{ {p1, p2}, {0, 1} })
-{}
+Line::Line(Vertex v1, Vertex v2)
+	:Object(VertexArray{ {v1, v2}, {0, 1} })
+{
+	_center = v1.coordinate + v2.coordinate;
+}

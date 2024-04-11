@@ -11,7 +11,7 @@ struct VertexBufferData {
 };
 struct Vertex {
 	glm::vec3 coordinate;
-	glm::uvec4 color{ 127, 127, 127, 127 };
+	glm::uvec4 color{ 127, 127, 127, 255 };
 };
 class VertexArray {
 public:

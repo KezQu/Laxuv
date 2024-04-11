@@ -14,10 +14,8 @@ Square::Square(Vertex center, float edgeLength)
 		{ {center.coordinate[0] - edgeLength / 2.f, center.coordinate[1] - edgeLength / 2.f, center.coordinate[2]} },
 		{ {center.coordinate[0] + edgeLength / 2.f, center.coordinate[1] - edgeLength / 2.f, center.coordinate[2]} })
 {}
-Square::Square(Vertex v0, Vertex v1, Vertex v2, Vertex v3)
-	:Object<GL_TRIANGLES>(Program{
-		{ GL_VERTEX_SHADER, "/CalculateNDC.glsl" },
-		{ GL_VERTEX_SHADER, "/Object/Object.vert" },
-		{ GL_FRAGMENT_SHADER, "/Object/Object.frag" } },
-		VertexArray{ {v0, v1, v2, v3}, {0, 1, 2, 1, 3, 2} })
-{}
+Square::Square(Vertex v1, Vertex v2, Vertex v3, Vertex v4)
+	:Object(VertexArray{ {v1, v2, v3, v4}, {0, 1, 2, 1, 3, 2} })
+{
+	_center = v1.coordinate + v2.coordinate + v3.coordinate + v4.coordinate;
+}

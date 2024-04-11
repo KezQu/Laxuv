@@ -4,7 +4,6 @@
 
 #include <Qube.h>
 #include <Sphere.h>
-#include <Sun.h>
 #include <Square.h>
 #include <WorldAxes.h>
 #include <Toolbar.h>
@@ -14,8 +13,8 @@
 
 class Window{
 private:
-	ImVec2 _windowSize;
 	std::string _windowTitle;
+	ImVec2 _windowSize;
 	GLFWwindow* _window;
 public:
 	Window(ImVec2 const& windowSize, std::string const& windowTitle);
