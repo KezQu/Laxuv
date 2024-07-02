@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Interface.h>
+#include <GLFW/glfw3.h>
 
 class Toolbar : public Interface {
 private:

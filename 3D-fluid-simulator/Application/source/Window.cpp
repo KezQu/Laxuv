@@ -21,6 +21,7 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
 		if (_window == nullptr) {
 			throw std::runtime_error("Unable to create window");
 		}
+
 		glfwMakeContextCurrent(_window);
 		glfwSwapInterval(0);
 
@@ -29,13 +30,14 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
 			std::cerr << "Unable to initialize OpenGL glewInit failed" << std::endl;
 			throw std::runtime_error((const char*)(glewGetErrorString(errorCode)));
 		}
-		Log() << "OpenGL version : " << glGetString(GL_VERSION) << std::endl;
+		LOG << "OpenGL version : " << glGetString(GL_VERSION) << std::endl;
 
 		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_PROGRAM_POINT_SIZE);
 		glEnable(GL_SCISSOR_TEST);
 		glEnable(GL_DEPTH_TEST);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_CULL_FACE);
 		glFrontFace(GL_CW);
 
@@ -66,23 +68,25 @@ Window::~Window()
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
-	glfwDestroyWindow(_window);
+	glfwDestroyWindow(_window); 
 	glfwTerminate();
-}
+} 
 void Window::EventLoop() {
 	WorldAxes Axes{};
-		Sphere sphere1{ { { 0, 0, 0 }, {255, 120, 50, 255} }, 150 };
-		Qube qube1{ { { -1050, 0, 0 } }, 300 };
+	Explorer::Append(Particles(Sphere{ { { 0, 0, 0 }, {255, 120, 50, 255} }, 5, false }, 250000));
+	Explorer::Append(Object(Sphere{ { { 0, 0, 0 }, {50, 70, 255, 255} }, 150, true }));
+	//Particles p1(Sphere{ { { 0, 0, 0 }, {255, 120, 50, 255} }, 5, false }, 250000);
 
 	while (glfwWindowShouldClose(_window) == GLFW_FALSE) {
 		Refresh();
 		//ImGui::ShowDemoWindow();
 		Toolbar(ImVec2{ _windowSize.x, 20 }, ImVec2{ 0,0 }).Generate();
 		Explorer(ImVec2{ _windowSize.x / 4.f, _windowSize.x - 20 }, ImVec2{ 0,20 }).Generate();
-		Log(ImVec2{ 3 * _windowSize.x / 4.f, 200 }, ImVec2{ _windowSize.x / 4.f, _windowSize.y - 200 }).Generate();
+		Logger(LOG, ImVec2{ 3 * _windowSize.x / 4.f, 200 }, ImVec2{ _windowSize.x / 4.f, _windowSize.y - 200 }).Generate();
 		
-		qube1.Draw();
-		sphere1.Draw();
+		for (auto& entity : Explorer::EntitiesVector) {
+			entity->Draw();
+		}
 		Axes.Draw();
 		Render();
 	}
@@ -127,12 +131,12 @@ void Window::ProcessKeyInputs() {
 	if (ImGui::IsKeyPressed(ImGuiKey_Q)) {
 		Camera::GetCamera().Move(ImGuiKey_Q);
 	}
-	if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+	if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
 		if (ImGui::IsMouseHoveringRect({ _windowSize.x / 4.f, 20 }, { _windowSize.x, _windowSize.y - 200 }, false)) {
 			glfwSetInputMode(glfwGetCurrentContext(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
 	}
-	else if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+	else if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
 		if (glfwGetInputMode(glfwGetCurrentContext(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
 			static glm::dvec2 mousePosPrev{ 0.0 }, mousePosCurr{ 0.0 }, mouseDeltaPos{ 0.0 };
 			glfwGetCursorPos(glfwGetCurrentContext(), &mousePosCurr.x, &mousePosCurr.y);
@@ -174,7 +178,7 @@ void Window::OpenGLErrorCallback(GLenum source, GLenum type, GLuint id, GLenum s
 		break;
 	}
 	if(messageType != "OTHER")
-		Log() << messageType << ": " << std::string(message, length) << " - source : " << std::hex << source << std::endl;
+		LOG << messageType << ": " << std::string(message, length) << " - source : " << std::hex << source << std::endl;
 }
 void Window::GLFWFrameBufferResizeCallback(GLFWwindow* window, int width, int height) {
 	if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_FALSE) {

@@ -2,10 +2,11 @@
 
 #include <Line.h>
 #include <Square.h>
+#include <Entity.h>
 
-class WorldAxes {
+class WorldAxes : public Entity {
 private:
-	Line _axisX, _axisY, _axisZ;
+	Line _axes[3];
 	Square _floor;
 public:
 	WorldAxes();
