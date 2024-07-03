@@ -2,14 +2,22 @@
 
 std::uint64_t Entity::_internalID = 0;
 
-std::string Entity::Name(std::string newName) {
-	if (!newName.empty()) {
-		_name = newName;
-	}
+std::string& Entity::Name() {
 	return _name;
 }
 
+std::string Entity::ID() const
+{
+	return std::to_string(_id);
+}
+
 void Entity::Draw() const {
+}
+
+Entity::details_map Entity::Details() {
+	details_map details;
+	details.push_back({ "Name", { [=]() {return std::ref(this->Name()); }, DetailsType::STRING } });
+	return details;
 }
 
 Entity::Entity()

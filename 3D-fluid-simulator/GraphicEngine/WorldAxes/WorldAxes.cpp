@@ -15,10 +15,10 @@ WorldAxes::WorldAxes()
 		{ {  1.f, 0.f,  1.f }, { 255,   0, 255, 255 } } }
 {
 	for (auto& axis : _axes) {
-		axis.Scale({ 1200, 1200, 1200 });
+		axis.Scale() = { 1200, 1200, 1200 };
 		axis.EnableLight(false);
 	}
-	_floor.Scale({ 1200, 1200, 1200 });
+	_floor.Scale() = { 1200, 1200, 1200 };
 }
 void WorldAxes::Draw() const {
 	for (auto& axis : _axes) {

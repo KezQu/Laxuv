@@ -10,4 +10,5 @@ public:
 	Object(Shape&& shape);
 	void Draw() const override;
 	Shape& GetShape();
+	details_map Details() override;
 };

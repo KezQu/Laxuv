@@ -81,7 +81,7 @@ void Window::EventLoop() {
 		Refresh();
 		//ImGui::ShowDemoWindow();
 		Toolbar(ImVec2{ _windowSize.x, 20 }, ImVec2{ 0,0 }).Generate();
-		Explorer(ImVec2{ _windowSize.x / 4.f, _windowSize.x - 20 }, ImVec2{ 0,20 }).Generate();
+		Explorer(ImVec2{ _windowSize.x / 4.f, _windowSize.y - 20 }, ImVec2{ 0,20 }).Generate();
 		Logger(LOG, ImVec2{ 3 * _windowSize.x / 4.f, 200 }, ImVec2{ _windowSize.x / 4.f, _windowSize.y - 200 }).Generate();
 		
 		for (auto& entity : Explorer::EntitiesVector) {

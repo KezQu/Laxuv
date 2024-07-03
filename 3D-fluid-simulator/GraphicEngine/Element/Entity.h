@@ -1,10 +1,23 @@
 #pragma once
 
+#include <glm/matrix.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <Debug.h>
+
 #include <unordered_map>
 #include <functional>
 #include <string>
+#include <variant>
 #include <cstdint>
-#include <Debug.h>
+
+enum DetailsType {
+	STRING = 0,
+	INT = 1,
+	FLOAT = 2,
+	VEC2 = 3,
+	VEC3 = 4,
+	VEC4 = 5
+};
 
 class Entity {
 protected:
@@ -12,14 +25,19 @@ protected:
 	std::uint64_t _id;
 	std::string _name;
 public:
-	std::string Name(std::string newName = {});
+	std::string& Name();
+	std::string ID() const;
 	virtual void Draw() const;
-	template<typename T>
-	std::unordered_map<std::string, std::function<void(T)>> Details() const {
-		std::unordered_map<std::string, std::function<void(T)>> details;
-		details.insert({ "Name", Entity::Name});
-		return details;
-	}
+	using details_map = std::vector<std::pair<std::string, 
+		std::pair<std::variant<
+		std::function<std::string&()>,
+		std::function<int&()>,
+		std::function<float&()>,
+		std::function<glm::vec2&()>,
+		std::function<glm::vec3&()>,
+		std::function<glm::vec4&()>>, DetailsType>>>;
+
+	virtual details_map Details();
 protected:
 	Entity();
 };

@@ -1,7 +1,9 @@
 #pragma once
 //#pragma execution_character_set("utf-8")
 
+#include <cstdint>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <imgui_stdlib.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>

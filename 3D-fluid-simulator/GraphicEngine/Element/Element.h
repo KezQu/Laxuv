@@ -30,9 +30,9 @@ protected:
 	Element& operator=(Element && obj_move) = default;
 	virtual ~Element();
 public:
-	Element<Prim>& Move(glm::vec3 translation);
-	Element<Prim>& Scale(glm::vec3 scale);
-	Element<Prim>& Rotate(glm::vec3 rotation);
+	glm::vec3& Move();
+	glm::vec3& Scale();
+	glm::vec3& Rotate();
 	glm::mat4 Model() const;
 	void Bind() const;
 	GLenum GetDrawPrimitive() const;
@@ -123,21 +123,18 @@ void Element<Prim>::Bind() const {
 }
 
 template<GLenum Prim>
-Element<Prim>& Element<Prim>::Move(glm::vec3 translation) {
-	_translation = translation;
-	return *this;
+glm::vec3& Element<Prim>::Move() {
+	return _translation;
 }
 
 template<GLenum Prim>
-Element<Prim>& Element<Prim>::Scale(glm::vec3 scale) {
-	_scale = scale;
-	return *this;
+glm::vec3& Element<Prim>::Scale() {
+	return _scale;
 }
 
 template<GLenum Prim>
-Element<Prim>& Element<Prim>::Rotate(glm::vec3 rotation) {
-	_rotation = rotation;
-	return *this;
+glm::vec3& Element<Prim>::Rotate() {
+	return _rotation;
 }
 
 template<GLenum Prim>
