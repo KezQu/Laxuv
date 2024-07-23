@@ -6,9 +6,14 @@ std::string& Entity::Name() {
 	return _name;
 }
 
-std::string Entity::ID() const
+bool& Entity::Visible()
 {
-	return std::to_string(_id);
+	return _visible;
+}
+
+std::uint64_t Entity::ID() const
+{
+	return _id;
 }
 
 void Entity::Draw() const {

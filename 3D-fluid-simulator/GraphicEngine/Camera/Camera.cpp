@@ -1,4 +1,5 @@
 #include <Camera.h>
+#include <iostream>
 
 Camera::Camera(WorldSpace area)
 	:_worldSize{ area },
@@ -17,6 +18,10 @@ glm::mat4 Camera::View(){
 }
 glm::mat4 const& Camera::Projection() const {
 	return _projection;
+}
+glm::vec2 const& Camera::Viewport() const
+{
+	return { _worldSize.width, _worldSize.height };
 }
 void Camera::ProjectionRescale(int width, int height) {
 	_worldSize.width = width;

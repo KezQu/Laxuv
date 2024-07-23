@@ -26,6 +26,7 @@ public:
 	static Camera& GetCamera();
 	glm::mat4 View() ;
 	glm::mat4 const& Projection() const;
+	glm::vec2 const& Viewport() const;
 	void ProjectionRescale(int width, int height);
 	void Move(ImGuiKey direction);
 	void Rotate(glm::vec3 rotation);

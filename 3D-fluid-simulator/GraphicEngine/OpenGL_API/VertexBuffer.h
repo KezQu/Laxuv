@@ -8,8 +8,8 @@ class VertexBuffer : public Buffer<GL_ARRAY_BUFFER, T>{
 public:
 	using type = T;
 private:
-	const GLuint size = S;
-	GLint _bindingIndex{ -1 };
+	const uint64_t size = S;
+	int32_t _bindingIndex{ -1 };
 public:
 	using type = T;
 	VertexBuffer();

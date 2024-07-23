@@ -2,6 +2,7 @@
 
 #include <Interface.h>
 #include <GLFW/glfw3.h>
+#include <variant>
 
 class Toolbar : public Interface {
 private:

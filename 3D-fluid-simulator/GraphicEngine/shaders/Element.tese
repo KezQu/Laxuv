@@ -16,8 +16,8 @@ void main(){
 		outColor[i] = inColor[i];
 		outCoordOffset[i] = inCoordOffset[i];
 	}
-	//float R = distance(gl_in[0].gl_Position.xyz, center);
-	//float tessVertexCenterLength = distance(tessVertexCoord, center);
-	//tessVertexCoord = tessVertexCoord + (R - tessVertexCenterLength) * normalize(tessVertexCoord - center);
+	float R = distance(gl_in[0].gl_Position.xyz, center);
+	float tessVertexCenterLength = distance(tessVertexCoord, center);
+	tessVertexCoord = tessVertexCoord + (R - tessVertexCenterLength) * normalize(tessVertexCoord - center);
 	gl_Position = vec4(tessVertexCoord, 1.0);
 }

@@ -4,12 +4,9 @@
 #include <iostream>
 
 #include <GLFW/glfw3.h>
+#include <ShapeInstance.h>
 #include <Object.h>
 #include <Particles.h>
-#include <Point.h>
-#include <Qube.h>
-#include <Sphere.h>
-#include <Square.h>
 #include <WorldAxes.h>
 #include <Toolbar.h>
 #include <Explorer.h>

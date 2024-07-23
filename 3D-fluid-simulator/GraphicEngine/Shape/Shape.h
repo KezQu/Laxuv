@@ -14,22 +14,27 @@ struct {
 }LIGHT;
 
 template<GLenum Prim>
-class Element {
+class Shape {
 protected:
 	VertexArray _vertexArray;
 	Program _renderer;
-	glm::vec3 _translation{ 0.f }, _scale{ 1.f }, _rotation{ 0.f }, _center{ 0.f }, _boundingBox{ 0.f };
-	GLenum _primitiveType{ Prim };
+	glm::vec3 _translation{ 0.f };
+	glm::vec3 _scale{ 1.f };
+	glm::vec3 _rotation{ 0.f };
+	glm::vec3 _center{ 0.f };
 	int _subdivision{ 1 };
-	bool _enableLight{ true }, _enableTesselation{ false };
-protected:
-	Element(VertexArray&& vertexArray = {}, bool enableTess = false);
-	Element(Element const& obj_copy) = delete;
-	Element(Element && obj_move) = default;
-	Element& operator=(Element const& obj_copy) = delete;
-	Element& operator=(Element && obj_move) = default;
-	virtual ~Element();
+	int _shapeRadius;
+	bool _enableLight{ true };
+	bool _enableTesselation{ false };
 public:
+	inline static GLenum _primitiveType{ Prim };
+public:
+	Shape(VertexArray&& vertexArray = {}, int shapeRadius = 100, bool enableTess = false);
+	Shape(Shape const& obj_copy) = delete;
+	Shape(Shape && obj_move) = default;
+	Shape& operator=(Shape const& obj_copy) = delete;
+	Shape& operator=(Shape && obj_move) = default;
+	virtual ~Shape() = default;
 	glm::vec3& Move();
 	glm::vec3& Scale();
 	glm::vec3& Rotate();
@@ -38,15 +43,18 @@ public:
 	GLenum GetDrawPrimitive() const;
 	VertexArray const& GetVA() const;
 	Program const& GetRenderer() const;
+	Program& GetRenderer();
 	glm::vec3 const& GetCenter() const;
-	glm::vec3 const& GetBoundingBox() const;
-	Element<Prim>& EnableLight(bool enable);
-	Element<Prim>& ChangeSubdivision(int newSubdivision);
+	bool& EnableLight();
+	bool& EnableTesselation();
+	int& ChangeSubdivision();
+	int& ChangeRadius();
 };
 
 template<GLenum Prim>
-Element<Prim>::Element(VertexArray&& vertexArray, bool enableTess)
+Shape<Prim>::Shape(VertexArray&& vertexArray, int shapeRadius, bool enableTess)
 	:_vertexArray{ std::move(vertexArray) },
+	_shapeRadius{ shapeRadius },
 	_enableTesselation{ enableTess }
 {
 	auto& coordBuffer = GetVA().Data().coordinateBuffer;
@@ -80,23 +88,22 @@ Element<Prim>::Element(VertexArray&& vertexArray, bool enableTess)
 }
 
 template<GLenum Prim>
-Element<Prim>::~Element() {}
-
-template<GLenum Prim>
-void Element<Prim>::Bind() const {
+void Shape<Prim>::Bind() const {
 	_vertexArray.Bind();
 	if (!_renderer.isLinked())
 		_renderer.Link();
 	_renderer.Bind();
- 
+	
 	GLint modelLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "model");
 	GLint viewLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "view");
 	GLint projectionLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "projection");
+	GLint viewportLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "viewport");
 	GLint centerLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "center");
 	GLint subdivisionLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "subdivision");
 	GLint ambientLightColorLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "ambientLightColor");
 	GLint diffuseLightColorLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "diffuseLightColor");
 	GLint diffuseLightDirectionLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "diffuseLightDirection");
+	GLint shapeRadiusLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "shapeRadius");
 
 	if (modelLocation != -1)
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(Model()));
@@ -104,6 +111,9 @@ void Element<Prim>::Bind() const {
 		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(Camera::GetCamera().View()));
 	if (projectionLocation != -1)
 		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(Camera::GetCamera().Projection()));
+ 	if (viewportLocation != -1)
+		glUniform2fv(viewportLocation, 1, glm::value_ptr(Camera::GetCamera().Viewport()));
+		
 	if (centerLocation != -1)
 		glUniform3fv(centerLocation, 1, glm::value_ptr(_center));
 	if (subdivisionLocation != -1)
@@ -120,25 +130,28 @@ void Element<Prim>::Bind() const {
 		auto objDiffuseLightDirection = _enableLight ? LIGHT.DiffuseLight.direction : glm::vec3(0.0);
 		glUniform3fv(diffuseLightDirectionLocation, 1, glm::value_ptr(objDiffuseLightDirection));
 	}
+	if (shapeRadiusLocation != -1) {
+		glUniform1i(shapeRadiusLocation, _shapeRadius);
+	}
 }
 
 template<GLenum Prim>
-glm::vec3& Element<Prim>::Move() {
+glm::vec3& Shape<Prim>::Move() {
 	return _translation;
 }
 
 template<GLenum Prim>
-glm::vec3& Element<Prim>::Scale() {
+glm::vec3& Shape<Prim>::Scale() {
 	return _scale;
 }
 
 template<GLenum Prim>
-glm::vec3& Element<Prim>::Rotate() {
+glm::vec3& Shape<Prim>::Rotate() {
 	return _rotation;
 }
 
 template<GLenum Prim>
-glm::mat4 Element<Prim>::Model() const {
+glm::mat4 Shape<Prim>::Model() const {
 	auto I = glm::identity<glm::mat4>();
 	auto angle = glm::max(glm::max(_rotation.x, _rotation.y), _rotation.z);
 	auto T = glm::dot(_translation, _translation) != 0.f ? glm::translate(I, _translation) : I;
@@ -148,34 +161,40 @@ glm::mat4 Element<Prim>::Model() const {
 }
 
 template<GLenum Prim>
-GLenum Element<Prim>::GetDrawPrimitive() const {
+GLenum Shape<Prim>::GetDrawPrimitive() const {
 	return _primitiveType;
 }
 template<GLenum Prim>
-VertexArray const& Element<Prim>::GetVA() const {
+VertexArray const& Shape<Prim>::GetVA() const {
 	return _vertexArray;
 }
 template<GLenum Prim>
-Program const& Element<Prim>::GetRenderer() const {
+Program const& Shape<Prim>::GetRenderer() const {
 	return _renderer;
 
 }
 template<GLenum Prim>
-glm::vec3 const& Element<Prim>::GetCenter() const {
-	return _center;
+Program& Shape<Prim>::GetRenderer() {
+	return _renderer;
 }
 template<GLenum Prim>
-glm::vec3 const& Element<Prim>::GetBoundingBox() const {
-	return _boundingBox;
+glm::vec3 const& Shape<Prim>::GetCenter() const {
+	return _center;
 }
 
 template<GLenum Prim>
-Element<Prim>& Element<Prim>::EnableLight(bool enable) {
-	_enableLight = enable;
-	return *this;
+bool& Shape<Prim>::EnableLight() {
+	return _enableLight;
 }
 template<GLenum Prim>
-Element<Prim>& Element<Prim>::ChangeSubdivision(int newSubdivision) {
-	_subdivision = newSubdivision;
-	return *this;
+bool& Shape<Prim>::EnableTesselation() {
+	return _enableTesselation;
+}
+template<GLenum Prim>
+int& Shape<Prim>::ChangeSubdivision() {
+	return _subdivision;
+}
+template<GLenum Prim>
+int& Shape<Prim>::ChangeRadius() {
+	return _shapeRadius;
 }

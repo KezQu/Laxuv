@@ -73,9 +73,6 @@ Window::~Window()
 } 
 void Window::EventLoop() {
 	WorldAxes Axes{};
-	Explorer::Append(Particles(Sphere{ { { 0, 0, 0 }, {255, 120, 50, 255} }, 5, false }, 250000));
-	Explorer::Append(Object(Sphere{ { { 0, 0, 0 }, {50, 70, 255, 255} }, 150, true }));
-	//Particles p1(Sphere{ { { 0, 0, 0 }, {255, 120, 50, 255} }, 5, false }, 250000);
 
 	while (glfwWindowShouldClose(_window) == GLFW_FALSE) {
 		Refresh();
@@ -84,14 +81,16 @@ void Window::EventLoop() {
 		Explorer(ImVec2{ _windowSize.x / 4.f, _windowSize.y - 20 }, ImVec2{ 0,20 }).Generate();
 		Logger(LOG, ImVec2{ 3 * _windowSize.x / 4.f, 200 }, ImVec2{ _windowSize.x / 4.f, _windowSize.y - 200 }).Generate();
 		
-		for (auto& entity : Explorer::EntitiesVector) {
+		for (auto& [id, entity] : Explorer::EntitiesContainer) {
 			entity->Draw();
 		}
 		Axes.Draw();
 		Render();
 	}
+
 }
 void Window::Refresh() {
+	glEnable(GL_PROGRAM_POINT_SIZE);
 	glClearColor(0.f, 0.f, 0.f, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	FramebufferResizeCheck();

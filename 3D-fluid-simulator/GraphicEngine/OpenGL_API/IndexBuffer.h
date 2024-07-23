@@ -2,9 +2,9 @@
 
 #include <Buffer.h>
 
-class IndexBuffer : public Buffer<GL_ELEMENT_ARRAY_BUFFER, GLuint> {
+class IndexBuffer : public Buffer<GL_ELEMENT_ARRAY_BUFFER, uint32_t> {
 public:
-	using type = GLuint;
+	using type = uint32_t;
 public:
 	IndexBuffer();
 	IndexBuffer(std::initializer_list<type> data);

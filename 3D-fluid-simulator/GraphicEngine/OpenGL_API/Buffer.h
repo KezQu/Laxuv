@@ -8,7 +8,7 @@ template<GLenum Target, typename T>
 class Buffer {
 protected:
 	std::vector<T> _data;
-	GLuint _id{ 0 };
+	uint32_t _id{ 0 };
 public:
 	const GLenum target{ Target };
 protected:
@@ -41,7 +41,7 @@ inline Buffer<Target, T>::Buffer(std::initializer_list<T> data)
 	:_data(data)
 {
 	glCreateBuffers(1, &_id);
-	glNamedBufferData(_id, _data.size() * sizeof(T), _data.data(), GL_STATIC_DRAW);
+	glNamedBufferData(_id, Size() * sizeof(T), RawData(), GL_STATIC_DRAW);
 }
 template<GLenum Target, typename T>
 inline Buffer<Target, T>::Buffer(Buffer<Target, T>&& objMove) {

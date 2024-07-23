@@ -1,12 +1,13 @@
 #include <Explorer.h>
 
-std::vector<std::unique_ptr<Entity>> Explorer::EntitiesVector = {};
+Explorer::entityContainer Explorer::EntitiesContainer = {};
 
 Explorer::Explorer(ImVec2 const& size, ImVec2 const& position) 
 	:Interface(size, position, ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_AlwaysAutoResize)
 {}
 
@@ -18,45 +19,100 @@ void Explorer::Generate() {
 
 	static std::uint64_t selected = 0;
 	if (ImGui::Begin("##Explorer", nullptr, _flags)) {
+		static std::pair<int, int> objectSelect = { 0,0 };
+
+		ImGui::SetNextItemWidth(_size.x / 3.f);
+		ImGui::Combo("##EntityType", &objectSelect.first, " \0Object\0Particle\0");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(_size.x / 3.f);
+		ImGui::Combo("##EntityShape", &objectSelect.second, " \0Point\0Line\0Square\0Qube\0Sphere\0");
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(_size.x / 3.f);
+		if (ImGui::Button("Add Entity##AddEntity") && objectSelect.first != 0 && objectSelect.second != 0) {
+			switch (objectSelect.second)
+			{
+			case 1:
+				objectSelect.first == 1 ? Explorer::Append(Object(Point())) : Explorer::Append(Particles(Point(), 100));
+				break;
+			case 2:
+				objectSelect.first == 1 ? Explorer::Append(Object(Line())) : Explorer::Append(Particles(Line(), 100));
+				break;
+			case 3:
+				objectSelect.first == 1 ? Explorer::Append(Object(Square())) : Explorer::Append(Particles(Square(), 100));
+				break;
+			case 4:
+				objectSelect.first == 1 ? Explorer::Append(Object(Qube())) : Explorer::Append(Particles(Qube(), 100));
+				break;
+			case 5:
+				objectSelect.first == 1 ? Explorer::Append(Object(Sphere())) : Explorer::Append(Particles(Sphere(), 100));
+				break;
+			}
+		}
 		if (ImGui::BeginChild("##ObjectExplorer", ImVec2(_size.x, _size.y / 2), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar)) {
-			for (std::uint64_t i = 0; i < EntitiesVector.size(); ++i) {
-				if (ImGui::Selectable((EntitiesVector.at(i)->Name() + " ##objectLookup" + EntitiesVector.at(i)->ID()).c_str())) {
-					selected = i;
+			if (ImGui::BeginTable("##NamesTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_NoHostExtendY | ImGuiTableFlags_NoHostExtendX, ImVec2(_size.x, _size.y / 2))) {
+				ImGui::TableSetupColumn("##Visibilty", ImGuiTableColumnFlags_WidthFixed);
+				ImGui::TableSetupColumn("##Name", ImGuiTableColumnFlags_WidthStretch);
+				for (auto & [k,v] : EntitiesContainer) {
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Checkbox(("##visible" + std::to_string(v->ID())).c_str(), &v->Visible());
+ 					ImGui::TableSetColumnIndex(1);
+					if (ImGui::Selectable((v->Name() + " ##objectLookup" + std::to_string(v->ID())).c_str())) {
+						selected = k;
+					}
 				}
 			}
+			ImGui::EndTable();
 		}
 		ImGui::EndChild();
 		if (ImGui::BeginChild("##ObjectDetails", ImVec2(_size.x, _size.y / 2), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar)) {
-			if (ImGui::BeginTable("##DetailsTable", 2, ImGuiTableFlags_None, ImVec2(_size.x, _size.y / 2))) {
-				for (auto& info : EntitiesVector.at(selected)->Details()) {
+			if (ImGui::BeginTable("##DetailsTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_NoHostExtendY | ImGuiTableFlags_NoHostExtendX, ImVec2(_size.x, _size.y / 2)) && selected != 0) {
+				ImGui::TableSetupColumn("##InfoName", ImGuiTableColumnFlags_WidthFixed, _size.x / 3.);
+				ImGui::TableSetupColumn("##InfoValues", ImGuiTableColumnFlags_WidthStretch);
+				
+				for (auto& info : EntitiesContainer.at(selected)->Details()) {
 					ImGui::TableNextRow(); 
 					ImGui::TableSetColumnIndex(0);
 					ImGui::Text(info.first.c_str());
-	
+
 					ImGui::TableSetColumnIndex(1);
+					ImGui::SetNextItemWidth(-1);
 					switch (info.second.second)
 					{
+					case DetailsType::BOOL:
+						ImGui::Checkbox(("##" + info.first).c_str(), &std::get<DetailsType::BOOL>(info.second.first)());
+						break;
 					case DetailsType::STRING:
 						ImGui::InputText(("##" + info.first).c_str(), &std::get<DetailsType::STRING>(info.second.first)(), ImGuiInputTextFlags_EnterReturnsTrue);
 						break;
 					case DetailsType::INT:
-						ImGui::InputInt(("##" + info.first).c_str(), &std::get<DetailsType::INT>(info.second.first)(), ImGuiInputTextFlags_EnterReturnsTrue);
+						ImGui::DragInt(("##" + info.first).c_str(), &std::get<DetailsType::INT>(info.second.first)(), 1, INT_MIN / 2, INT_MAX / 2, "%d", ImGuiSliderFlags_AlwaysClamp);
+						break;
+					case DetailsType::SIZET:
+						ImGui::DragScalar(("##" + info.first).c_str(), ImGuiDataType_U64, &std::get<DetailsType::SIZET>(info.second.first)(), 1, (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
 						break;
 					case DetailsType::FLOAT:
-						ImGui::InputFloat(("##" + info.first).c_str(), &std::get<DetailsType::FLOAT>(info.second.first)(), ImGuiInputTextFlags_EnterReturnsTrue);
+						ImGui::DragFloat(("##" + info.first).c_str(), &std::get<DetailsType::FLOAT>(info.second.first)(), 1.f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 						break;
 					case DetailsType::VEC2:
-						ImGui::InputFloat2(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC2>(info.second.first)()), "%.3f", ImGuiInputTextFlags_EnterReturnsTrue);
+						ImGui::DragFloat2(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC2>(info.second.first)()), 1.f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 						break;
 					case DetailsType::VEC3:
-						ImGui::InputFloat3(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC3>(info.second.first)()), "%.3f", ImGuiInputTextFlags_EnterReturnsTrue);
+						ImGui::DragFloat3(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC3>(info.second.first)()), 1.f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 						break;
 					case DetailsType::VEC4:
-						ImGui::InputFloat4(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC4>(info.second.first)()), "%.3f", ImGuiInputTextFlags_EnterReturnsTrue);
+						ImGui::DragFloat4(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC4>(info.second.first)()), 1.f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 						break;
 					default:
 						break;
 					}
+					ImGui::Spacing();
+				}
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				if (ImGui::Button("Delete")) {
+					Delete(selected);
+					selected = 0;
 				}
 			}
 			ImGui::EndTable();
@@ -66,4 +122,13 @@ void Explorer::Generate() {
 	}
 	ImGui::End();
 	ImGui::PopStyleVar();
+}
+
+void Explorer::Delete(entityContainer::key_type id) {
+	if (id != 0) {
+		EntitiesContainer.erase(id);
+	}
+	else {
+		EntitiesContainer.erase(std::prev(EntitiesContainer.end()));
+	}
 }
