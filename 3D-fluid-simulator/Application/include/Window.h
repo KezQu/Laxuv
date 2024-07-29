@@ -5,6 +5,7 @@
 
 #include <GLFW/glfw3.h>
 #include <ShapeInstance.h>
+#include <PhysicsDispatch.h>
 #include <Object.h>
 #include <Particles.h>
 #include <WorldAxes.h>

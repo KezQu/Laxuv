@@ -1,10 +1,10 @@
 #pragma once
 
-#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
 struct PhysicsProperties {
-	glm::vec3 position;
-	glm::vec3 velocity;
-	glm::vec3 acceleration;
-	float mass;
+	glm::vec4 acceleration{};
+	glm::vec4 position{};
+	glm::vec4 velocity{};
+	glm::vec4 mass{};
 };

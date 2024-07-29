@@ -23,9 +23,12 @@ public:
 	void Bind() const;
 	void Unbind() const;
 	std::vector<T> const& Data() const;
+	std::vector<T>& Data();
 	T const* const RawData() const;
-	void UpdateData(std::vector<T> const& data);
+	T* const RawData();
+	void UpdateData(std::vector<T> && data);
 	void UpdateData(std::initializer_list<T> data);
+	void Add(std::vector<T> && data);
 	void Add(std::initializer_list<T> data);
 	std::size_t Size() const;
 	GLuint const ID() const;
@@ -75,14 +78,21 @@ inline std::vector<T> const& Buffer<Target, T>::Data() const {
 	return _data;
 }
 template<GLenum Target, typename T>
+inline std::vector<T>& Buffer<Target, T>::Data() {
+	return _data;
+}
+template<GLenum Target, typename T>
 inline T const* const Buffer<Target, T>::RawData() const {
 	return _data.data();
 }
 template<GLenum Target, typename T>
-inline void Buffer<Target, T>::UpdateData(std::vector<T> const& data) {
+inline T* const Buffer<Target, T>::RawData() {
+	return _data.data();
+}
+template<GLenum Target, typename T>
+inline void Buffer<Target, T>::UpdateData(std::vector<T> && data) {
 	glNamedBufferData(_id, _data.size() * sizeof(T), nullptr, GL_STATIC_DRAW);
-	_data.clear();
-	_data.insert(std::end(_data), std::begin(data), std::end(data));
+	_data = std::move(data);
 	glNamedBufferData(_id, _data.size() * sizeof(T), _data.data(), GL_STATIC_DRAW);
 }
 template<GLenum Target, typename T>
@@ -90,10 +100,14 @@ inline void Buffer<Target, T>::UpdateData(std::initializer_list<T> data) {
 	UpdateData(std::vector<T>(std::begin(data), std::end(data)));
 }
 template<GLenum Target, typename T>
-inline void Buffer<Target, T>::Add(std::initializer_list<T> data){
+inline void Buffer<Target, T>::Add(std::vector<T> && data) {
 	glNamedBufferData(_id, _data.size() * sizeof(T), nullptr, GL_STATIC_DRAW);
 	_data.insert(std::end(_data), std::begin(data), std::end(data));
 	glNamedBufferData(_id, _data.size() * sizeof(T), _data.data(), GL_STATIC_DRAW);
+}
+template<GLenum Target, typename T>
+inline void Buffer<Target, T>::Add(std::initializer_list<T> data){
+	Add(std::vector<T>(data.begin(), data.end()));
 }
 template<GLenum Target, typename T>
 inline std::size_t Buffer<Target, T>::Size() const {

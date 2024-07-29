@@ -60,24 +60,15 @@ void Particles<T>::Draw() const
 
 template<typename T>
 void Particles<T>::Bind() const
-{
-	GLint distFunctionTypeLoc = glGetProgramResourceLocation(_particleShape.GetRenderer().ID(), GL_UNIFORM, "distributionFunctionType");
-	GLint maxParticlesLoc = glGetProgramResourceLocation(_particleShape.GetRenderer().ID(), GL_UNIFORM, "maxParticles");
+{}
 
-	if (distFunctionTypeLoc != -1) {
-		glUniform1i(distFunctionTypeLoc, _distribution);
-	}
-	if (maxParticlesLoc != -1) {
-		glUniform1i(maxParticlesLoc, _count);
-	}
-}
 template<typename T>
 Particles<T>::details_map Particles<T>::Details()
 {
 	details_map details = Entity::Details();
-	details.push_back({ "Location", { [=]() {return std::ref(this->_particleShape.Move()); }, DetailsType::VEC3 } });
-	details.push_back({ "Rotation", { [=]() {return std::ref(this->_particleShape.Rotate()); }, DetailsType::VEC3 } });
-	details.push_back({ "Scale", { [=]() {return std::ref(this->_particleShape.Scale()); }, DetailsType::VEC3 } });
+	details.push_back({ "Location", { [=]() {return std::ref(this->_particleShape.GetLocation()); }, DetailsType::VEC3 } });
+	details.push_back({ "Rotation", { [=]() {return std::ref(this->_particleShape.GetRotate()); }, DetailsType::VEC3 } });
+	details.push_back({ "Scale", { [=]() {return std::ref(this->_particleShape.GetScale()); }, DetailsType::VEC3 } });
 	details.push_back({ "Light", { [=]() {return std::ref(this->_particleShape.EnableLight()); }, DetailsType::BOOL } });
 	details.push_back({ "Subdivision", { [=]() {return std::ref(this->_particleShape.ChangeSubdivision()); }, DetailsType::INT } });
 	details.push_back({ "Radius", { [=]() {return std::ref(this->_particleShape.ChangeRadius()); }, DetailsType::INT } });

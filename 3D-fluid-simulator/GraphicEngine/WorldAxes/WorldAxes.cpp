@@ -11,10 +11,10 @@ WorldAxes::WorldAxes()
 	_floor{ { { 0.f, 0.f, 0.f }, { 127, 127, 127, 127 } }, 1 }
 {
 	for (auto& axis : _axes) {
-		axis.Scale() = { 1200, 1200, 1200 };
+		axis.GetScale() = { 1200, 1200, 1200 };
 		axis.EnableLight() = false;
 	}
-	_floor.Scale() = { 1200, 1200, 1200 };
+	_floor.GetScale() = { 1200, 1200, 1200 };
 }
 void WorldAxes::Draw() const {
 	for (auto& axis : _axes) {

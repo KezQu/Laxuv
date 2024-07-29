@@ -42,9 +42,9 @@ template<GLenum Prim>
 Object<Prim>::details_map Object<Prim>::Details()
 {
 	details_map details = Entity::Details();
-	details.push_back({ "Location", { [=]() {return std::ref(this->_shape.Move()); }, DetailsType::VEC3 } });
-	details.push_back({ "Rotation", { [=]() {return std::ref(this->_shape.Rotate()); }, DetailsType::VEC3 } });
-	details.push_back({ "Scale", { [=]() {return std::ref(this->_shape.Scale()); }, DetailsType::VEC3 } });
+	details.push_back({ "Location", { [=]() {return std::ref(this->_shape.GetLocation()); }, DetailsType::VEC3 } });
+	details.push_back({ "Rotation", { [=]() {return std::ref(this->_shape.GetRotate()); }, DetailsType::VEC3 } });
+	details.push_back({ "Scale", { [=]() {return std::ref(this->_shape.GetScale()); }, DetailsType::VEC3 } });
 	details.push_back({ "Light", { [=]() {return std::ref(this->_shape.EnableLight()); }, DetailsType::BOOL } });
 	details.push_back({ "Subdivision", { [=]() {return std::ref(this->_shape.ChangeSubdivision()); }, DetailsType::INT } });
 	details.push_back({ "Radius", { [=]() {return std::ref(this->_shape.ChangeRadius()); }, DetailsType::INT } });

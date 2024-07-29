@@ -71,8 +71,12 @@ Window::~Window()
 	glfwDestroyWindow(_window); 
 	glfwTerminate();
 } 
+
 void Window::EventLoop() {
 	WorldAxes Axes{};
+	auto instance = PhysicsDispatch::GetDispatchInstance();
+	instance->InitDefaultState(Distribution::LINE, {0,0,0}, 100'000'000U);
+	//instance->GenerateFrameForces();
 
 	while (glfwWindowShouldClose(_window) == GLFW_FALSE) {
 		Refresh();
@@ -80,7 +84,8 @@ void Window::EventLoop() {
 		Toolbar(ImVec2{ _windowSize.x, 20 }, ImVec2{ 0,0 }).Generate();
 		Explorer(ImVec2{ _windowSize.x / 4.f, _windowSize.y - 20 }, ImVec2{ 0,20 }).Generate();
 		Logger(LOG, ImVec2{ 3 * _windowSize.x / 4.f, 200 }, ImVec2{ _windowSize.x / 4.f, _windowSize.y - 200 }).Generate();
-		
+
+		instance->GenerateFrameForces();
 		for (auto& [id, entity] : Explorer::EntitiesContainer) {
 			entity->Draw();
 		}

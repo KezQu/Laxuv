@@ -14,7 +14,6 @@ public:
 	ShaderStorageBuffer& operator=(ShaderStorageBuffer const& objCopy) = delete;
 	ShaderStorageBuffer& operator=(ShaderStorageBuffer&& objMove);
 	~ShaderStorageBuffer() override;
-	void Bind() const;
 };
 
 template<typename T>
@@ -22,7 +21,7 @@ inline ShaderStorageBuffer<T>::ShaderStorageBuffer() {}
 
 template<typename T>
 inline ShaderStorageBuffer<T>::ShaderStorageBuffer(std::initializer_list<T> data)
-	:Buffer<this->target, T>{data}
+	:Buffer<GL_SHADER_STORAGE_BUFFER, T>{data}
 {}
 
 template<typename T>
@@ -44,10 +43,3 @@ inline ShaderStorageBuffer<T>& ShaderStorageBuffer<T>::operator=(ShaderStorageBu
 template<typename T>
 inline ShaderStorageBuffer<T>::~ShaderStorageBuffer()
 {}
-
-template<typename T>
-inline void ShaderStorageBuffer<T>::Bind() const
-{
-	Buffer<this->target, T>::Bind();
-
-}

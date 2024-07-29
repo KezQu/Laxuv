@@ -35,9 +35,9 @@ public:
 	Shape& operator=(Shape const& obj_copy) = delete;
 	Shape& operator=(Shape && obj_move) = default;
 	virtual ~Shape() = default;
-	glm::vec3& Move();
-	glm::vec3& Scale();
-	glm::vec3& Rotate();
+	glm::vec3& GetLocation();
+	glm::vec3& GetScale();
+	glm::vec3& GetRotate();
 	glm::mat4 Model() const;
 	void Bind() const;
 	GLenum GetDrawPrimitive() const;
@@ -66,7 +66,7 @@ Shape<Prim>::Shape(VertexArray&& vertexArray, int shapeRadius, bool enableTess)
 	_center /= coordBuffer.Size() / coordBuffer.AttribSize();
 
 	_renderer.AddShader(GL_VERTEX_SHADER, "/Element.vert");
-	_renderer.AddShader(GL_VERTEX_SHADER, "/CalculateOffset.glsl");
+	//_renderer.AddShader(GL_VERTEX_SHADER, "/CalculateOffset.glsl");
 	if (_enableTesselation) {
 		_primitiveType = GL_PATCHES;
 
@@ -136,17 +136,17 @@ void Shape<Prim>::Bind() const {
 }
 
 template<GLenum Prim>
-glm::vec3& Shape<Prim>::Move() {
+glm::vec3& Shape<Prim>::GetLocation() {
 	return _translation;
 }
 
 template<GLenum Prim>
-glm::vec3& Shape<Prim>::Scale() {
+glm::vec3& Shape<Prim>::GetScale() {
 	return _scale;
 }
 
 template<GLenum Prim>
-glm::vec3& Shape<Prim>::Rotate() {
+glm::vec3& Shape<Prim>::GetRotate() {
 	return _rotation;
 }
 

@@ -23,8 +23,8 @@ VertexArray::VertexArray(std::initializer_list<Vertex> vertices, IndexBuffer&& i
 		for (int i = 0; i < 4; i++) tmpColors.push_back(vertex.color[i]);
 	}
 	_data.indexBuffer = std::move(idxBuffer);
-	_data.coordinateBuffer.UpdateData(tmpCoordinates);
-	_data.colorBuffer.UpdateData(tmpColors);
+	_data.coordinateBuffer.UpdateData(std::move(tmpCoordinates));
+	_data.colorBuffer.UpdateData(std::move(tmpColors));
 }
 VertexArray::VertexArray(VertexArray&& objMove) {
 	*this = std::move(objMove);

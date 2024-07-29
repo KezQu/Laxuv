@@ -3,7 +3,6 @@
 const int vertexPrimitiveCount = 3;
 layout(triangles) in;
 layout(location = 0) in vec4 inColor[];
-layout(location = 3) in vec3 outCoordOffset[];
 
 layout(triangle_strip, max_vertices = 24) out;
 layout(location = 0) out vec4 outColor; 
@@ -17,7 +16,7 @@ vec4 CalculateNDC(in vec3 position);
 void main(){
 	vec4 primitiveVertices[vertexPrimitiveCount];
 	for(int i = 0; i < vertexPrimitiveCount; i++){
-		primitiveVertices[i] = CalculateNDC((gl_in[i].gl_Position.xyz + outCoordOffset[0] * 2) * shapeRadius);
+		primitiveVertices[i] = CalculateNDC((gl_in[i].gl_Position.xyz) * shapeRadius);
 	}
 	normal = CalculateNormal(primitiveVertices);
 	
