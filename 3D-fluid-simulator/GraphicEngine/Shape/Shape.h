@@ -58,6 +58,7 @@ Shape<Prim>::Shape(VertexArray&& vertexArray, int shapeRadius, bool enableTess)
 	_enableTesselation{ enableTess }
 {
 	auto& coordBuffer = GetVA().Data().coordinateBuffer;
+
 	for (int i = 0; i < coordBuffer.Size(); i += 3) {
 		_center += glm::vec3(coordBuffer.Data()[i + 0],
 							 coordBuffer.Data()[i + 1],

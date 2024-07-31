@@ -1,27 +1,27 @@
 #pragma once
 
-#include "Buffer.h"
+#include <CPUBuffer.h>
+#include <GPUBuffer.h>
 
 template<typename T>
-class ShaderStorageBuffer : public Buffer<GL_SHADER_STORAGE_BUFFER, T>{
-private:
-	int64_t _bindingIndex{ -1 };
+class ShaderStorageBuffer : public CPUBuffer<GL_SHADER_STORAGE_BUFFER, T>{
 public:
-	ShaderStorageBuffer();
-	ShaderStorageBuffer(std::initializer_list<T> data);
+	using BufferType = T;
+
+	explicit ShaderStorageBuffer() = default;
+	explicit ShaderStorageBuffer(uint64_t initialBufferSize);
 	ShaderStorageBuffer(ShaderStorageBuffer const& objCopy) = delete;
-	ShaderStorageBuffer(ShaderStorageBuffer&& objMove);
+	explicit ShaderStorageBuffer(ShaderStorageBuffer&& objMove);
 	ShaderStorageBuffer& operator=(ShaderStorageBuffer const& objCopy) = delete;
 	ShaderStorageBuffer& operator=(ShaderStorageBuffer&& objMove);
 	~ShaderStorageBuffer() override;
+
+	std::vector<T> GetBufferSubData(uint64_t offset, uint64_t payloadSize);
 };
 
 template<typename T>
-inline ShaderStorageBuffer<T>::ShaderStorageBuffer() {}
-
-template<typename T>
-inline ShaderStorageBuffer<T>::ShaderStorageBuffer(std::initializer_list<T> data)
-	:Buffer<GL_SHADER_STORAGE_BUFFER, T>{data}
+inline ShaderStorageBuffer<T>::ShaderStorageBuffer(uint64_t initialBufferSize)
+	:GPUBuffer<GL_SHADER_STORAGE_BUFFER>{ initialBufferSize }
 {}
 
 template<typename T>
@@ -36,10 +36,18 @@ inline ShaderStorageBuffer<T>& ShaderStorageBuffer<T>::operator=(ShaderStorageBu
 	this->~ShaderStorageBuffer();
 	this->_data = std::exchange(objMove._data, {});
 	this->_id = std::exchange(objMove._id, 0);
-	_bindingIndex = std::exchange(objMove._bindingIndex, {});
 	return *this;
 }
 
 template<typename T>
 inline ShaderStorageBuffer<T>::~ShaderStorageBuffer()
 {}
+
+template<typename T>
+inline std::vector<T> ShaderStorageBuffer<T>::GetBufferSubData(uint64_t objectsOffset, uint64_t numberOfObjectsToRead)
+{
+	std::vector<T> bufferSubData(numberOfObjectsToRead);
+	glGetNamedBufferSubData(this->ID(), objectsOffset * sizeof(T), numberOfObjectsToRead * sizeof(T), bufferSubData.data());
+	//glGetNamedBufferSubData(this->ID(), 0, 0, bufferSubData.data());
+	return bufferSubData;
+}

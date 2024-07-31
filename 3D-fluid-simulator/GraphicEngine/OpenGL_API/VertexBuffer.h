@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Buffer.h>
+#include <CPUBuffer.h>
 #include <type_traits>
 
 template<typename T, GLuint S>
-class VertexBuffer : public Buffer<GL_ARRAY_BUFFER, T>{
+class VertexBuffer : public CPUBuffer<GL_ARRAY_BUFFER, T>{
 public:
 	using type = T;
 private:
@@ -18,7 +18,7 @@ public:
 	VertexBuffer(VertexBuffer && objMove);
 	VertexBuffer& operator=(VertexBuffer const& objCopy) = delete;
 	VertexBuffer& operator=(VertexBuffer&& objMove);
-	virtual ~VertexBuffer() override;
+	~VertexBuffer() override = default;
 	void DefineAttribute(GLuint const vertexArrayID, GLuint const bindingIndex);
 	void EnableAttribute(GLuint const vertexArrayID) const;
 	void DisableAttribute(GLuint const vertexArrayID) const;
@@ -34,13 +34,13 @@ private:
 
 template<typename T, GLuint S>
 inline VertexBuffer<T, S>::VertexBuffer()
-	:Buffer<GL_ARRAY_BUFFER, type>()
+	:CPUBuffer<GL_ARRAY_BUFFER, type>()
 {
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &_bindingIndex);
 }
 template<typename T, GLuint S>
 inline VertexBuffer<T, S>::VertexBuffer(std::initializer_list<type> data)
-	: Buffer<GL_ARRAY_BUFFER, type>(data)
+	: CPUBuffer<GL_ARRAY_BUFFER, type>(data)
 {
 	if (data.size() % size != 0) {
 		LOG << "Error size of vertex data is not a multiplication of vertice size(" << size << ")" << std::endl;
@@ -49,20 +49,18 @@ inline VertexBuffer<T, S>::VertexBuffer(std::initializer_list<type> data)
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &_bindingIndex);
 }
 template<typename T, GLuint S>
-inline VertexBuffer<T, S>::VertexBuffer(VertexBuffer<T, S>&& objMove) {
-	*this = std::move(objMove);
-}
+inline VertexBuffer<T, S>::VertexBuffer(VertexBuffer<T, S>&& objMove) 
+	:CPUBuffer<GL_ARRAY_BUFFER, type>(std::move(objMove)),
+	_bindingIndex{ std::exchange(objMove._bindingIndex, {}) }
+{}
 template<typename T, GLuint S>
 inline VertexBuffer<T, S>& VertexBuffer<T, S>::operator=(VertexBuffer<T, S>&& objMove) {
 	this->~VertexBuffer();
-	this->_data = std::exchange(objMove._data, {});
 	this->_id = std::exchange(objMove._id, 0);
-	_bindingIndex = std::exchange(objMove._bindingIndex, 0);
+	this->_data = std::exchange(objMove._data, {});
+	this->_bindingIndex = std::exchange(objMove._bindingIndex, 0);
 	return *this;
 }
-template<typename T, GLuint S>
-inline VertexBuffer<T, S>::~VertexBuffer()
-{}
 template<typename T, GLuint S>
 void inline VertexBuffer<T, S>::DefineAttribute(GLuint const vertexArrayID, GLuint const bindingIndex){
 	_bindingIndex = bindingIndex;

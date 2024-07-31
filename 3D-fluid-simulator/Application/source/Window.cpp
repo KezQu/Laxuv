@@ -75,7 +75,7 @@ Window::~Window()
 void Window::EventLoop() {
 	WorldAxes Axes{};
 	auto instance = PhysicsDispatch::GetDispatchInstance();
-	instance->InitDefaultState(Distribution::LINE, {0,0,0}, 100'000'000U);
+	instance->InitDefaultState(Distribution::LINE, {0,0,0}, 1000000U);
 	//instance->GenerateFrameForces();
 
 	while (glfwWindowShouldClose(_window) == GLFW_FALSE) {

@@ -32,12 +32,10 @@ private:
 	ShaderStorageBuffer<PhysicsProperties> _particleMesh;
 private:
 	PhysicsDispatch();
-	void CopyDataToLocalBuffer(uint32_t bufferId, std::vector<PhysicsProperties>& localBuffer);
 	void Bind(Program const& workingShaderProgram) const;
 public:
 	static std::shared_ptr<PhysicsDispatch>& GetDispatchInstance();
 	void InitDefaultState(Distribution distribution, glm::vec3 const& location, uint64_t maxParticles);
 	void Reset();
 	void GenerateFrameForces();
-	void AddListener(std::function<bool()> const& listenerCallback);
 };

@@ -5,9 +5,7 @@ PhysicsDispatch::PhysicsDispatch() {
 	_forcesQueue.AddShader(GL_COMPUTE_SHADER, "/Gravitation.comp");
 	_initState.AddShader(GL_COMPUTE_SHADER, "/InitDefaultState.comp");
 }
-void PhysicsDispatch::CopyDataToLocalBuffer(uint32_t bufferId, std::vector<PhysicsProperties>& localBuffer) {
-	_(glGetNamedBufferSubData(bufferId, 0, localBuffer.size() * sizeof(PhysicsProperties), localBuffer.data()));
-}
+
 void PhysicsDispatch::Bind(Program const& workingShaderProgram) const
 {
 	_particleMesh.Bind();
@@ -31,15 +29,16 @@ void PhysicsDispatch::InitDefaultState(Distribution distribution, glm::vec3 cons
 	else if (distribution == Distribution::SPHERE) {
 		maxParticles = std::cbrt(3 * maxParticles / (4 * glm::pi<float>()));
 	}
-	_particleMesh.Add(std::vector<PhysicsProperties>(maxParticles));
-	
+	//_particleMesh.SetBufferMemorySize(maxParticles);
+	_particleMesh.UpdateBufferMemory(std::vector<PhysicsProperties>(10));
+
 	_particleMesh.Bind();
 	if (!_initState.isLinked())
 		_initState.Link();
 	_initState.Bind();
 	
 	auto bindingIndex = glGetUniformBlockIndex(_initState.ID(), "dataBuffer");
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _particleMesh.ID());	
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _particleMesh.ID());
 
 	GLint distFunctionTypeLoc = glGetProgramResourceLocation(_initState.ID(), GL_UNIFORM, "distributionFunctionType");
 	if (distFunctionTypeLoc != -1) {
@@ -48,7 +47,10 @@ void PhysicsDispatch::InitDefaultState(Distribution distribution, glm::vec3 cons
 	
 	glDispatchCompute(maxParticles, 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-	CopyDataToLocalBuffer(_particleMesh.ID(), _particleMesh.Data());
+	auto lookupBuffer = _particleMesh.GetBufferSubData(0U, 10U);
+	for (auto& particle : lookupBuffer) {
+		std::cout << particle;
+	}
 }
 
 void PhysicsDispatch::Reset()
@@ -68,13 +70,11 @@ void PhysicsDispatch::GenerateFrameForces()
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _particleMesh.ID());
 	glDispatchCompute(_particleMesh.Size(), 1, 1);
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-	CopyDataToLocalBuffer(_particleMesh.ID(), _particleMesh.Data());
+	auto lookupBuffer = _particleMesh.GetBufferSubData(0U, 10U);
+	for (auto& particle : lookupBuffer) {
+		std::cout << particle;
+	}
 }
-
-void PhysicsDispatch::AddListener(std::function<bool()> const& listenerCallback)
-{
-}
-
 
 //std::function<std::vector<PhysicsProperties>()> fluidDistributionFunction;
 //switch (distribution) {
