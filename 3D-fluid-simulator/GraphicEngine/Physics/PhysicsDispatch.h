@@ -7,35 +7,29 @@
 #include <GL/glew.h>
 
 #include "Program.h"
-#include "Properties.h"
+#include "Essentials.h"
 #include "ShaderStorageBuffer.h"
-
-#include <functional>
-#include <execution>
-#include <numeric>
-#include <cmath>
-
-enum class Distribution {
-	LINE,
-	CIRCLE,
-	SQUARE,
-	DISK,
-	QUBE,
-	SPHERE
-};
 
 class PhysicsDispatch{
 private:
-	Program _forcesQueue;
-	Program _initState;
-	mutable uint64_t _timestamp;
 	ShaderStorageBuffer<PhysicsProperties> _particleMesh;
+	Program _physicsGenerator;
+	glm::ivec3 _boundingDimensions;
+	static uint64_t _timestamp;
+	static float _dt;
 private:
-	PhysicsDispatch();
-	void Bind(Program const& workingShaderProgram) const;
+	void Bind() const;
 public:
-	static std::shared_ptr<PhysicsDispatch>& GetDispatchInstance();
-	void InitDefaultState(Distribution distribution, glm::vec3 const& location, uint64_t maxParticles);
-	void Reset();
-	void GenerateFrameForces();
+	PhysicsDispatch(glm::ivec3 dimensions);
+	PhysicsDispatch(PhysicsDispatch const& obj_copy) = delete;
+	PhysicsDispatch(PhysicsDispatch&& obj_move) = default;
+	PhysicsDispatch& operator=(PhysicsDispatch const& obj_copy) = delete;
+	PhysicsDispatch& operator=(PhysicsDispatch&& obj_move) = default;
+	~PhysicsDispatch() = default;
+
+	glm::ivec3& GetMeshDimensions();
+	void UpdateMeshDimensions(glm::ivec3 dimensions);
+	void InitDefaultShape(DistributionShape initObjectBounds);
+	void GenerateForces();
+	void BindSSBOToProgram(uint64_t const& programID) const;
 };

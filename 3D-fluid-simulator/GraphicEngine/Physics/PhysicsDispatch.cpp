@@ -1,190 +1,81 @@
 #include "PhysicsDispatch.h"
 
+#include <imgui.h>
 
-PhysicsDispatch::PhysicsDispatch() {
-	_forcesQueue.AddShader(GL_COMPUTE_SHADER, "/Gravitation.comp");
-	_initState.AddShader(GL_COMPUTE_SHADER, "/InitDefaultState.comp");
+uint64_t PhysicsDispatch::_timestamp{};
+float PhysicsDispatch::_dt{};
+
+PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
+	:_boundingDimensions{dimensions},
+	_particleMesh{ static_cast<uint64_t>(dimensions.x * dimensions.y * dimensions.z) } {
+	_physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Element.comp");
+	_physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/InitDefaultShape.glsl");
+	_physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Gravitation.glsl");
 }
 
-void PhysicsDispatch::Bind(Program const& workingShaderProgram) const
+void PhysicsDispatch::Bind() const
 {
-	_particleMesh.Bind();
-	if (!workingShaderProgram.isLinked())
-		workingShaderProgram.Link();
-	workingShaderProgram.Bind();
-	//auto bindingIndex = glGetUniformBlockIndex(workingShaderProgram.ID(), "dataBuffer");
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _particleMesh.ID());
+	if (!_physicsGenerator.isLinked())
+		_physicsGenerator.Link();
+	_physicsGenerator.Bind();
+	BindSSBOToProgram(_physicsGenerator.ID());
 }
-std::shared_ptr<PhysicsDispatch>& PhysicsDispatch::GetDispatchInstance()
+
+glm::ivec3& PhysicsDispatch::GetMeshDimensions()
 {
-	static std::shared_ptr<PhysicsDispatch> instance(new PhysicsDispatch());
-	return instance;
+	return _boundingDimensions;
 }
 
-void PhysicsDispatch::InitDefaultState(Distribution distribution, glm::vec3 const& location, uint64_t maxParticles)
+void PhysicsDispatch::UpdateMeshDimensions(glm::ivec3 dimensions)
 {
-	if (distribution == Distribution::DISK) {
-		maxParticles = std::sqrt(maxParticles / glm::pi<float>());
-	}
-	else if (distribution == Distribution::SPHERE) {
-		maxParticles = std::cbrt(3 * maxParticles / (4 * glm::pi<float>()));
-	}
-	//_particleMesh.SetBufferMemorySize(maxParticles);
-	_particleMesh.UpdateBufferMemory(std::vector<PhysicsProperties>(10));
-
-	_particleMesh.Bind();
-	if (!_initState.isLinked())
-		_initState.Link();
-	_initState.Bind();
-	
-	auto bindingIndex = glGetUniformBlockIndex(_initState.ID(), "dataBuffer");
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _particleMesh.ID());
-
-	GLint distFunctionTypeLoc = glGetProgramResourceLocation(_initState.ID(), GL_UNIFORM, "distributionFunctionType");
-	if (distFunctionTypeLoc != -1) {
-		glUniform1i(distFunctionTypeLoc, static_cast<int32_t>(distribution));
-	}
-	
-	glDispatchCompute(maxParticles, 1, 1);
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-	auto lookupBuffer = _particleMesh.GetBufferSubData(0U, 10U);
-	for (auto& particle : lookupBuffer) {
-		std::cout << particle;
+	if (_boundingDimensions != dimensions) {
+		_boundingDimensions = dimensions;
+		_particleMesh.SetBufferMemorySize(dimensions.x * dimensions.y * dimensions.z);
 	}
 }
 
-void PhysicsDispatch::Reset()
+void PhysicsDispatch::InitDefaultShape(DistributionShape initOjectBounds)
 {
 	_timestamp = 0U;
-}
+ 	Bind();
 
-void PhysicsDispatch::GenerateFrameForces()
-{
-	_timestamp++;
-
-	_particleMesh.Bind();
-	if (!_forcesQueue.isLinked())
-		_forcesQueue.Link();
-	_forcesQueue.Bind();
-	auto bindingIndex = glGetUniformBlockIndex(_forcesQueue.ID(), "dataBuffer");
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _particleMesh.ID());
-	glDispatchCompute(_particleMesh.Size(), 1, 1);
-	glMemoryBarrier(GL_ALL_BARRIER_BITS);
-	auto lookupBuffer = _particleMesh.GetBufferSubData(0U, 10U);
+	GLint simulatorStateLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "SimulatorState");
+	if (simulatorStateLoc != -1) {
+		glUniform1ui(simulatorStateLoc, static_cast<uint32_t>(SimulationState::INIT));
+	}
+	
+	GLint distributionShapeLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "DistributionShape");
+	if (distributionShapeLoc != -1) {
+		glUniform1i(distributionShapeLoc, static_cast<int32_t>(initOjectBounds));
+	}
+	
+	//glDispatchCompute(_boundingDimensions.x, _boundingDimensions.y, _boundingDimensions.z);
+	_(glDispatchCompute(_boundingDimensions.x / 10, _boundingDimensions.y / 10, _boundingDimensions.z / 10));
+	_(glMemoryBarrier(GL_ALL_BARRIER_BITS));
+	auto lookupBuffer = _particleMesh.GetBufferSubData(1000U, 1050U);
 	for (auto& particle : lookupBuffer) {
 		std::cout << particle;
 	}
 }
 
-//std::function<std::vector<PhysicsProperties>()> fluidDistributionFunction;
-//switch (distribution) {
-//case Distribution::LINE:
-//	fluidDistributionFunction = [location, maxParticles, grain]() {
-//		std::vector<PhysicsProperties>fluidParticlesPositions(maxParticles);
-//		std::for_each(std::execution::par_unseq, fluidParticlesPositions.begin(), fluidParticlesPositions.end(), [&](auto& value) {
-//			static int init = -maxParticles / 2;
-//			value.position = glm::vec4(location, 0) + glm::vec4(
-//				0.f,
-//				init, 
-//				0.f, 
-//				0.f) * grain;
-//			init++;
-//			});
-//		return fluidParticlesPositions; };
-//	break;
-//case Distribution::CIRCLE:
-//	fluidDistributionFunction = [location, maxParticles, grain]() {
-//		std::vector<PhysicsProperties>fluidParticlesPositions(maxParticles);
-//		std::for_each(std::execution::par_unseq, fluidParticlesPositions.begin(), fluidParticlesPositions.end(), [&](auto& value) {
-//			static int init = 0;
-//			static float const angle = 2.f * glm::pi<float>() / maxParticles;
-//			static float const radius =  maxParticles / (2.f * glm::pi<float>());
-//			value.position = glm::vec4(location, 0) + glm::vec4(
-//				radius * std::cos(angle * init),
-//				radius * std::sin(angle * init),
-//				0.f,
-//				0.f) * grain;
-//			init++;
-//			});
-//		return fluidParticlesPositions; };
-//	break;
-//case Distribution::SQUARE:
-//	fluidDistributionFunction = [location, maxParticles, grain]() {
-//		std::vector<PhysicsProperties>fluidParticlesPositions(maxParticles);
-//		std::for_each(std::execution::par_unseq, fluidParticlesPositions.begin(), fluidParticlesPositions.end(), [&](auto& value) {
-//			static int init = 0;
-//			static float const edgeLength = std::sqrt(maxParticles);
-//			value.position = glm::vec4(location, 0) + glm::vec4(
-//				std::floor(init / edgeLength),
-//				std::fmod(init, edgeLength),
-//				0.f,
-//				0.f) * grain;
-//			init++;
-//			});
-//		return fluidParticlesPositions; };
-//	break;
-//case Distribution::DISK:
-//	fluidDistributionFunction = [location, maxParticles, grain]() {
-//		std::vector<PhysicsProperties>fluidParticlesPositions(maxParticles);
-//		std::for_each(std::execution::par_unseq, fluidParticlesPositions.begin(), fluidParticlesPositions.end(), [&](auto& value) {
-//			static int init = 0;
-//			static float const radius = std::sqrt(maxParticles / glm::pi<float>());
-//			auto candidatePosition = glm::vec4(
-//				std::floor(init / (radius * 2)), 
-//				std::fmod(init, radius * 2), 
-//				0.f,
-//				0.f);
-//			while (glm::length(candidatePosition) > radius) { 
-//				init++;
-//				candidatePosition = glm::vec4(
-//					std::floor(init / (radius * 2)), 
-//					std::fmod(init, radius * 2), 
-//					0.f,
-//					0.f);
-//			}
-//			value.position = glm::vec4(location, 0) + candidatePosition * grain;
-//			init++;
-//			});
-//		return fluidParticlesPositions; };
-//	break;
-//case Distribution::QUBE:
-//	fluidDistributionFunction = [location, maxParticles, grain]() {
-//		std::vector<PhysicsProperties>fluidParticlesPositions(maxParticles);
-//		std::for_each(std::execution::par_unseq, fluidParticlesPositions.begin(), fluidParticlesPositions.end(), [&](auto& value) {
-//			static int init = 0;
-//			static float const edgeLength = std::cbrt(maxParticles);
-//			value.position = glm::vec4(location, 0) + glm::vec4(
-//				std::floor(init / edgeLength), 
-//				std::fmod(init, edgeLength), 
-//				std::floor(init / (edgeLength * edgeLength)),
-//				0.f) * grain;
-//			init++;
-//			});
-//		return fluidParticlesPositions; };
-//	break;
-//case Distribution::SPHERE:
-//	fluidDistributionFunction = [location, maxParticles, grain]() {
-//		std::vector<PhysicsProperties>fluidParticlesPositions(maxParticles);
-//		std::for_each(std::execution::par_unseq, fluidParticlesPositions.begin(), fluidParticlesPositions.end(), [&](auto& value) {
-//			static int init = 0;
-//			static float const radius = std::cbrt((3.f * maxParticles) / (4 * glm::pi<float>()));
-//			auto candidatePosition = glm::vec4(
-//				std::floor(init / (radius * 2)),
-//				std::fmod(init, (radius * 2)),
-//				std::floor(init / (radius * radius * 4)),
-//				0.f);
-//			while (glm::length(candidatePosition) > radius) {
-//				init++;
-//				candidatePosition = glm::vec4(
-//					std::floor(init / (radius * 2)), 
-//					std::fmod(init, (radius * 2)), 
-//					std::floor(init / (radius * radius * 4)),
-//					0.f);
-//			}
-//			value.position = glm::vec4(location, 0) + candidatePosition * grain;
-//			init++;
-//			});
-//		return fluidParticlesPositions; };
-//	break;
-//}
+void PhysicsDispatch::GenerateForces()
+{
+	_timestamp++;
+	_dt = 1.f / ImGui::GetIO().Framerate;
 
+	Bind();
+
+	GLint simulatorStateLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "SimulatorState");
+	if (simulatorStateLoc != -1) {
+		glUniform1ui(simulatorStateLoc, static_cast<uint32_t>(SimulationState::SIMULATION));
+	}
+	_(glDispatchCompute(_boundingDimensions.x / 10, _boundingDimensions.y / 10, _boundingDimensions.z / 10));
+	_(glMemoryBarrier(GL_ALL_BARRIER_BITS));
+}
+
+void PhysicsDispatch::BindSSBOToProgram(uint64_t const& programID) const
+{
+	_particleMesh.Bind();
+	auto bindingIndex = glGetProgramResourceIndex(programID, GL_SHADER_STORAGE_BLOCK, "dataBuffer");
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, _particleMesh.ID());
+}

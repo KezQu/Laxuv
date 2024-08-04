@@ -12,7 +12,6 @@ concept is_streamable = requires(std::ostringstream stream, T value) {
 	stream << value << std::endl;
 };
 
-//std::ostringstream LOG = {};
 class console {
 private:
 	std::ostringstream log;
@@ -34,6 +33,7 @@ extern console LOG;
 #define _(x) x; \
 { GLenum err = glGetError(); \
 if(err != GL_NO_ERROR) \
-{ LOG << "Error " << err << " in file : " << __FILE__ << " line : " << __LINE__ <<std::endl;\
+{ LOG << "Error " << std::hex << err << " in file : " << __FILE__ << " line : " << __LINE__ <<std::endl;\
+std::cout << "Error " << std::hex << err << " in file : " << __FILE__ << " line : " << __LINE__ <<std::endl;\
+__debugbreak();\
 }}
-//__debugbreak();\

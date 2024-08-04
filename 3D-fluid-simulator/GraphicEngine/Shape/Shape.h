@@ -3,7 +3,7 @@
 #include <Program.h>
 #include <VertexArray.h>
 #include <Camera.h>
-
+#include "Essentials.h"
 
 struct {
 	glm::vec3 AmbientLightColor{ .2f };
@@ -22,14 +22,13 @@ protected:
 	glm::vec3 _scale{ 1.f };
 	glm::vec3 _rotation{ 0.f };
 	glm::vec3 _center{ 0.f };
-	int _subdivision{ 1 };
-	int _shapeRadius;
+	uint64_t _subdivision{ 1 };
+	uint64_t _shapeRadius;
 	bool _enableLight{ true };
 	bool _enableTesselation{ false };
+	GLenum _primitiveType{ Prim };
 public:
-	inline static GLenum _primitiveType{ Prim };
-public:
-	Shape(VertexArray&& vertexArray = {}, int shapeRadius = 100, bool enableTess = false);
+	Shape(VertexArray&& vertexArray = {}, uint64_t shapeRadius = 100, bool enableTess = false);
 	Shape(Shape const& obj_copy) = delete;
 	Shape(Shape && obj_move) = default;
 	Shape& operator=(Shape const& obj_copy) = delete;
@@ -47,12 +46,13 @@ public:
 	glm::vec3 const& GetCenter() const;
 	bool& EnableLight();
 	bool& EnableTesselation();
-	int& ChangeSubdivision();
-	int& ChangeRadius();
+	uint64_t& GetSubdivision();
+	uint64_t& GetRadius();
+	virtual DistributionShape GetParticleDistribution() = 0;
 };
 
 template<GLenum Prim>
-Shape<Prim>::Shape(VertexArray&& vertexArray, int shapeRadius, bool enableTess)
+Shape<Prim>::Shape(VertexArray&& vertexArray, uint64_t shapeRadius, bool enableTess)
 	:_vertexArray{ std::move(vertexArray) },
 	_shapeRadius{ shapeRadius },
 	_enableTesselation{ enableTess }
@@ -65,7 +65,7 @@ Shape<Prim>::Shape(VertexArray&& vertexArray, int shapeRadius, bool enableTess)
 							 coordBuffer.Data()[i + 2]);
 	}
 	_center /= coordBuffer.Size() / coordBuffer.AttribSize();
-
+	 
 	_renderer.AddShader(GL_VERTEX_SHADER, "/Element.vert");
 	//_renderer.AddShader(GL_VERTEX_SHADER, "/CalculateOffset.glsl");
 	if (_enableTesselation) {
@@ -112,7 +112,7 @@ void Shape<Prim>::Bind() const {
 		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(Camera::GetCamera().View()));
 	if (projectionLocation != -1)
 		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(Camera::GetCamera().Projection()));
- 	if (viewportLocation != -1)
+	if (viewportLocation != -1)
 		glUniform2fv(viewportLocation, 1, glm::value_ptr(Camera::GetCamera().Viewport()));
 		
 	if (centerLocation != -1)
@@ -192,10 +192,10 @@ bool& Shape<Prim>::EnableTesselation() {
 	return _enableTesselation;
 }
 template<GLenum Prim>
-int& Shape<Prim>::ChangeSubdivision() {
+uint64_t& Shape<Prim>::GetSubdivision() {
 	return _subdivision;
 }
 template<GLenum Prim>
-int& Shape<Prim>::ChangeRadius() {
+uint64_t& Shape<Prim>::GetRadius() {
 	return _shapeRadius;
 }

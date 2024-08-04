@@ -22,7 +22,8 @@ void main(){
 	for(int i = 0; i < vertexPrimitiveCount; i++){
 		outColor = inColor[i]; 
 		gl_Position = CalculateNDC((gl_in[i].gl_Position.xyz) * shapeRadius);
-		gl_PointSize = PointSize(gl_Position) * shapeRadius;
+//		gl_PointSize = PointSize(gl_Position) * shapeRadius;
+		gl_PointSize = 10;
 		EmitVertex();
 	}
 	EndPrimitive();

@@ -9,6 +9,7 @@ protected:
 protected:
 	explicit CPUBuffer() = default;
 	CPUBuffer(std::initializer_list<T> data);
+	CPUBuffer(std::vector<T> && data);
 	CPUBuffer(CPUBuffer  const& objCopy) = delete;
 	explicit CPUBuffer(CPUBuffer&& objMove);
 	CPUBuffer& operator=(CPUBuffer  const& objCopy) = delete;
@@ -30,7 +31,13 @@ template<GLenum target, typename T>
 inline CPUBuffer<target, T>::CPUBuffer(std::initializer_list<T> data)
 	:_data(data)
 {
-	glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(), GL_STATIC_DRAW);
+	_(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(), GL_STATIC_DRAW));
+}
+template<GLenum target, typename T>
+inline CPUBuffer<target, T>::CPUBuffer(std::vector<T>&& data)
+	:_data(data)
+{
+	_(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(), GL_STATIC_DRAW));
 }
 template<GLenum target, typename T>
 inline CPUBuffer<target, T>::CPUBuffer(CPUBuffer<target, T>&& objMove)

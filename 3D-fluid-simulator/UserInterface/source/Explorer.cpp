@@ -1,6 +1,9 @@
 #include <Explorer.h>
+#include <variant>
+#include <ShapeInstance.h>
+#include <Object.h>
+#include <Particles.h>
 
-Explorer::entityContainer Explorer::EntitiesContainer = {};
 
 Explorer::Explorer(ImVec2 const& size, ImVec2 const& position) 
 	:Interface(size, position, ImGuiWindowFlags_NoMove |
@@ -32,19 +35,19 @@ void Explorer::Generate() {
 			switch (objectSelect.second)
 			{
 			case 1:
-				objectSelect.first == 1 ? Explorer::Append(Object(Point())) : Explorer::Append(Particles(Point(), 100));
+				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Point())) : simulatorInstance.Append(Particles(new Point(), 100));
 				break;
 			case 2:
-				objectSelect.first == 1 ? Explorer::Append(Object(Line())) : Explorer::Append(Particles(Line(), 100));
+				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Line())) : simulatorInstance.Append(Particles(new Line(), 100));
 				break;
 			case 3:
-				objectSelect.first == 1 ? Explorer::Append(Object(Square())) : Explorer::Append(Particles(Square(), 100));
+				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Square())) : simulatorInstance.Append(Particles(new Square(), 100));
 				break;
 			case 4:
-				objectSelect.first == 1 ? Explorer::Append(Object(Qube())) : Explorer::Append(Particles(Qube(), 100));
+				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Qube())) : simulatorInstance.Append(Particles(new Qube(), 100));
 				break;
 			case 5:
-				objectSelect.first == 1 ? Explorer::Append(Object(Sphere())) : Explorer::Append(Particles(Sphere(), 100));
+				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Sphere())) : simulatorInstance.Append(Particles(new Sphere(), 100));
 				break;
 			}
 		}
@@ -52,7 +55,7 @@ void Explorer::Generate() {
 			if (ImGui::BeginTable("##NamesTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_NoHostExtendY | ImGuiTableFlags_NoHostExtendX, ImVec2(_size.x, _size.y / 2))) {
 				ImGui::TableSetupColumn("##Visibilty", ImGuiTableColumnFlags_WidthFixed);
 				ImGui::TableSetupColumn("##Name", ImGuiTableColumnFlags_WidthStretch);
-				for (auto & [k,v] : EntitiesContainer) {
+				for (auto & [k,v] : simulatorInstance.GetEntities()) {
 					ImGui::TableNextRow();
 					ImGui::TableSetColumnIndex(0);
 					ImGui::Checkbox(("##visible" + std::to_string(v->ID())).c_str(), &v->Visible());
@@ -70,7 +73,7 @@ void Explorer::Generate() {
 				ImGui::TableSetupColumn("##InfoName", ImGuiTableColumnFlags_WidthFixed, _size.x / 3.);
 				ImGui::TableSetupColumn("##InfoValues", ImGuiTableColumnFlags_WidthStretch);
 				
-				for (auto& info : EntitiesContainer.at(selected)->Details()) {
+				for (auto& info : simulatorInstance.GetEntities().at(selected)->Details()) {
 					ImGui::TableNextRow(); 
 					ImGui::TableSetColumnIndex(0);
 					ImGui::Text(info.first.c_str());
@@ -85,11 +88,14 @@ void Explorer::Generate() {
 					case DetailsType::STRING:
 						ImGui::InputText(("##" + info.first).c_str(), &std::get<DetailsType::STRING>(info.second.first)(), ImGuiInputTextFlags_EnterReturnsTrue);
 						break;
-					case DetailsType::INT:
-						ImGui::DragInt(("##" + info.first).c_str(), &std::get<DetailsType::INT>(info.second.first)(), 1, INT_MIN / 2, INT_MAX / 2, "%d", ImGuiSliderFlags_AlwaysClamp);
+					case DetailsType::INT32:
+						ImGui::DragInt(("##" + info.first).c_str(), &std::get<DetailsType::INT32>(info.second.first)(), 1, INT_MIN / 2, INT_MAX / 2, "%d", ImGuiSliderFlags_AlwaysClamp);
 						break;
-					case DetailsType::SIZET:
-						ImGui::DragScalar(("##" + info.first).c_str(), ImGuiDataType_U64, &std::get<DetailsType::SIZET>(info.second.first)(), 1, (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
+					case DetailsType::UINT64:
+						ImGui::DragScalar(("##" + info.first).c_str(), ImGuiDataType_U64, &std::get<DetailsType::UINT64>(info.second.first)(), 1, (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
+						break;
+					case DetailsType::DISTSHAPE:
+						ImGui::DragScalar(("##" + info.first).c_str(), ImGuiDataType_U8, &std::get<DetailsType::DISTSHAPE>(info.second.first)(), 1, (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
 						break;
 					case DetailsType::FLOAT:
 						ImGui::DragFloat(("##" + info.first).c_str(), &std::get<DetailsType::FLOAT>(info.second.first)(), 1.f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
@@ -111,7 +117,7 @@ void Explorer::Generate() {
 				ImGui::TableNextRow();
 				ImGui::TableSetColumnIndex(0);
 				if (ImGui::Button("Delete")) {
-					Delete(selected);
+					simulatorInstance.Delete(selected);
 					selected = 0;
 				}
 			}
@@ -122,13 +128,4 @@ void Explorer::Generate() {
 	}
 	ImGui::End();
 	ImGui::PopStyleVar();
-}
-
-void Explorer::Delete(entityContainer::key_type id) {
-	if (id != 0) {
-		EntitiesContainer.erase(id);
-	}
-	else {
-		EntitiesContainer.erase(std::prev(EntitiesContainer.end()));
-	}
 }

@@ -1,6 +1,6 @@
 #include <Entity.h>
 
-std::uint64_t Entity::_internalID = 0;
+uint64_t Entity::_internalID = 0U;
 
 std::string& Entity::Name() {
 	return _name;
@@ -11,12 +11,20 @@ bool& Entity::Visible()
 	return _visible;
 }
 
-std::uint64_t Entity::ID() const
+uint64_t Entity::ID() const
 {
 	return _id;
 }
+void Entity::Initialize() {
+}
+
+void Entity::Calculate() {
+}
 
 void Entity::Draw() const {
+}
+
+void Entity::UpdateBoundingDimensions() {
 }
 
 Entity::details_map Entity::Details() {
@@ -25,7 +33,9 @@ Entity::details_map Entity::Details() {
 	return details;
 }
 
-Entity::Entity()
-	:_id{ Entity::_internalID++ },
-	_name{ "Entity" + std::to_string(_id) }
+Entity::Entity(PhysicsType physics)
+	:_physicsDispatch{ { 0,0,0 } },
+	_id{ Entity::_internalID++ },
+	_name{ "Entity" + std::to_string(_id) },
+	_physics{physics}
 {}

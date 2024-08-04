@@ -6,7 +6,6 @@ template<GLenum target, typename T = void>
 class GPUBuffer : public BufferI<target, T> {
 protected:
 	uint64_t _bufferSize;
-	uint32_t _id{ 0 };
 public:
 	const GLenum Target{ target };
 protected:
@@ -27,7 +26,7 @@ template<GLenum target, typename T>
 inline GPUBuffer<target, T>::GPUBuffer(uint64_t initialBufferSize)
 	:_bufferSize{initialBufferSize}
 {
-	glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(), GL_STATIC_DRAW);
+	_(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(), GL_STATIC_DRAW));
 }
 template<GLenum target, typename T>
 inline GPUBuffer<target, T>::GPUBuffer(GPUBuffer<target, T>&& objMove)
@@ -58,5 +57,5 @@ template<GLenum target, typename T>
 inline void GPUBuffer<target, T>::SetBufferMemorySize(uint64_t newBufferMemorySize)
 {
 	_bufferSize = newBufferMemorySize;
-	glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(), GL_STATIC_DRAW);
+	_(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(), GL_STATIC_DRAW));
 }

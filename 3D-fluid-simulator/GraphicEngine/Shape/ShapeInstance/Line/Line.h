@@ -10,5 +10,6 @@ public:
 	Line(Line&& obj_move) = default;
 	Line& operator=(Line const& obj_copy) = delete;
 	Line& operator=(Line&& obj_move) = default;
-	virtual ~Line();
+	~Line() override = default;
+	DistributionShape GetParticleDistribution() override;
 };

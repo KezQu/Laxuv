@@ -10,9 +10,10 @@ Program::Program(std::initializer_list<std::pair<GLenum, std::string>> shaderSou
 		AddShader(type, filepath);
 	}
 }
-Program::Program(Program&& objMove) {
-	*this = std::move(objMove);
-}
+Program::Program(Program&& objMove)
+	: _shaderList{ std::exchange(objMove._shaderList, {}) },
+	_id{ std::exchange(objMove._id, {}) }
+{}
 
 Program& Program::operator=(Program&& objMove) {
 	this->~Program();
@@ -23,7 +24,10 @@ Program& Program::operator=(Program&& objMove) {
 
 Program::~Program()
 {
-	if (_id != 0) {
+	if (_id != 0 && glIsProgram(_id) != GL_TRUE){
+		throw std::runtime_error("Program ID is not valid");
+	}
+	else if (glIsProgram(_id) == GL_TRUE) {
 		_(glDeleteProgram(_id));
 	}
 }

@@ -1,0 +1,62 @@
+#version 460 core
+
+layout (local_size_x = 10, local_size_y = 10, local_size_z = 10) in;
+
+struct PhysicsProperties {
+	vec4 forceMass;
+	vec4 velocity;
+	vec4 position;
+};
+
+layout(std140, binding = 0) buffer dataBuffer{
+	PhysicsProperties particle[];
+};
+
+const uint IDLE = 0;
+const uint INIT = 1;
+const uint SIMULATION = 2;
+
+uniform float dt = 0.f;
+uniform uint SimulatorState = IDLE;
+
+vec4 ApplyGravitation(in vec4 particleForceMass, in float dt);
+vec4 InitDefaultShape(in uint index, in uint maxParticles);
+
+uint index = gl_LocalInvocationIndex + (gl_WorkGroupID.x + 
+										(gl_WorkGroupID.y * gl_NumWorkGroups.x) + 
+										(gl_WorkGroupID.z * gl_NumWorkGroups.y * gl_NumWorkGroups.x));
+
+const uint maxParticles = gl_NumWorkGroups.x * 
+						gl_NumWorkGroups.y * 
+						gl_NumWorkGroups.z *
+						gl_WorkGroupSize.x *
+						gl_WorkGroupSize.y *
+						gl_WorkGroupSize.z;
+
+const uint forcesCount = 10;
+vec4 appliedForcesMass[forcesCount];
+
+void main(){
+	if(SimulatorState == IDLE){
+		return;
+	}
+	else if(SimulatorState == INIT){
+		particle[index].position = InitDefaultShape(index, maxParticles);
+	}
+	else if(SimulatorState == SIMULATION){
+		appliedForcesMass[0] = ApplyGravitation(particle[index].forceMass, dt);
+
+		vec4 netForceMass = vec4(0);
+
+		for(int i = 0; i < forcesCount; i++){
+			netForceMass += appliedForcesMass[i];
+		}
+
+		particle[index].forceMass = netForceMass;
+		if(particle[index].forceMass.w != 0){
+			vec3 a = particle[index].forceMass.xyz / particle[index].forceMass.w;
+			particle[index].velocity.xyz = particle[index].velocity.xyz + a * dt;
+			particle[index].position.xyz = particle[index].position.xyz + particle[index].velocity.xyz * dt;
+		}
+	}
+}

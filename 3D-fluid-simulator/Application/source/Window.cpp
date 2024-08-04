@@ -74,9 +74,7 @@ Window::~Window()
 
 void Window::EventLoop() {
 	WorldAxes Axes{};
-	auto instance = PhysicsDispatch::GetDispatchInstance();
-	instance->InitDefaultState(Distribution::LINE, {0,0,0}, 1000000U);
-	//instance->GenerateFrameForces();
+	auto& SimulationInstance = Simulator::GetInstance();
 
 	while (glfwWindowShouldClose(_window) == GLFW_FALSE) {
 		Refresh();
@@ -84,18 +82,32 @@ void Window::EventLoop() {
 		Toolbar(ImVec2{ _windowSize.x, 20 }, ImVec2{ 0,0 }).Generate();
 		Explorer(ImVec2{ _windowSize.x / 4.f, _windowSize.y - 20 }, ImVec2{ 0,20 }).Generate();
 		Logger(LOG, ImVec2{ 3 * _windowSize.x / 4.f, 200 }, ImVec2{ _windowSize.x / 4.f, _windowSize.y - 200 }).Generate();
-
-		instance->GenerateFrameForces();
-		for (auto& [id, entity] : Explorer::EntitiesContainer) {
+		
+		switch (SimulationInstance.GetSimulationState()) {
+		case SimulationState::IDLE:
+			break;
+		case SimulationState::INIT:
+			for (auto& [id, entity] : SimulationInstance.GetEntities()) {
+				entity->Initialize();
+			}
+			SimulationInstance.SetSimulationState(SimulationState::IDLE);
+			break;
+		case SimulationState::SIMULATION:
+			for (auto& [id, entity] : SimulationInstance.GetEntities()) {
+				entity->Calculate();
+			}
+			break;
+		}
+		for (auto& [id, entity] : SimulationInstance.GetEntities()) {
 			entity->Draw();
 		}
+
 		Axes.Draw();
 		Render();
 	}
-
+	SimulationInstance.CleanUp();
 }
 void Window::Refresh() {
-	glEnable(GL_PROGRAM_POINT_SIZE);
 	glClearColor(0.f, 0.f, 0.f, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	FramebufferResizeCheck();
@@ -181,8 +193,10 @@ void Window::OpenGLErrorCallback(GLenum source, GLenum type, GLuint id, GLenum s
 		messageType =  "OTHER";
 		break;
 	}
-	if(messageType != "OTHER")
+	if (messageType != "OTHER") {
 		LOG << messageType << ": " << std::string(message, length) << " - source : " << std::hex << source << std::endl;
+		std::cout << messageType << ": " << std::string(message, length) << " - source : " << std::hex << source << std::endl;
+	}
 }
 void Window::GLFWFrameBufferResizeCallback(GLFWwindow* window, int width, int height) {
 	if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_FALSE) {

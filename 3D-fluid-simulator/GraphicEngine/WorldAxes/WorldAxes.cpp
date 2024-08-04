@@ -1,7 +1,8 @@
 #include <WorldAxes.h>
 
 WorldAxes::WorldAxes()
-	:_axes{ 
+	:Entity(PhysicsType::NONE),
+	_axes{ 
 		{ { { -1.f,  0.f,  0.f }, { 255, 255, 255, 255 } },
 		  { {  1.f,  0.f,  0.f }, {   0,   0, 255, 255 } } },
 		{ { {  0.f, -1.f,  0.f }, { 255, 255, 255, 255 } },
@@ -23,4 +24,3 @@ void WorldAxes::Draw() const {
 	}
 	//_floor.Draw();
 }
-

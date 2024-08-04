@@ -17,7 +17,7 @@ Shader& Shader::operator=(Shader&& objMove) {
 Shader::~Shader()
 {
 	if (_id != 0) {
- 		_(glDeleteShader(_id));
+		_(glDeleteShader(_id));
 	}
 }
 GLuint const Shader::ID() const {
