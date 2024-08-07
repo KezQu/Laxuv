@@ -1,20 +1,22 @@
 #pragma once
+#define GLFW_INCLUDE_NONE
 
 #include <iostream>
 
-#include <Qube.h>
-#include <Sphere.h>
-#include <Square.h>
+#include <GLFW/glfw3.h>
+#include <ShapeInstance.h>
+#include <PhysicsDispatch.h>
+#include <Object.h>
+#include <Particles.h>
 #include <WorldAxes.h>
 #include <Toolbar.h>
 #include <Explorer.h>
-#include <Log.h>
-#include <GLFW/glfw3.h>
+#include <Logger.h>
 
 class Window{
 private:
-	ImVec2 _windowSize;
 	std::string _windowTitle;
+	ImVec2 _windowSize;
 	GLFWwindow* _window;
 public:
 	Window(ImVec2 const& windowSize, std::string const& windowTitle);

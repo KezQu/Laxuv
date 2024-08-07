@@ -1,9 +1,0 @@
-cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
-
-file(GLOB PENGINE_SRC_FILES *.cpp)
-
-add_library(PhysicsEngine ${PENGINE_SRC_FILES})
-
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
-
-target_include_directories(PhysicsEngine PUBLIC ${PENGINE_INC_DIR})
