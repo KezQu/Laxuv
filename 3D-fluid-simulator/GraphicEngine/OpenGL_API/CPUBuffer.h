@@ -7,7 +7,7 @@ class CPUBuffer : public BufferI<target, T>{
 protected:
 	std::vector<T> _data;
 protected:
-	explicit CPUBuffer() = default;
+	explicit CPUBuffer();
 	CPUBuffer(std::initializer_list<T> data);
 	CPUBuffer(std::vector<T> && data);
 	CPUBuffer(CPUBuffer  const& objCopy) = delete;
@@ -28,16 +28,23 @@ public:
 };
 
 template<GLenum target, typename T>
+inline CPUBuffer<target, T>::CPUBuffer()
+	:BufferI<target, T>(GL_STATIC_DRAW)
+{}
+
+template<GLenum target, typename T>
 inline CPUBuffer<target, T>::CPUBuffer(std::initializer_list<T> data)
-	:_data(data)
+	: BufferI<target, T>(GL_STATIC_DRAW),
+	_data(data)
 {
-	_(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(), GL_STATIC_DRAW));
+	_(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(), this->_purpose));
 }
 template<GLenum target, typename T>
 inline CPUBuffer<target, T>::CPUBuffer(std::vector<T>&& data)
-	:_data(data)
+	:BufferI<target, T>(GL_STATIC_DRAW),
+	_data(data)
 {
-	_(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(), GL_STATIC_DRAW));
+	_(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(), this->_purpose));
 }
 template<GLenum target, typename T>
 inline CPUBuffer<target, T>::CPUBuffer(CPUBuffer<target, T>&& objMove)
@@ -48,6 +55,7 @@ template<GLenum target, typename T>
 inline CPUBuffer<target, T>& CPUBuffer<target, T>::operator=(CPUBuffer<target, T>&& objMove) {
 	this->~CPUBuffer();
 	this->_id = std::exchange(objMove._id, 0U);
+	this->_purpose = std::exchange(objMove._purpose, 0U);
 	this->_data = std::exchange(objMove._data, {});
 	return *this;
 }
@@ -69,9 +77,9 @@ inline T* const CPUBuffer<target, T>::GetBufferMemory() {
 }
 template<GLenum target, typename T>
 inline void CPUBuffer<target, T>::UpdateBufferMemory(std::vector<T> && data) {
-	glNamedBufferData(this->_id, _data.size() * sizeof(T), nullptr, GL_STATIC_DRAW);
+	//glNamedBufferData(this->_id, _data.size() * sizeof(T), nullptr, this->_purpose);
 	_data = std::move(data);
-	glNamedBufferData(this->_id, _data.size() * sizeof(T), GetBufferMemory(), GL_STATIC_DRAW);
+	glNamedBufferData(this->_id, _data.size() * sizeof(T), GetBufferMemory(), this->_purpose);
 }
 template<GLenum target, typename T>
 inline void CPUBuffer<target, T>::UpdateBufferMemory(std::initializer_list<T> data) {
@@ -79,9 +87,9 @@ inline void CPUBuffer<target, T>::UpdateBufferMemory(std::initializer_list<T> da
 }
 template<GLenum target, typename T>
 inline void CPUBuffer<target, T>::AddBufferData(std::vector<T> && data) {
-	glNamedBufferData(this->_id, _data.size() * sizeof(T), nullptr, GL_STATIC_DRAW);
+	//glNamedBufferData(this->_id, _data.size() * sizeof(T), nullptr, this->_purpose);
 	_data.insert(std::end(_data), std::begin(data), std::end(data));
-	glNamedBufferData(this->_id, _data.size() * sizeof(T), GetBufferMemory(), GL_STATIC_DRAW);
+	glNamedBufferData(this->_id, _data.size() * sizeof(T), GetBufferMemory(), this->_purpose);
 }
 template<GLenum target, typename T>
 inline void CPUBuffer<target, T>::AddBufferData(std::initializer_list<T> data){

@@ -3,6 +3,7 @@
 const int vertexPrimitiveCount = 2;
 layout(lines) in;
 layout(location = 0) in vec4 inColor[];
+layout(location = 3) in vec4 inShapeOffset[];
 
 layout(line_strip, max_vertices = vertexPrimitiveCount) out;
 layout(location = 0) out vec4 outColor; 
@@ -20,7 +21,7 @@ void main(){
 	normal = normalize(primitiveVertices[1] - primitiveVertices[0]);
 	for(int i = 0; i < vertexPrimitiveCount; i++){
 		outColor = inColor[i];
-		gl_Position = CalculateNDC((gl_in[i].gl_Position.xyz) * shapeRadius);
+		gl_Position = CalculateNDC((gl_in[i].gl_Position.xyz + inShapeOffset[i].xyz) * shapeRadius);
 		EmitVertex();
 	}
 	EndPrimitive();

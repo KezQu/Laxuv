@@ -17,6 +17,8 @@ public:
 	~ShaderStorageBuffer() override = default;
 
 	std::vector<T> GetBufferSubData(uint64_t offset, uint64_t payloadSize);
+	void Bind(uint64_t const& programID) const;
+	void Unbind(uint64_t const& programID) const;
 };
 
 template<typename T>
@@ -31,4 +33,20 @@ inline std::vector<T> ShaderStorageBuffer<T>::GetBufferSubData(uint64_t objectsO
 	_(glGetNamedBufferSubData(this->ID(), objectsOffset * sizeof(T), numberOfObjectsToRead * sizeof(T), bufferSubData.data()));
 	//glGetNamedBufferSubData(this->ID(), 0, 0, bufferSubData.data());
 	return bufferSubData;
+}
+
+template<typename T>
+inline void ShaderStorageBuffer<T>::Bind(uint64_t const& programID) const
+{
+	GPUBuffer<GL_SHADER_STORAGE_BUFFER, T>::Bind();
+	auto bindingIndex = glGetProgramResourceIndex(programID, GL_SHADER_STORAGE_BLOCK, "dataBuffer");
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, this->_id);
+}
+
+template<typename T>
+inline void ShaderStorageBuffer<T>::Unbind(uint64_t const& programID) const
+{
+	GPUBuffer<GL_SHADER_STORAGE_BUFFER, T>::Unbind();
+	auto bindingIndex = glGetProgramResourceIndex(programID, GL_SHADER_STORAGE_BLOCK, "dataBuffer");
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, 0);
 }

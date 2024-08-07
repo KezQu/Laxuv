@@ -34,20 +34,20 @@ void Explorer::Generate() {
 		if (ImGui::Button("Add Entity##AddEntity") && objectSelect.first != 0 && objectSelect.second != 0) {
 			switch (objectSelect.second)
 			{
-			case 1:
-				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Point())) : simulatorInstance.Append(Particles(new Point(), 100));
+			case 1: 
+				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Point())) : simulatorInstance.Append(Particles(new Point(), 1U));
 				break;
 			case 2:
-				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Line())) : simulatorInstance.Append(Particles(new Line(), 100));
+				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Line())) : simulatorInstance.Append(Particles(new Line(), 1U));
 				break;
 			case 3:
-				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Square())) : simulatorInstance.Append(Particles(new Square(), 100));
+				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Square())) : simulatorInstance.Append(Particles(new Square(), 1U));
 				break;
 			case 4:
-				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Qube())) : simulatorInstance.Append(Particles(new Qube(), 100));
+				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Qube())) : simulatorInstance.Append(Particles(new Qube(), 1U));
 				break;
 			case 5:
-				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Sphere())) : simulatorInstance.Append(Particles(new Sphere(), 100));
+				objectSelect.first == 1 ? simulatorInstance.Append(Object(new Sphere())) : simulatorInstance.Append(Particles(new Sphere(), 1U));
 				break;
 			}
 		}
@@ -119,6 +119,9 @@ void Explorer::Generate() {
 				if (ImGui::Button("Delete")) {
 					simulatorInstance.Delete(selected);
 					selected = 0;
+				}
+				if (ImGui::Button("Recompile")) {
+					simulatorInstance.GetEntities()[selected]->Initialize();
 				}
 			}
 			ImGui::EndTable();

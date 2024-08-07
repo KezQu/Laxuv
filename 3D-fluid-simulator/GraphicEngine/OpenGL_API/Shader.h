@@ -12,7 +12,8 @@
 class Shader {
 private:
 	std::string _source;
-	GLuint _id{ 0 };
+	uint32_t _id{ 0 };
+	GLenum _type;
 public:
 	Shader(GLenum type, std::string const& filepath);
 	Shader(Shader const& objCopy) = delete;
@@ -20,8 +21,8 @@ public:
 	Shader& operator=(Shader const& objCopy) = delete;
 	Shader& operator=(Shader&& objMove);
 	~Shader();
-	GLuint const ID() const;
+	uint32_t const ID() const;
 	void Compile() const;
 	bool isCompiled() const;
-	void AddSource(GLenum type, std::string const& filepath);
+	void AddSource(std::string const& filepath);
 };

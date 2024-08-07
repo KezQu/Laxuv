@@ -94,6 +94,7 @@ void Window::EventLoop() {
 			break;
 		case SimulationState::SIMULATION:
 			for (auto& [id, entity] : SimulationInstance.GetEntities()) {
+				PhysicsDispatch::UpdateDeltaTime();
 				entity->Calculate();
 			}
 			break;

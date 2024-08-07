@@ -11,6 +11,11 @@ bool& Entity::Visible()
 	return _visible;
 }
 
+PhysicsType& Entity::GetPhysicsType()
+{
+	return _physics;
+}
+
 uint64_t Entity::ID() const
 {
 	return _id;

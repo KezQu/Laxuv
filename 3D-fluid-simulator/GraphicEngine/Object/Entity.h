@@ -24,12 +24,6 @@ enum DetailsType {
 	VEC4
 };
 
-enum class PhysicsType : uint8_t{
-	NONE,
-	STATIC,
-	DYNAMIC
-};
-
 class Entity {
 protected:
 	PhysicsDispatch _physicsDispatch;
@@ -59,6 +53,7 @@ public:
 
 	std::string& Name();
 	bool& Visible();
+	PhysicsType& GetPhysicsType();
 	uint64_t ID() const;
 	virtual void Initialize();
 	virtual void Calculate();

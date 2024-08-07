@@ -27,9 +27,10 @@ public:
 	PhysicsDispatch& operator=(PhysicsDispatch&& obj_move) = default;
 	~PhysicsDispatch() = default;
 
-	glm::ivec3& GetMeshDimensions();
+	ShaderStorageBuffer<PhysicsProperties> const& GetParticleMeshBuffer() const;
+	glm::ivec3 const& GetMeshDimensions() const;
 	void UpdateMeshDimensions(glm::ivec3 dimensions);
-	void InitDefaultShape(DistributionShape initObjectBounds);
+	void InitDefaultShape(DistributionShape initObjectBounds, PhysicsType objectPhysicsType);
 	void GenerateForces();
-	void BindSSBOToProgram(uint64_t const& programID) const;
+	static void UpdateDeltaTime();
 };

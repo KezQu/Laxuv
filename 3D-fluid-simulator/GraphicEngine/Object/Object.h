@@ -34,7 +34,7 @@ template<GLenum Prim>
 void Object<Prim>::Initialize()
 {
 	UpdateBoundingDimensions();
-	_physicsDispatch.InitDefaultShape(_shape->GetParticleDistribution());
+	_physicsDispatch.InitDefaultShape(_shape->GetParticleDistribution(), GetPhysicsType());
 }
 template<GLenum Prim>
 void Object<Prim>::Calculate()

@@ -8,10 +8,11 @@ template<GLenum target, typename T>
 class BufferI {
 protected:
 	uint32_t _id{ 0 };
+	GLenum _purpose;
 public:
 	const GLenum Target{ target };
 protected:
-	explicit BufferI();
+	explicit BufferI(GLenum purpose);
 	BufferI(BufferI const& objCopy) = delete;
 	explicit BufferI(BufferI&& objMove);
 	BufferI& operator=(BufferI const& objCopy) = delete;
@@ -27,18 +28,22 @@ public:
 };
 
 template<GLenum target, typename T>
-inline BufferI<target, T>::BufferI(){
+inline BufferI<target, T>::BufferI(GLenum purpose)
+	:_purpose{purpose}
+{
 	glCreateBuffers(1, &_id);
 }
 
 template<GLenum target, typename T>
 inline BufferI<target, T>::BufferI(BufferI<target, T>&& objMove)
-	:_id{std::exchange(objMove._id, 0U)}
+	:_id{std::exchange(objMove._id, 0U)},
+	_purpose{ std::exchange(objMove._purpose, 0U) }
 {}
 template<GLenum target, typename T>
 inline BufferI<target, T>& BufferI<target, T>::operator=(BufferI<target, T>&& objMove) {
 	this->~BufferI();
 	this->_id = std::exchange(objMove._id, 0U);
+	this->_purpose = std::exchange(objMove._purpose, 0U);
 	return *this;
 }
 

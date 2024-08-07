@@ -34,21 +34,13 @@ Particles<Prim>::Particles(Shape<Prim>* const particleShape, uint64_t _meshRadiu
 	_particleShape{ std::unique_ptr<Shape<Prim>>(particleShape) },
 	_meshRadius{ _meshRadius }
 {
-	//if (_particleShape->GetDrawPrimitive() == GL_LINES) {
-	//	_particleShape->GetRenderer().AddShader(GL_GEOMETRY_SHADER, "/Lines.geom");
-	//}
-	//else if (_particleShape->GetDrawPrimitive() == GL_POINPrimS) {
-	//	_particleShape->GetRenderer().AddShader(GL_GEOMETRY_SHADER, "/Points.geom");
-	//}
-	//else {
-	//	_particleShape->GetRenderer().AddShader(GL_GEOMETRY_SHADER, "/Triangles.geom");
-	//}
+	Initialize();
 }
 template<GLenum Prim>
 void Particles<Prim>::Initialize()
 {
 	UpdateBoundingDimensions();
-	_physicsDispatch.InitDefaultShape(GetDistributionShape());
+	_physicsDispatch.InitDefaultShape(GetDistributionShape(), GetPhysicsType());
 }
 template<GLenum Prim>
 void Particles<Prim>::Calculate()
@@ -59,10 +51,12 @@ template<GLenum Prim>
 void Particles<Prim>::Draw() const
 {
 	if (_visible) {
+		glm::ivec3 const& meshDimensions = _physicsDispatch.GetMeshDimensions();
 		_particleShape->Bind();
-		_physicsDispatch.BindSSBOToProgram(_particleShape->GetRenderer().ID());
-		_(glDrawElementsInstanced(_particleShape->GetDrawPrimitive(), _particleShape->GetVA().Size(), _particleShape->GetVA().IndexBufferType(), nullptr, std::pow(_meshRadius, 3)));
- 	}
+		_physicsDispatch.GetParticleMeshBuffer().Bind(_particleShape->GetRenderer().ID());
+		_(glDrawElementsInstanced(_particleShape->GetDrawPrimitive(), _particleShape->GetVA().Size(), _particleShape->GetVA().IndexBufferType(), nullptr, meshDimensions.x * meshDimensions.y * meshDimensions.z));
+		_physicsDispatch.GetParticleMeshBuffer().Unbind(_particleShape->GetRenderer().ID());
+	}
 }
 template<GLenum Prim>
 inline void Particles<Prim>::UpdateBoundingDimensions() {
