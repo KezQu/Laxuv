@@ -19,8 +19,8 @@ add_library(GraphicEngine ${GENGINE_SRC_FILES})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
-target_link_libraries(GraphicEngine PUBLIC PhysicsEngine)
 target_link_libraries(GraphicEngine PUBLIC glew)
+target_link_libraries(GraphicEngine PUBLIC glm)
 target_link_libraries(GraphicEngine PUBLIC glfw)
 target_link_libraries(GraphicEngine PUBLIC imgui)
 
