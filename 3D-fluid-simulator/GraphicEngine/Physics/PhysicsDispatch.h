@@ -14,7 +14,7 @@ class PhysicsDispatch{
 private:
 	ShaderStorageBuffer<PhysicsProperties> _particleMesh;
 	Program _physicsGenerator;
-	glm::ivec3 _boundingDimensions;
+	glm::uvec3 _meshDimensions;
 	static uint64_t _timestamp;
 	static float _dt;
 private:
@@ -28,9 +28,9 @@ public:
 	~PhysicsDispatch() = default;
 
 	ShaderStorageBuffer<PhysicsProperties> const& GetParticleMeshBuffer() const;
-	glm::ivec3 const& GetMeshDimensions() const;
-	void UpdateMeshDimensions(glm::ivec3 dimensions);
-	void InitDefaultShape(DistributionShape initObjectBounds, PhysicsType objectPhysicsType);
-	void GenerateForces();
+	glm::uvec3 const& GetMeshDimensions() const;
+	void UpdateMeshDimensions(glm::uvec3 dimensions);
+	void InitDefaultShape(DistributionShape initObjectBounds, PhysicsType objectPhysicsType, uint32_t shapeRadius);
+	void GenerateForces(PhysicsType objectPhysicsType);
 	static void UpdateDeltaTime();
 };

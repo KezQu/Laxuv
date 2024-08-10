@@ -22,13 +22,13 @@ protected:
 	glm::vec3 _scale{ 1.f };
 	glm::vec3 _rotation{ 0.f };
 	glm::vec3 _center{ 0.f };
-	uint64_t _subdivision{ 1 };
-	uint64_t _shapeRadius;
+	uint32_t _subdivision{ 1 };
+	uint32_t _shapeRadius;
 	bool _enableLight{ true };
 	bool _enableTesselation{ false };
 	GLenum _primitiveType{ Prim };
 public:
-	Shape(VertexArray&& vertexArray = {}, uint64_t shapeRadius = 100, bool enableTess = false);
+	Shape(VertexArray&& vertexArray = {}, uint32_t shapeRadius = 100, bool enableTess = false);
 	Shape(Shape const& obj_copy) = delete;
 	Shape(Shape && obj_move) = default;
 	Shape& operator=(Shape const& obj_copy) = delete;
@@ -46,13 +46,13 @@ public:
 	glm::vec3 const& GetCenter() const;
 	bool& EnableLight();
 	bool& EnableTesselation();
-	uint64_t& GetSubdivision();
-	uint64_t& GetRadius();
+	uint32_t& GetSubdivision();
+	uint32_t& GetRadius();
 	virtual DistributionShape GetParticleDistribution() = 0;
 };
 
 template<GLenum Prim>
-Shape<Prim>::Shape(VertexArray&& vertexArray, uint64_t shapeRadius, bool enableTess)
+Shape<Prim>::Shape(VertexArray&& vertexArray, uint32_t shapeRadius, bool enableTess)
 	:_vertexArray{ std::move(vertexArray) },
 	_shapeRadius{ shapeRadius },
 	_enableTesselation{ enableTess }
@@ -67,24 +67,28 @@ Shape<Prim>::Shape(VertexArray&& vertexArray, uint64_t shapeRadius, bool enableT
 	_center /= coordBuffer.Size() / coordBuffer.AttribSize();
 	 
 	_renderer.AddShader(GL_VERTEX_SHADER, "/Element.vert");
-	//_renderer.AddShader(GL_VERTEX_SHADER, "/CalculateOffset.glsl");
+	_renderer.AddShader(GL_VERTEX_SHADER, "/CalculateNDC.glsl");
 	if (_enableTesselation) {
 		_primitiveType = GL_PATCHES;
 
 		_renderer.AddShader(GL_TESS_CONTROL_SHADER, "/Element.tesc");
 		_renderer.AddShader(GL_TESS_EVALUATION_SHADER, "/Element.tese");
-	}
-	if (_primitiveType == GL_LINES) {
-		_renderer.AddShader(GL_GEOMETRY_SHADER, "/Lines.geom");
-	}
-	else if (_primitiveType == GL_POINTS) {
-		_renderer.AddShader(GL_GEOMETRY_SHADER, "/Points.geom");
+		_renderer.AddShader(GL_TESS_EVALUATION_SHADER, "/CalculateNDC.glsl");
 	}
 	else {
-		_renderer.AddShader(GL_GEOMETRY_SHADER, "/Triangles.geom");
+
 	}
-	_renderer.AddShader(GL_GEOMETRY_SHADER, "/CalculateNDC.glsl");
-	_renderer.AddShader(GL_GEOMETRY_SHADER, "/CalculateNormal.glsl");
+	//if (_primitiveType == GL_LINES) {
+	//	_renderer.AddShader(GL_GEOMETRY_SHADER, "/Lines.geom");
+	//}
+	//else if (_primitiveType == GL_POINTS) {
+	//	_renderer.AddShader(GL_GEOMETRY_SHADER, "/Points.geom");
+	//}
+	//else {
+	//	_renderer.AddShader(GL_GEOMETRY_SHADER, "/Triangles.geom");
+	//}
+	//_renderer.AddShader(GL_GEOMETRY_SHADER, "/CalculateNDC.glsl");
+	//_renderer.AddShader(GL_GEOMETRY_SHADER, "/CalculateNormal.glsl");
 	_renderer.AddShader(GL_FRAGMENT_SHADER, "/Element.frag");
 }
 
@@ -132,7 +136,7 @@ void Shape<Prim>::Bind() const {
 		glUniform3fv(diffuseLightDirectionLocation, 1, glm::value_ptr(objDiffuseLightDirection));
 	}
 	if (shapeRadiusLocation != -1) {
-		glUniform1i(shapeRadiusLocation, _shapeRadius);
+		glUniform1ui(shapeRadiusLocation, _shapeRadius);
 	}
 }
 
@@ -192,10 +196,10 @@ bool& Shape<Prim>::EnableTesselation() {
 	return _enableTesselation;
 }
 template<GLenum Prim>
-uint64_t& Shape<Prim>::GetSubdivision() {
+uint32_t& Shape<Prim>::GetSubdivision() {
 	return _subdivision;
 }
 template<GLenum Prim>
-uint64_t& Shape<Prim>::GetRadius() {
+uint32_t& Shape<Prim>::GetRadius() {
 	return _shapeRadius;
 }

@@ -17,7 +17,7 @@ vec4 CalculateNDC(in vec3 position);
 void main(){
 	vec4 primitiveVertices[vertexPrimitiveCount];
 	for(int i = 0; i < vertexPrimitiveCount; i++){
-		primitiveVertices[i] = CalculateNDC((gl_in[i].gl_Position.xyz + inShapeOffset[i].xyz) * shapeRadius);
+		primitiveVertices[i] = CalculateNDC(gl_in[i].gl_Position.xyz + inShapeOffset[i].xyz);
 	}
 	normal = CalculateNormal(primitiveVertices);
 	

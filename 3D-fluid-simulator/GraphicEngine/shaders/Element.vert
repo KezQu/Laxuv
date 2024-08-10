@@ -4,7 +4,8 @@ layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec4 inColor;
 
 layout(location = 0) out vec4 outColor;
-layout(location = 3) out vec4 outShapeOffset;
+layout(location = 1) out vec3 normal;
+//layout(location = 3) out vec4 outShapeOffset;
 
 struct PhysicsProperties {
 	vec4 forceMass;
@@ -16,8 +17,12 @@ layout(std140, binding = 0) buffer dataBuffer{
 	PhysicsProperties particle[];
 };
 
+vec4 CalculateNDC(in vec3 position, in vec4 offset);
+
 void main(){
 	outColor = inColor / 255.;
-	outShapeOffset = particle[gl_InstanceID].position;
-	gl_Position = vec4(inPosition, 1.0);
+	normal = inPosition;
+//	outShapeOffset = particle[gl_InstanceID].position;
+	gl_Position = CalculateNDC(inPosition, particle[gl_InstanceID].position);
+	gl_PointSize = 10;
 }

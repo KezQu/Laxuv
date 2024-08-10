@@ -4,9 +4,10 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform vec2 viewport;
+uniform uint shapeRadius;
 
-vec4 CalculateNDC(in vec3 position){
-	vec4 outPosition = vec4(position, 1.0);
+vec4 CalculateNDC(in vec3 position, in vec4 offset){
+	vec4 outPosition = vec4(position * shapeRadius + offset.xyz, 1.0);
 	outPosition = model * outPosition;
 	outPosition = view * outPosition;
 	outPosition = projection * outPosition;

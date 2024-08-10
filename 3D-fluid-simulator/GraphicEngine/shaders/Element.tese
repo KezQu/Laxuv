@@ -8,6 +8,7 @@ layout(location = 0) out vec4 outColor[3];
 layout(location = 3) out vec4 outShapeOffset[3];
 
 uniform vec3 center;
+vec4 CalculateNDC(in vec3 position);
 
 void main(){
 	vec3 tessVertexCoord = vec3(0.0);
@@ -19,5 +20,5 @@ void main(){
 	float R = distance(gl_in[0].gl_Position.xyz, center);
 	float tessVertexCenterLength = distance(tessVertexCoord, center);
 	tessVertexCoord = tessVertexCoord + (R - tessVertexCenterLength) * normalize(tessVertexCoord - center);
-	gl_Position = vec4(tessVertexCoord, 1.0);
+	gl_Position = CalculateNDC(tessVertexCoord);
 }

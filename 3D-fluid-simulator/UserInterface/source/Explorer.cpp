@@ -91,6 +91,9 @@ void Explorer::Generate() {
 					case DetailsType::INT32:
 						ImGui::DragInt(("##" + info.first).c_str(), &std::get<DetailsType::INT32>(info.second.first)(), 1, INT_MIN / 2, INT_MAX / 2, "%d", ImGuiSliderFlags_AlwaysClamp);
 						break;
+					case DetailsType::UINT32:
+						ImGui::DragScalar(("##" + info.first).c_str(), ImGuiDataType_U32, &std::get<DetailsType::UINT32>(info.second.first)(), 1, (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
+						break;
 					case DetailsType::UINT64:
 						ImGui::DragScalar(("##" + info.first).c_str(), ImGuiDataType_U64, &std::get<DetailsType::UINT64>(info.second.first)(), 1, (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
 						break;
@@ -98,16 +101,16 @@ void Explorer::Generate() {
 						ImGui::DragScalar(("##" + info.first).c_str(), ImGuiDataType_U8, &std::get<DetailsType::DISTSHAPE>(info.second.first)(), 1, (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
 						break;
 					case DetailsType::FLOAT:
-						ImGui::DragFloat(("##" + info.first).c_str(), &std::get<DetailsType::FLOAT>(info.second.first)(), 1.f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::DragFloat(("##" + info.first).c_str(), &std::get<DetailsType::FLOAT>(info.second.first)(), 0.1f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
 						break;
 					case DetailsType::VEC2:
-						ImGui::DragFloat2(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC2>(info.second.first)()), 1.f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::DragFloat2(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC2>(info.second.first)()), 0.1f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
 						break;
 					case DetailsType::VEC3:
-						ImGui::DragFloat3(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC3>(info.second.first)()), 1.f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::DragFloat3(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC3>(info.second.first)()), 0.1f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
 						break;
 					case DetailsType::VEC4:
-						ImGui::DragFloat4(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC4>(info.second.first)()), 1.f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+						ImGui::DragFloat4(("##" + info.first).c_str(), glm::value_ptr(std::get<DetailsType::VEC4>(info.second.first)()), 0.1f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
 						break;
 					default:
 						break;
