@@ -6,7 +6,7 @@ uint64_t PhysicsDispatch::_timestamp{};
 float PhysicsDispatch::_dt{};
 
 PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
-	:_boundingDimensions{dimensions},
+	:_meshDimensions{dimensions},
 	_particleMesh{ static_cast<uint64_t>(dimensions.x * dimensions.y * dimensions.z) } {
 	_physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Element.comp");
 	_physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/InitDefaultShape.glsl");
@@ -26,20 +26,20 @@ ShaderStorageBuffer<PhysicsProperties> const& PhysicsDispatch::GetParticleMeshBu
 	return _particleMesh;
 }
 
-glm::ivec3 const& PhysicsDispatch::GetMeshDimensions() const
+glm::uvec3 const& PhysicsDispatch::GetMeshDimensions() const
 {
-	return _boundingDimensions;
+	return _meshDimensions;
 }
 
-void PhysicsDispatch::UpdateMeshDimensions(glm::ivec3 dimensions)
+void PhysicsDispatch::UpdateMeshDimensions(glm::uvec3 dimensions)
 {
-	if (_boundingDimensions != dimensions) {
-		_boundingDimensions = dimensions * 10;
-		_particleMesh.SetBufferMemorySize(_boundingDimensions.x * _boundingDimensions.y * _boundingDimensions.z);
+	if (_meshDimensions != dimensions) {
+		_meshDimensions = dimensions * 10U;
+		_particleMesh.SetBufferMemorySize(_meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
 	}
 }
 
-void PhysicsDispatch::InitDefaultShape(DistributionShape initObjectBounds, PhysicsType objectPhysicsType)
+void PhysicsDispatch::InitDefaultShape(DistributionShape initObjectBounds, PhysicsType objectPhysicsType, uint32_t shapeRadius)
 {
 	_timestamp = 0U;
 	Bind();
@@ -47,6 +47,7 @@ void PhysicsDispatch::InitDefaultShape(DistributionShape initObjectBounds, Physi
 	GLint simulatorStateLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "SimulatorState");
 	GLint distributionShapeLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "DistributionShape");
 	GLint physicsTypeLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "physicsType");
+	GLint shapeRadiusLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "shapeRadius");
 	if (simulatorStateLoc != -1) {
 		glUniform1ui(simulatorStateLoc, static_cast<uint32_t>(SimulationState::INIT));
 	}
@@ -56,10 +57,12 @@ void PhysicsDispatch::InitDefaultShape(DistributionShape initObjectBounds, Physi
 	if (physicsTypeLoc != -1) {
 		glUniform1ui(physicsTypeLoc, static_cast<uint32_t>(objectPhysicsType));
 	}
-
-	_(glDispatchCompute(_boundingDimensions.x / 10, _boundingDimensions.y / 10, _boundingDimensions.z / 10));
+	if (shapeRadiusLoc != -1) {
+		glUniform1ui(shapeRadiusLoc, static_cast<uint32_t>(shapeRadius));
+	}
+	_(glDispatchCompute(_meshDimensions.x / 10, _meshDimensions.y / 10, _meshDimensions.z / 10));
 	_(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
-	//auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _boundingDimensions.x * _boundingDimensions.y * _boundingDimensions.z);
+	//auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
 	//for (auto& particle : lookupBuffer) {
 	//	std::cout << particle;
 	//}
@@ -72,19 +75,28 @@ void PhysicsDispatch::InitDefaultShape(DistributionShape initObjectBounds, Physi
 	//}
 }
 
-void PhysicsDispatch::GenerateForces()
+void PhysicsDispatch::GenerateForces(PhysicsType objectPhysicsType)
 {
 	Bind();
 
 	GLint simulatorStateLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "SimulatorState");
+	GLint physicsTypeLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "physicsType");
+	GLint shapeRadiusLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "shapeRadius");
 	GLint dtLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "dt");
+
 	if (simulatorStateLoc != -1) {
 		glUniform1ui(simulatorStateLoc, static_cast<uint32_t>(SimulationState::SIMULATION));
+	}
+	if (physicsTypeLoc != -1) {
+		glUniform1ui(physicsTypeLoc, static_cast<uint32_t>(objectPhysicsType));
+	}
+	if (shapeRadiusLoc != -1) {
+		glUniform1ui(shapeRadiusLoc, static_cast<uint32_t>(1));
 	}
 	if (dtLoc != -1) {
 		glUniform1f(dtLoc, _dt);
 	}
-	_(glDispatchCompute(_boundingDimensions.x / 10, _boundingDimensions.y / 10, _boundingDimensions.z / 10));
+	_(glDispatchCompute(_meshDimensions.x / 10, _meshDimensions.y / 10, _meshDimensions.z / 10));
 	_(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
 }
 

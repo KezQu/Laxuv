@@ -23,6 +23,7 @@ const uint INIT = 1;
 const uint SIMULATION = 2;
 
 uniform uint SimulatorState = IDLE;
+uniform uint shapeRadius = 1;
 uniform float dt = 0.f;
 
 vec4 ApplyGravitation(in vec4 particleForceMass, in float dt);
@@ -50,8 +51,7 @@ void main(){
 		particle[index].velocity = vec4(0);
 		particle[index].position= vec4(0);
 		if(physicsType != NONE){
-			particle[index].position = InitDefaultShape(index, maxParticles);
-//			particle[index].position = vec4(maxParticles);
+			particle[index].position = InitDefaultShape(index, maxParticles) * shapeRadius;
 		}
 	}
 	else if(SimulatorState == SIMULATION && physicsType == DYNAMIC){

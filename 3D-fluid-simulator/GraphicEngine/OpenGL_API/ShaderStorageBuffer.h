@@ -31,7 +31,6 @@ inline std::vector<T> ShaderStorageBuffer<T>::GetBufferSubData(uint64_t objectsO
 {
 	std::vector<T> bufferSubData(numberOfObjectsToRead);
 	_(glGetNamedBufferSubData(this->ID(), objectsOffset * sizeof(T), numberOfObjectsToRead * sizeof(T), bufferSubData.data()));
-	//glGetNamedBufferSubData(this->ID(), 0, 0, bufferSubData.data());
 	return bufferSubData;
 }
 

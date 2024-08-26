@@ -5,8 +5,6 @@
 
 template<typename T, GLuint S>
 class VertexBuffer : public CPUBuffer<GL_ARRAY_BUFFER, T>{
-public:
-	using type = T;
 private:
 	const uint64_t size = S;
 	int32_t _bindingIndex{ -1 };

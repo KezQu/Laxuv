@@ -19,5 +19,6 @@ layout(std140, binding = 0) buffer dataBuffer{
 void main(){
 	outColor = inColor / 255.;
 	outShapeOffset = particle[gl_InstanceID].position;
-	gl_Position = vec4(inPosition, 1.0);
+	gl_Position = vec4(inPosition, 0);
+	gl_PointSize = 10;
 }

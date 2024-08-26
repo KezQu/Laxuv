@@ -34,29 +34,31 @@ template<GLenum Prim>
 void Object<Prim>::Initialize()
 {
 	UpdateBoundingDimensions();
-	_physicsDispatch.InitDefaultShape(_shape->GetParticleDistribution(), GetPhysicsType());
+	_physicsDispatch.InitDefaultShape(_shape->GetParticleDistribution(), GetPhysicsType(), 1);
 }
 template<GLenum Prim>
 void Object<Prim>::Calculate()
 {
-	_physicsDispatch.GenerateForces();
+	_physicsDispatch.GenerateForces(GetPhysicsType());
 }
 template<GLenum Prim>
 void Object<Prim>::Draw() const
 {
 	if (_visible) {
 		_shape->Bind();
+		uint32_t programID = _shape->EnableTesselation() ?
+			ProgramDispatch::GetInstance().GetTesselationPipeline().ID() :
+			ProgramDispatch::GetInstance().GetSimplePipeline().ID();
+
+		_physicsDispatch.GetParticleMeshBuffer().Bind(programID);
 		_(glDrawElements(_shape->GetDrawPrimitive(), _shape->GetVA().Size(), _shape->GetVA().IndexBufferType(), nullptr));
+		_physicsDispatch.GetParticleMeshBuffer().Unbind(programID);
 	}
 }
 
 template<GLenum Prim>
 inline void Object<Prim>::UpdateBoundingDimensions() {
-	glm::vec4 initialDimensions = glm::vec4(glm::vec3(_shape->GetRadius()), 0);
-	glm::vec4 correctedDimensions = _shape->Model() * initialDimensions;
-	glm::ivec3 newMeshDimensions{ static_cast<int32_t>(correctedDimensions.x), 
-		static_cast<int32_t>(correctedDimensions.y), 
-		static_cast<int32_t>(correctedDimensions.z) };
+	glm::uvec3 newMeshDimensions{ _shape->GetRadius() / 10 };
 
 	_physicsDispatch.UpdateMeshDimensions(newMeshDimensions);
 }
@@ -68,7 +70,8 @@ Object<Prim>::details_map Object<Prim>::Details()
 	details.push_back({ "Rotation", { [=]() {return std::ref(this->_shape->GetRotate()); }, DetailsType::VEC3 } });
 	details.push_back({ "Scale", { [=]() {return std::ref(this->_shape->GetScale()); }, DetailsType::VEC3 } });
 	details.push_back({ "Light", { [=]() {return std::ref(this->_shape->EnableLight()); }, DetailsType::BOOL } });
-	details.push_back({ "Subdivision", { [=]() {return std::ref(this->_shape->GetSubdivision()); }, DetailsType::UINT64 } });
-	details.push_back({ "Radius", { [=]() {return std::ref(this->_shape->GetRadius()); }, DetailsType::UINT64 } });
+	details.push_back({ "Subdivision", { [=]() {return std::ref(this->_shape->GetSubdivision()); }, DetailsType::UINT32 } });
+	details.push_back({ "Radius", { [=]() {return std::ref(this->_shape->GetRadius()); }, DetailsType::UINT32 } });
+	details.push_back({ "Physics type", { [=]() {return std::ref(this->GetPhysicsType()); }, DetailsType::PHYSTYPE } });
 	return details;
 }

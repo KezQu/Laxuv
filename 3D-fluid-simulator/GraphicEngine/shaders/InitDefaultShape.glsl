@@ -5,7 +5,7 @@ uniform int DistributionShape = -1;
 float PI = 3.14159265358979323846264338327950288;
 
 vec4 Line(in uint idx, in uint maxParticles){
-	return vec4(0.f, idx - maxParticles / 2.f, 0.f, 0.f);
+	return vec4(0.f, idx, 0.f, 0.f);
 }
 vec4 Circle(in uint idx, in uint maxParticles){
 	const float angle = 2.f * PI / maxParticles;
