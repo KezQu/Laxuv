@@ -100,6 +100,9 @@ void Explorer::Generate() {
 					case DetailsType::DISTSHAPE:
 						ImGui::DragScalar(("##" + info.first).c_str(), ImGuiDataType_U8, &std::get<DetailsType::DISTSHAPE>(info.second.first)(), 1, (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
 						break;
+					case DetailsType::PHYSTYPE:
+						ImGui::DragScalar(("##" + info.first).c_str(), ImGuiDataType_U8, &std::get<DetailsType::PHYSTYPE>(info.second.first)(), 1, (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
+						break;
 					case DetailsType::FLOAT:
 						ImGui::DragFloat(("##" + info.first).c_str(), &std::get<DetailsType::FLOAT>(info.second.first)(), 0.1f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
 						break;

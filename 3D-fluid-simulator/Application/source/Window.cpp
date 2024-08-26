@@ -107,6 +107,7 @@ void Window::EventLoop() {
 		Render();
 	}
 	SimulationInstance.CleanUp();
+	ProgramDispatch::GetInstance().CleanUp();
 }
 void Window::Refresh() {
 	glClearColor(0.f, 0.f, 0.f, 1.f);

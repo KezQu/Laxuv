@@ -45,6 +45,7 @@ Program::~Program()
 	if (_id != 0){
 		_(glDeleteProgram(_id));
 	}
+	_id = 0;
 }
 
 void Program::AddShader(GLenum type, std::string const& filepath){

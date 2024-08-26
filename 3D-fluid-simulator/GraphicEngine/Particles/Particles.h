@@ -40,7 +40,7 @@ template<GLenum Prim>
 void Particles<Prim>::Initialize()
 {
 	UpdateBoundingDimensions();
-	_physicsDispatch.InitDefaultShape(GetDistributionShape(), GetPhysicsType(), _particleShape->GetRadius());
+	_physicsDispatch.InitDefaultShape(GetDistributionShape(), GetPhysicsType(), _particleShape->GetRadius() * 2);
 }
 template<GLenum Prim>
 void Particles<Prim>::Calculate()
@@ -53,9 +53,13 @@ void Particles<Prim>::Draw() const
 	if (_visible) {
 		glm::ivec3 const& meshDimensions = _physicsDispatch.GetMeshDimensions();
 		_particleShape->Bind();
-		_physicsDispatch.GetParticleMeshBuffer().Bind(_particleShape->GetRenderer().ID());
+		uint32_t programID = _particleShape->EnableTesselation() ?
+			ProgramDispatch::GetInstance().GetTesselationPipeline().ID() :
+			ProgramDispatch::GetInstance().GetSimplePipeline().ID();
+
+		_physicsDispatch.GetParticleMeshBuffer().Bind(programID);
 		_(glDrawElementsInstanced(_particleShape->GetDrawPrimitive(), _particleShape->GetVA().Size(), _particleShape->GetVA().IndexBufferType(), nullptr, meshDimensions.x * meshDimensions.y * meshDimensions.z));
-		_physicsDispatch.GetParticleMeshBuffer().Unbind(_particleShape->GetRenderer().ID());
+		_physicsDispatch.GetParticleMeshBuffer().Unbind(programID);
 	}
 }
 template<GLenum Prim>
@@ -75,6 +79,7 @@ Particles<Prim>::details_map Particles<Prim>::Details()
 	details.push_back({ "Radius", { [=]() {return std::ref(this->_particleShape->GetRadius()); }, DetailsType::UINT32 } });
 	details.push_back({ "Distribution shape", { [=]() {return std::ref(this->GetDistributionShape()); }, DetailsType::DISTSHAPE } });
 	details.push_back({ "Mesh radius", { [=]() {return std::ref(this->GetMeshRadius()); }, DetailsType::UINT32 } });
+	details.push_back({ "Physics type", { [=]() {return std::ref(this->GetPhysicsType()); }, DetailsType::PHYSTYPE } });
 	return details;
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Program.h>
+#include <ProgramDispatch.h>
 #include <VertexArray.h>
 #include <Camera.h>
 #include "Essentials.h"
@@ -17,7 +17,6 @@ template<GLenum Prim>
 class Shape {
 protected:
 	VertexArray _vertexArray;
-	Program _renderer;
 	glm::vec3 _translation{ 0.f };
 	glm::vec3 _scale{ 1.f };
 	glm::vec3 _rotation{ 0.f };
@@ -41,8 +40,6 @@ public:
 	void Bind() const;
 	GLenum GetDrawPrimitive() const;
 	VertexArray const& GetVA() const;
-	Program const& GetRenderer() const;
-	Program& GetRenderer();
 	glm::vec3 const& GetCenter() const;
 	bool& EnableLight();
 	bool& EnableTesselation();
@@ -57,6 +54,9 @@ Shape<Prim>::Shape(VertexArray&& vertexArray, uint32_t shapeRadius, bool enableT
 	_shapeRadius{ shapeRadius },
 	_enableTesselation{ enableTess }
 {
+	if (_enableTesselation == true) {
+		_primitiveType = GL_PATCHES;
+	}
 	auto& coordBuffer = GetVA().Data().coordinateBuffer;
 
 	for (int i = 0; i < coordBuffer.Size(); i += 3) {
@@ -65,50 +65,30 @@ Shape<Prim>::Shape(VertexArray&& vertexArray, uint32_t shapeRadius, bool enableT
 							 coordBuffer.Data()[i + 2]);
 	}
 	_center /= coordBuffer.Size() / coordBuffer.AttribSize();
-	 
-	_renderer.AddShader(GL_VERTEX_SHADER, "/Element.vert");
-	_renderer.AddShader(GL_VERTEX_SHADER, "/CalculateNDC.glsl");
-	if (_enableTesselation) {
-		_primitiveType = GL_PATCHES;
-
-		_renderer.AddShader(GL_TESS_CONTROL_SHADER, "/Element.tesc");
-		_renderer.AddShader(GL_TESS_EVALUATION_SHADER, "/Element.tese");
-		_renderer.AddShader(GL_TESS_EVALUATION_SHADER, "/CalculateNDC.glsl");
-	}
-	else {
-
-	}
-	//if (_primitiveType == GL_LINES) {
-	//	_renderer.AddShader(GL_GEOMETRY_SHADER, "/Lines.geom");
-	//}
-	//else if (_primitiveType == GL_POINTS) {
-	//	_renderer.AddShader(GL_GEOMETRY_SHADER, "/Points.geom");
-	//}
-	//else {
-	//	_renderer.AddShader(GL_GEOMETRY_SHADER, "/Triangles.geom");
-	//}
-	//_renderer.AddShader(GL_GEOMETRY_SHADER, "/CalculateNDC.glsl");
-	//_renderer.AddShader(GL_GEOMETRY_SHADER, "/CalculateNormal.glsl");
-	_renderer.AddShader(GL_FRAGMENT_SHADER, "/Element.frag");
 }
 
 template<GLenum Prim>
 void Shape<Prim>::Bind() const {
 	_vertexArray.Bind();
-	if (!_renderer.isLinked())
-		_renderer.Link();
-	_renderer.Bind();
 	
-	GLint modelLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "model");
-	GLint viewLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "view");
-	GLint projectionLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "projection");
-	GLint viewportLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "viewport");
-	GLint centerLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "center");
-	GLint subdivisionLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "subdivision");
-	GLint ambientLightColorLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "ambientLightColor");
-	GLint diffuseLightColorLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "diffuseLightColor");
-	GLint diffuseLightDirectionLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "diffuseLightDirection");
-	GLint shapeRadiusLocation = glGetProgramResourceLocation(_renderer.ID(), GL_UNIFORM, "shapeRadius");
+	Program& renderer = _enableTesselation == true ?
+		ProgramDispatch::GetInstance().GetTesselationPipeline():
+		ProgramDispatch::GetInstance().GetSimplePipeline();
+	
+	if (!renderer.isLinked())
+		renderer.Link();
+	renderer.Bind();
+	
+	GLint modelLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "model");
+	GLint viewLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "view");
+	GLint projectionLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "projection");
+	GLint viewportLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "viewport");
+	GLint centerLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "center");
+	GLint subdivisionLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "subdivision");
+	GLint ambientLightColorLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "ambientLightColor");
+	GLint diffuseLightColorLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "diffuseLightColor");
+	GLint diffuseLightDirectionLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "diffuseLightDirection");
+	GLint shapeRadiusLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "shapeRadius");
 
 	if (modelLocation != -1)
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(Model()));
@@ -169,19 +149,12 @@ template<GLenum Prim>
 GLenum Shape<Prim>::GetDrawPrimitive() const {
 	return _primitiveType;
 }
+
 template<GLenum Prim>
 VertexArray const& Shape<Prim>::GetVA() const {
 	return _vertexArray;
 }
-template<GLenum Prim>
-Program const& Shape<Prim>::GetRenderer() const {
-	return _renderer;
 
-}
-template<GLenum Prim>
-Program& Shape<Prim>::GetRenderer() {
-	return _renderer;
-}
 template<GLenum Prim>
 glm::vec3 const& Shape<Prim>::GetCenter() const {
 	return _center;

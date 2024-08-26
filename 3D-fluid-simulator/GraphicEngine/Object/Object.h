@@ -46,9 +46,13 @@ void Object<Prim>::Draw() const
 {
 	if (_visible) {
 		_shape->Bind();
-		_physicsDispatch.GetParticleMeshBuffer().Bind(_shape->GetRenderer().ID());
+		uint32_t programID = _shape->EnableTesselation() ?
+			ProgramDispatch::GetInstance().GetTesselationPipeline().ID() :
+			ProgramDispatch::GetInstance().GetSimplePipeline().ID();
+
+		_physicsDispatch.GetParticleMeshBuffer().Bind(programID);
 		_(glDrawElements(_shape->GetDrawPrimitive(), _shape->GetVA().Size(), _shape->GetVA().IndexBufferType(), nullptr));
-		_physicsDispatch.GetParticleMeshBuffer().Unbind(_shape->GetRenderer().ID());
+		_physicsDispatch.GetParticleMeshBuffer().Unbind(programID);
 	}
 }
 
@@ -68,5 +72,6 @@ Object<Prim>::details_map Object<Prim>::Details()
 	details.push_back({ "Light", { [=]() {return std::ref(this->_shape->EnableLight()); }, DetailsType::BOOL } });
 	details.push_back({ "Subdivision", { [=]() {return std::ref(this->_shape->GetSubdivision()); }, DetailsType::UINT32 } });
 	details.push_back({ "Radius", { [=]() {return std::ref(this->_shape->GetRadius()); }, DetailsType::UINT32 } });
+	details.push_back({ "Physics type", { [=]() {return std::ref(this->GetPhysicsType()); }, DetailsType::PHYSTYPE } });
 	return details;
 }
