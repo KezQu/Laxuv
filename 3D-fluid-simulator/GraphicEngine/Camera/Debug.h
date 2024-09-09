@@ -23,7 +23,7 @@ public:
 	std::ostringstream& operator<<(T const& LogMessage)
 	{
 		auto timestamp = std::chrono::system_clock().now();
-		log << "[" << std::format("{:%T}", std::chrono::floor<std::chrono::seconds>(timestamp)) << "] " << LogMessage;
+		 log << "[" << std::format("{:%T}", std::chrono::floor<std::chrono::seconds>(timestamp)) << "] " << LogMessage;
 		return log;
 	}
 };
@@ -35,5 +35,5 @@ extern console LOG;
 if(err != GL_NO_ERROR) \
 { LOG << "Error " << std::hex << err << " in file : " << __FILE__ << " line : " << __LINE__ <<std::endl;\
 std::cout << "Error " << std::hex << err << " in file : " << __FILE__ << " line : " << __LINE__ <<std::endl;\
-__debugbreak();\
+ __debugbreak();\
 }}

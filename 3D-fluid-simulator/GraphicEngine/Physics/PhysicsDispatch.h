@@ -2,6 +2,7 @@
 
 
 #include <glm/vec3.hpp>
+#include <glm/gtc/constants.hpp>
 #include <glm/geometric.hpp>
 #include <glm/ext/scalar_constants.hpp>
 #include <GL/glew.h>

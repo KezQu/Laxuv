@@ -63,6 +63,7 @@ void Program::Link() const {
 		std::vector<GLchar> logInfo(logLength > 0 ? logLength : 1, '\0');
 		_(glGetProgramInfoLog(_id, logLength, nullptr, logInfo.data()));
 		LOG << "Unable to link " << logInfo.data() << " deleting program." << std::endl;
+		std::cout << "Unable to link " << logInfo.data() << " deleting program." << std::endl;
 	}
 	DetachShaders();
 }

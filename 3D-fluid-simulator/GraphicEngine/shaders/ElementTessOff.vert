@@ -6,13 +6,18 @@ layout(location = 1) in vec4 inColor;
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec3 normal;
 
+const uint KernelRadius = 1;
+const uint MaxNeighbours = KernelRadius * KernelRadius * 4 * 4 * 2;
+
 struct PhysicsProperties {
 	vec4 forceMass;
 	vec4 velocity;
-	vec4 position;
+	vec4 position;	
+	vec4 VolumeDensityPressureMass;
+	uint neighbours[MaxNeighbours];
 };
 
-layout(std140, binding = 0) buffer dataBuffer{
+layout(std430, binding = 0) buffer dataBuffer{
 	PhysicsProperties particle[];
 };
 

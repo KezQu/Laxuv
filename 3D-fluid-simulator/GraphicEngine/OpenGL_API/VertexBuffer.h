@@ -42,7 +42,7 @@ inline VertexBuffer<T, S>::VertexBuffer(std::initializer_list<type> data)
 {
 	if (data.size() % size != 0) {
 		LOG << "Error size of vertex data is not a multiplication of vertice size(" << size << ")" << std::endl;
-		__debugbreak();
+		//__debugbreak();
 	}
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &_bindingIndex);
 }

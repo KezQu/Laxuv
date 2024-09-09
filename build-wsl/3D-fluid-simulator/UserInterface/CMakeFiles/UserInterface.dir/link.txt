@@ -1,0 +1,2 @@
+/usr/bin/ar qc libUserInterface.a  CMakeFiles/UserInterface.dir/source/Explorer.cpp.o CMakeFiles/UserInterface.dir/source/Interface.cpp.o CMakeFiles/UserInterface.dir/source/Logger.cpp.o CMakeFiles/UserInterface.dir/source/Toolbar.cpp.o
+/usr/bin/ranlib libUserInterface.a

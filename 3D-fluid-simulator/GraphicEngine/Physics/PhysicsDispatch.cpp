@@ -1,6 +1,7 @@
 #include "PhysicsDispatch.h"
 
 #include <imgui.h>
+#include <HydroTest.h>
 
 uint64_t PhysicsDispatch::_timestamp{};
 float PhysicsDispatch::_dt{};
@@ -11,6 +12,7 @@ PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
 	_physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Element.comp");
 	_physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/InitDefaultShape.glsl");
 	_physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Gravitation.glsl");
+	_physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Hydrodynamics.glsl");
 }
 
 void PhysicsDispatch::Bind() const
@@ -34,6 +36,7 @@ glm::uvec3 const& PhysicsDispatch::GetMeshDimensions() const
 void PhysicsDispatch::UpdateMeshDimensions(glm::uvec3 dimensions)
 {
 	if (_meshDimensions != dimensions) {
+		_meshDimensions = dimensions;
 		_meshDimensions = dimensions * 10U;
 		_particleMesh.SetBufferMemorySize(_meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
 	}
@@ -62,7 +65,15 @@ void PhysicsDispatch::InitDefaultShape(DistributionShape initObjectBounds, Physi
 	}
 	_(glDispatchCompute(_meshDimensions.x / 10, _meshDimensions.y / 10, _meshDimensions.z / 10));
 	_(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
-	//auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
+	auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
+
+	Vector particleQn[1000];
+	PhysicsProperties* lookupTest = Init();
+	for (int i = 0; i < 1000; i++)
+	{
+		particleQn[i] = GenerateHydrodynamics(i);
+	}
+	
 	//for (auto& particle : lookupBuffer) {
 	//	std::cout << particle;
 	//}
@@ -98,6 +109,10 @@ void PhysicsDispatch::GenerateForces(PhysicsType objectPhysicsType)
 	}
 	_(glDispatchCompute(_meshDimensions.x / 10, _meshDimensions.y / 10, _meshDimensions.z / 10));
 	_(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
+	//auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
+	//for (auto& particle : lookupBuffer) {
+	//	std::cout << particle;
+	//}
 }
 
 void PhysicsDispatch::UpdateDeltaTime()
