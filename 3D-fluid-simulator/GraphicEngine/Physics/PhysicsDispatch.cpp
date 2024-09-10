@@ -66,13 +66,6 @@ void PhysicsDispatch::InitDefaultShape(DistributionShape initObjectBounds, Physi
 	_(glDispatchCompute(_meshDimensions.x / 10, _meshDimensions.y / 10, _meshDimensions.z / 10));
 	_(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
 	auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
-
-	Vector particleQn[1000];
-	PhysicsProperties* lookupTest = Init();
-	for (int i = 0; i < 1000; i++)
-	{
-		particleQn[i] = GenerateHydrodynamics(i);
-	}
 	
 	//for (auto& particle : lookupBuffer) {
 	//	std::cout << particle;
@@ -109,7 +102,14 @@ void PhysicsDispatch::GenerateForces(PhysicsType objectPhysicsType)
 	}
 	_(glDispatchCompute(_meshDimensions.x / 10, _meshDimensions.y / 10, _meshDimensions.z / 10));
 	_(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
-	//auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
+	auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
+	
+	static Vector particleQn[64];
+	static PhysicsProperties* lookupTest = Init();
+	for (int i = 0; i < 64; i++)
+	{
+		particleQn[i] = GenerateHydrodynamics(i);
+	}
 	//for (auto& particle : lookupBuffer) {
 	//	std::cout << particle;
 	//}

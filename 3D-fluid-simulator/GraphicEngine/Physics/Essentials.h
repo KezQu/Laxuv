@@ -39,7 +39,7 @@ struct PhysicsProperties {
 	glm::vec4 force = glm::vec4(0, 0, 0, 0);
 	glm::vec4 velocity = glm::vec4(0, 0, 0, 0);
 	glm::vec4 position = glm::vec4(0, 0, 0, 0);
-	glm::vec4 VolumeDensityPressureMass = glm::vec4(1, 1, 0, 1);
+	glm::vec4 VolumeDensityPressureMass = glm::vec4(1, 1, 1, 1);
 	uint32_t neighbours[MaxNeighbours] = { 0xffffffff };
 };
 
