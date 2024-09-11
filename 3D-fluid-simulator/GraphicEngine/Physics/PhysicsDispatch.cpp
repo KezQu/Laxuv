@@ -1,6 +1,7 @@
 #include "PhysicsDispatch.h"
 
 #include <imgui.h>
+#include <span>
 #include <HydroTest.h>
 
 uint64_t PhysicsDispatch::_timestamp{};
@@ -105,10 +106,19 @@ void PhysicsDispatch::GenerateForces(PhysicsType objectPhysicsType)
 	auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
 	
 	static Vector particleQn[64];
-	static PhysicsProperties* lookupTest = Init();
+	static std::span<PhysicsProperties> lookupTest{ Init(), 64 };
+
 	for (int i = 0; i < 64; i++)
 	{
 		particleQn[i] = GenerateHydrodynamics(i);
+	}
+	for (int i = 0; i < 64; i++)
+	{
+		lookupTest[i].velocity = glm::vec4(particleQn[i].y / particleQn[i].x, 0);
+		lookupTest[i].VolumeDensityPressureMass.y = particleQn[i].x;
+		lookupTest[i].force.x = particleQn[i].x;
+		lookupTest[i].force.y = glm::length(particleQn[i].y);
+		lookupTest[i].force.w = particleQn[i].z;
 	}
 	//for (auto& particle : lookupBuffer) {
 	//	std::cout << particle;

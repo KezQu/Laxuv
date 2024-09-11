@@ -20,9 +20,9 @@ struct GradVector {
     vec3 z;
 };
 
-uniform float dt = 0.01667f;
+uniform float dt;
 uniform float b = 0.f;
-uniform float gamma = 1.4f;
+uniform float gamma = 0.6f;
 
 struct PhysicsProperties{
 	vec4 force;
@@ -136,7 +136,6 @@ Vector CalculateTimeDerivativeOfW(uint index_x, Vector Wp) {
     const vec3 v = vec3(particle[index_x].velocity.x, particle[index_x].velocity.y, particle[index_x].velocity.z);
     const float density = particle[index_x].VolumeDensityPressureMass.y;
     const float pressure = particle[index_x].VolumeDensityPressureMass.z;
-    const float gamma = 0.6;
     const vec3 Wp_y_trace = vec3(gradWp.y[0][0], gradWp.y[1][1], gradWp.y[2][2]);
     dW_dt.x = -(dot(v, gradWp.x) + dot(vec3(density), Wp_y_trace));
     dW_dt.y = -(v * gradWp.y + vec3(1. / density) * gradWp.z);
@@ -188,17 +187,17 @@ Vector CalculateReimannProblem(uint index_i, uint index_j) {
     Wpp_r.x = Wp_i.x + gradCrossW_i.x + dW_dt_i.x * dt / 2.;
     Wpp_r.y = Wp_i.y + gradCrossW_i.y + vec3(dW_dt_i.y.x * dt / 2., dW_dt_i.y.y * dt / 2., dW_dt_i.y.z * dt / 2.);
     Wpp_r.z = Wp_i.z + gradCrossW_i.z + dW_dt_i.z * dt / 2.;
-
+    
+    vec3 direction_versor = length(Wpp_r.y) > 0 ? normalize(Wpp_r.y) : Wpp_r.y;
+ 
     float alpha_zr = atan(Wpp_r.y.y, Wpp_r.y.x);
     float alpha_zl = atan(Wpp_l.y.y, Wpp_l.y.x);
-    float alpha_yr = atan(Wpp_r.y.z, sqrt(Wpp_r.y.x * Wpp_r.y.x + Wpp_r.y.y * Wpp_r.y.y));
-    float alpha_yl = atan(Wpp_l.y.z, sqrt(Wpp_l.y.x * Wpp_l.y.x + Wpp_l.y.y * Wpp_l.y.y));
-
-    vec3 direction_versor = length(Wpp_r.y) > 0 ? normalize(Wpp_r.y) : Wpp_r.y;
-    mat3 rotMtx = GetRotationYMatrix(alpha_yr) * GetRotationZMatrix(alpha_zr);
-    //mat3 rotMtx_l = GetRotationYMatrix(alpha_yl) * GetRotationZMatrix(alpha_zl);
-    Vector Wppp_r = Vector(Wpp_r.x, rotMtx * Wpp_r.y, Wpp_l.z);
-    Vector Wppp_l = Vector(Wpp_l.x, rotMtx * Wpp_l.y, Wpp_l.z);
+    Vector Wppp_r = Vector(Wpp_r.x, GetRotationZMatrix(alpha_zr) * Wpp_r.y, Wpp_r.z);
+    Vector Wppp_l = Vector(Wpp_l.x, GetRotationZMatrix(alpha_zr) * Wpp_l.y, Wpp_l.z);
+    float alpha_yr = atan(Wppp_r.y.z, sqrt(Wppp_r.y.x * Wppp_r.y.x + Wppp_r.y.y * Wppp_r.y.y));
+    float alpha_yl = atan(Wppp_l.y.z, sqrt(Wppp_l.y.x * Wppp_l.y.x + Wppp_l.y.y * Wppp_l.y.y));
+    Wppp_r.y = GetRotationYMatrix(alpha_yr) * Wppp_r.y;
+    Wppp_l.y = GetRotationYMatrix(alpha_yr) * Wppp_l.y;
 
     /////////////////////////////////////HLLC SOLVER//////////////////////////////////////////
     float ro_r = Wppp_r.x;
@@ -248,11 +247,11 @@ Vector CalculateReimannProblem(uint index_i, uint index_j) {
         F_r_hash = S_r * U_r_hash - R;
         F_l_hash = S_l * U_l_hash - Q;
     }
-    else if (S_l <= 0 && S_m <= 0 && S_r <= 0) {
+    else if (S_l <= S_m && S_m <= S_r && S_r <= 0) {
         F_l_hash = S_l * U_l_hash - Q;
         F_r_hash = (S_m * S_r * (U_r - U_l) + S_m * S_r * F_l / S_l - S_m * F_r + S_r * (1 - S_m / S_l) * F_l_hash) / (S_r - S_m);
     }
-    else if (S_l <= 0 && S_m <= 0 && S_r <= 0) {
+    else if (S_l >= 0 && S_m >= S_l && S_r >= S_m) {
         F_r_hash = S_r * U_r_hash - R;
         F_l_hash = S_l * U_l_hash - Q;
         F_l_hash = (S_m * S_l * (U_r - U_l) + S_m * S_l * F_r / S_r - S_m * F_l + S_l * (1 - S_m / S_r) * F_r_hash) / (S_m - S_l);
@@ -265,12 +264,12 @@ Vector CalculateReimannProblem(uint index_i, uint index_j) {
                                 dt * S_r / length(x_i - x_j),
                                 1 };
     vec3 F_i2_k[5] = { vec3(0), F_l, F_l_hash, F_r_hash, F_r };
-    vec3 F_i2;
+    vec3 F_i2 = vec3(0);
     for (uint k = 1; k < 5; k++) {
         F_i2 += vec3((CourantNumbers[k] - CourantNumbers[k - 1]) / 2.) * F_i2_k[k];
     }
     /////////////////////////////////////FLUX IJ DEBOOST//////////////////////////////////////////
-    Vector Fp_ij = Vector(F_i2.x, direction_versor * (inverse(rotMtx) * vec3(F_i2.y, 0, 0)), F_i2.z);
+    Vector Fp_ij = Vector(F_i2.x, direction_versor * (inverse(GetRotationZMatrix(alpha_zr)) * (inverse(GetRotationYMatrix(alpha_yr)) * glm::vec3(F_i2.y, 0, 0))), F_i2.z);
     Vector F_ij = Vector(Fp_ij.x, Fp_ij.y + v_frameij * Fp_ij.x, length(v_frameij) * Fp_ij.x / 2. + dot(v_frameij, Fp_ij.y));
 
     return F_ij;

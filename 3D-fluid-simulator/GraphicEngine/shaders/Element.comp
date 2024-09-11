@@ -28,7 +28,7 @@ const uint index = gl_GlobalInvocationID.x +
 uniform uint physicsType = NONE;
 uniform uint SimulatorState = IDLE;
 uniform uint shapeRadius = 1;
-uniform float dt = 0.01667f;
+uniform float dt;
 
 struct PhysicsProperties {
 	vec4 force;
@@ -61,7 +61,7 @@ vec4 appliedForces[forcesCount];
 void main(){
 	if(SimulatorState == INIT){
 		particle[index].force = vec4(0);
-		particle[index].velocity = vec4(10,0,0,0);
+		particle[index].velocity = vec4(0,0,0,0);
 		particle[index].position= vec4(0);
 		particle[index].VolumeDensityPressureMass= vec4(1, 1, 1, 1);
 		for(uint i = 0; i < MaxNeighbours; i++){
@@ -91,11 +91,11 @@ void main(){
 
 		Vector Q_n1 = GenerateHydrodynamics(index);
 		barrier();
-		particle[index].velocity.xyz += Q_n1.y / Q_n1.x;
-		particle[index].VolumeDensityPressureMass.y = Q_n1.x;
+		particle[index].velocity.xyz = Q_n1.y / Q_n1.x;
+		particle[index].VolumeDensityPressureMass.w = Q_n1.x;
 		particle[index].force.x = Q_n1.x;
 		particle[index].force.y = length(Q_n1.y);
-		particle[index].force.z = Q_n1.z;
+		particle[index].force.w = Q_n1.z;
 
 //		particle[index].force = netForce;
 //		if(particle[index].VolumeDensityPressureMass.z != 0){
