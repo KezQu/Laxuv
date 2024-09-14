@@ -8,14 +8,14 @@ public:
 	using EntityContainer = std::unordered_map<uint64_t, std::unique_ptr<Entity>>;
 private:
 	EntityContainer _entitiesContainer;
-	SimulationState _globalSimulationState;
+	Essentials::SimulationState _globalSimulationState;
 private:
 	Simulator() = default;
 public:
 	static Simulator& GetInstance();
 	EntityContainer& GetEntities();
-	SimulationState GetSimulationState();
-	void SetSimulationState(SimulationState newGlobalState);
+	Essentials::SimulationState GetSimulationState();
+	void SetSimulationState(Essentials::SimulationState newGlobalState);
 	template<typename T>
 	void Append(T&& entity);
 	void Delete(EntityContainer::key_type id = 0);

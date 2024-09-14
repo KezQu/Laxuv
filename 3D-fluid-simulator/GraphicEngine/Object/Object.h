@@ -9,7 +9,7 @@ class Object : public Entity {
 private:
 	std::unique_ptr<Shape<Prim>> _shape;
 public:
-	Object(Shape<Prim> * const shape, PhysicsType physics = PhysicsType::STATIC);
+	Object(Shape<Prim> * const shape, Essentials::PhysicsType physics = Essentials::PhysicsType::STATIC);
 	Object(Object const& obj_copy) = delete;
 	Object(Object&& obj_move) = default;
 	Object& operator=(Object const& obj_copy) = delete;
@@ -23,7 +23,7 @@ public:
 };
 
 template<GLenum Prim>
-Object<Prim>::Object(Shape<Prim> * const shape, PhysicsType physics)
+Object<Prim>::Object(Shape<Prim> * const shape, Essentials::PhysicsType physics)
 	: Entity(physics),
 	_shape{ std::unique_ptr<Shape<Prim>>(shape) }
 {

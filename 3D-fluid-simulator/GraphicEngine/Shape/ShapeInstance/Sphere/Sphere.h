@@ -12,5 +12,5 @@ public:
 	Sphere& operator=(Sphere const& obj_copy) = delete;
 	Sphere& operator=(Sphere&& obj_move) = default;
 	~Sphere() override = default;
-DistributionShape GetParticleDistribution() override;
+	Essentials::DistributionShape GetParticleDistribution() override;
 };

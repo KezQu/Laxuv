@@ -11,7 +11,7 @@ bool& Entity::Visible()
 	return _visible;
 }
 
-PhysicsType& Entity::GetPhysicsType()
+Essentials::PhysicsType& Entity::GetPhysicsType()
 {
 	return _physics;
 }
@@ -38,7 +38,7 @@ Entity::details_map Entity::Details() {
 	return details;
 }
 
-Entity::Entity(PhysicsType physics)
+Entity::Entity(Essentials::PhysicsType physics)
 	:_physicsDispatch{ { 0,0,0 } },
 	_id{ Entity::_internalID++ },
 	_name{ "Entity" + std::to_string(_id) },

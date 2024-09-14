@@ -15,11 +15,11 @@ Simulator::EntityContainer& Simulator::GetEntities()
 	return _entitiesContainer;
 }
 
-SimulationState Simulator::GetSimulationState()
+Essentials::SimulationState Simulator::GetSimulationState()
 {
 	return _globalSimulationState;
 }
-void Simulator::SetSimulationState(SimulationState newGlobalState)
+void Simulator::SetSimulationState(Essentials::SimulationState newGlobalState)
 {
 	_globalSimulationState = newGlobalState;
 }

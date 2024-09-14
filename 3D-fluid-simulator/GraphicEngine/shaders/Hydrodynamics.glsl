@@ -144,6 +144,42 @@ Vector CalculateTimeDerivativeOfW(uint index_x, Vector Wp) {
     return dW_dt;
 }
 
+Vector PrepareRiemmanProblemSide(uint index_x, vec3 v_frame, vec3 x_mean_x, out vec3 dir_versor) {
+    Vector W_x = Vector(particle[index_x].VolumeDensityPressureMass.y,
+        vec3(particle[index_x].velocity.x, particle[index_x].velocity.y, particle[index_x].velocity.z),
+        particle[index_x].VolumeDensityPressureMass.z);
+
+    Vector Wp_x = Vector(W_x.x, W_x.y - v_frame, W_x.z);
+    GradVector gradW_x = CalculateGradW(index_x, Wp_x);
+
+    Vector gradCrossW_x = Vector(dot(gradW_x.x, x_mean_x),
+        gradW_x.y * x_mean_x,
+        dot(gradW_x.z, x_mean_x));
+    Vector dW_dt_x = CalculateTimeDerivativeOfW(index_x, Wp_x);
+
+
+    Vector Wpp_x = Vector(0, vec3(0), 0);
+    Wpp_x.x = Wp_x.x + gradCrossW_x.x + dW_dt_x.x * dt / 2.;
+    Wpp_x.y = Wp_x.y + gradCrossW_x.y + vec3(dW_dt_x.y.x * dt / 2., dW_dt_x.y.y * dt / 2., dW_dt_x.y.z * dt / 2.);
+    Wpp_x.z = Wp_x.z + gradCrossW_x.z + dW_dt_x.z * dt / 2.;
+
+    dir_versor = length(Wpp_x.y) > 0 ? normalize(Wpp_x.y) : Wpp_x.y;
+
+    //vec3 Wpp_y_norm = length(Wpp_x.y) > 0 ? normalize(Wpp_x.y) : vec3(0);
+    //vec3 x_versor = vec3(1, 0, 0);
+    //vec3 rot_x = cross(Wpp_y_norm, x_versor);
+    //rot_x = length(rot_x) > 0 ? normalize(rot_x) : vec3(0);
+    //float cos_x = dot(Wpp_y_norm, x_versor) / (length(Wpp_y_norm) * length(x_versor));
+    //const mat3 rot_helper_x = mat3(0, -rot_x.z, rot_x.y,
+    //    rot_x.z, 0, -rot_x.x,
+    //    -rot_x.y, rot_x.x, 0);
+    //const auto rot_helper_squared = rot_helper_x * rot_helper_x;
+    //mat3 rotMtx_x = I + sqrt(1 - cos_x * cos_x) * rot_helper_x + (1 - cos_x) * rot_helper_squared;
+    Vector Wppp_x = Vector(Wpp_x.x, vec3(length(Wpp_x.y), 0, 0), Wpp_x.z);
+
+    return Wppp_x;
+}
+
 Vector CalculateReimannProblem(uint index_i, uint index_j) {
     /////////////////////////////////////PREPARATION//////////////////////////////////////////
     vec3 x_i = vec3(particle[index_i].position.x, particle[index_i].position.y, particle[index_i].position.z);
@@ -151,54 +187,14 @@ Vector CalculateReimannProblem(uint index_i, uint index_j) {
     vec3 x_ij = vec3((x_i + x_j).x / 2., (x_i + x_j).y / 2., (x_i + x_j).z / 2.);
     vec3 v_frameij = CalculateFrameVelocity(index_i, index_j);
 
-    Vector W_i = Vector(particle[index_i].VolumeDensityPressureMass.y,
-        vec3(particle[index_i].velocity.x, particle[index_i].velocity.y, particle[index_i].velocity.z),
-        particle[index_i].VolumeDensityPressureMass.z);
-    Vector W_j = Vector(particle[index_j].VolumeDensityPressureMass.y,
-        vec3(particle[index_j].velocity.x, particle[index_j].velocity.y, particle[index_j].velocity.z),
-        particle[index_j].VolumeDensityPressureMass.z);
-
-    Vector Wp_i = Vector(W_i.x, W_i.y - v_frameij, W_i.z);
-    Vector Wp_j = Vector(W_j.x, W_j.y - v_frameij, W_j.z);
-
-    GradVector gradW_i = CalculateGradW(index_i, Wp_i);
-    GradVector gradW_j = CalculateGradW(index_j, Wp_j);
-
     vec3 x_ij_i = x_ij - x_i;
-
-    Vector gradCrossW_i = Vector(dot(gradW_i.x, x_ij_i),
-        gradW_i.y * x_ij_i,
-        dot(gradW_i.z, x_ij_i));
-
     vec3 x_ij_j = x_ij - x_j;
-    Vector gradCrossW_j = Vector(dot(gradW_j.x, x_ij_j),
-        gradW_j.y * x_ij_j,
-        dot(gradW_j.z, x_ij_j));
 
-    Vector dW_dt_i = CalculateTimeDerivativeOfW(index_i, Wp_i);
-    Vector dW_dt_j = CalculateTimeDerivativeOfW(index_j, Wp_j);
+    vec3 dir_versor_r = vec3(0);
+    Vector Wppp_r = PrepareRiemmanProblemSide(index_i, v_frameij, x_ij_i, dir_versor_r);
 
-    Vector Wpp_l = Vector(0, vec3(0), 0);
-    Wpp_l.x = Wp_j.x + gradCrossW_j.x + dW_dt_j.x * dt / 2.;
-    Wpp_l.y = Wp_j.y + gradCrossW_j.y + vec3(dW_dt_j.y.x * dt / 2., dW_dt_j.y.y * dt / 2., dW_dt_j.y.z * dt / 2.);
-    Wpp_l.z = Wp_j.z + gradCrossW_j.z + dW_dt_j.z * dt / 2.;
-
-    Vector Wpp_r = Vector(0, vec3(0), 0);
-    Wpp_r.x = Wp_i.x + gradCrossW_i.x + dW_dt_i.x * dt / 2.;
-    Wpp_r.y = Wp_i.y + gradCrossW_i.y + vec3(dW_dt_i.y.x * dt / 2., dW_dt_i.y.y * dt / 2., dW_dt_i.y.z * dt / 2.);
-    Wpp_r.z = Wp_i.z + gradCrossW_i.z + dW_dt_i.z * dt / 2.;
-    
-    vec3 direction_versor = length(Wpp_r.y) > 0 ? normalize(Wpp_r.y) : Wpp_r.y;
- 
-    float alpha_zr = atan(Wpp_r.y.y, Wpp_r.y.x);
-    float alpha_zl = atan(Wpp_l.y.y, Wpp_l.y.x);
-    Vector Wppp_r = Vector(Wpp_r.x, GetRotationZMatrix(alpha_zr) * Wpp_r.y, Wpp_r.z);
-    Vector Wppp_l = Vector(Wpp_l.x, GetRotationZMatrix(alpha_zr) * Wpp_l.y, Wpp_l.z);
-    float alpha_yr = atan(Wppp_r.y.z, sqrt(Wppp_r.y.x * Wppp_r.y.x + Wppp_r.y.y * Wppp_r.y.y));
-    float alpha_yl = atan(Wppp_l.y.z, sqrt(Wppp_l.y.x * Wppp_l.y.x + Wppp_l.y.y * Wppp_l.y.y));
-    Wppp_r.y = GetRotationYMatrix(alpha_yr) * Wppp_r.y;
-    Wppp_l.y = GetRotationYMatrix(alpha_yr) * Wppp_l.y;
-
+    vec3 dir_versor_l = vec3(0);
+    Vector Wppp_l = PrepareRiemmanProblemSide(index_j, v_frameij, x_ij_j, dir_versor_l);
     /////////////////////////////////////HLLC SOLVER//////////////////////////////////////////
     float ro_r = Wppp_r.x;
     float u_r = Wppp_r.y.x;
@@ -257,7 +253,6 @@ Vector CalculateReimannProblem(uint index_i, uint index_j) {
         F_l_hash = (S_m * S_l * (U_r - U_l) + S_m * S_l * F_r / S_r - S_m * F_l + S_l * (1 - S_m / S_r) * F_r_hash) / (S_m - S_l);
     }
 
-
     float CourantNumbers[5] = { -1,
                                 dt * S_l / length(x_i - x_j),
                                 dt * S_m / length(x_i - x_j),
@@ -269,7 +264,15 @@ Vector CalculateReimannProblem(uint index_i, uint index_j) {
         F_i2 += vec3((CourantNumbers[k] - CourantNumbers[k - 1]) / 2.) * F_i2_k[k];
     }
     /////////////////////////////////////FLUX IJ DEBOOST//////////////////////////////////////////
-    Vector Fp_ij = Vector(F_i2.x, direction_versor * (inverse(GetRotationZMatrix(alpha_zr)) * (inverse(GetRotationYMatrix(alpha_yr)) * glm::vec3(F_i2.y, 0, 0))), F_i2.z);
+    vec3 x_versor = vec3(1, 0, 0);
+    vec3 dir_versor_m = dir_versor_r + dir_versor_l;
+    vec3 rot_m = cross(dir_versor_m, x_versor);
+    float rot_angle_m = acos(dot(dir_versor_m, x_versor) / (length(dir_versor_m) * length(x_versor)));
+    const mat3 rot_helper_m = mat3(0, -rot_m.z, rot_m.y,
+                                   rot_m.z, 0, -rot_m.x,
+                                   -rot_m.y, rot_m.x, 0);
+    mat3 rotMtx_m = I + sin(rot_angle_m) * rot_helper_m + (1- cos(rot_angle_m)) * rot_helper_m * rot_helper_m;
+    Vector Fp_ij = Vector(F_i2.x, dir_versor_m * (inverse(rotMtx_m) * vec3(F_i2.y, 0, 0)), F_i2.z);
     Vector F_ij = Vector(Fp_ij.x, Fp_ij.y + v_frameij * Fp_ij.x, length(v_frameij) * Fp_ij.x / 2. + dot(v_frameij, Fp_ij.y));
 
     return F_ij;

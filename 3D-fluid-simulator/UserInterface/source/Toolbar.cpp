@@ -2,10 +2,10 @@
 #include <GLFW/glfw3.h>
 
 bool Toolbar::_fullscreen = false;
-std::unordered_map<SimulationState, std::string> Toolbar::simulationState{
-	{SimulationState::IDLE, "Start"},
-	{SimulationState::INIT, "Start"},
-	{SimulationState::SIMULATION, "Stop"}
+std::unordered_map<Essentials::SimulationState, std::string> Toolbar::simulationState{
+	{Essentials::SimulationState::IDLE, "Start"},
+	{Essentials::SimulationState::INIT, "Start"},
+	{Essentials::SimulationState::SIMULATION, "Stop"}
 };
 
 Toolbar::Toolbar(ImVec2 const& size, ImVec2 const& position)
@@ -24,9 +24,9 @@ void Toolbar::Generate() {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0,0 });
 	if (ImGui::Begin("##Toolbar", nullptr, _flags)) {
 		if (ImGui::Button((simulationState[simulatorInstance.GetSimulationState()] + " simulation").c_str())) {
-			simulatorInstance.SetSimulationState(simulatorInstance.GetSimulationState() == SimulationState::SIMULATION ?
-				SimulationState::INIT :
-				SimulationState::SIMULATION);
+			simulatorInstance.SetSimulationState(simulatorInstance.GetSimulationState() == Essentials::SimulationState::SIMULATION ?
+				Essentials::SimulationState::INIT :
+				Essentials::SimulationState::SIMULATION);
 		}
 		ImGui::SameLine(_size.x - 150);
 		ImGui::Text("%.0f", ImGui::GetIO().Framerate);

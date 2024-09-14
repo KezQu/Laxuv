@@ -84,15 +84,15 @@ void Window::EventLoop() {
 		Logger(LOG, ImVec2{ 3 * _windowSize.x / 4.f, 200 }, ImVec2{ _windowSize.x / 4.f, _windowSize.y - 200 }).Generate();
 		
 		switch (SimulationInstance.GetSimulationState()) {
-		case SimulationState::IDLE:
+		case Essentials::SimulationState::IDLE:
 			break;
-		case SimulationState::INIT:
+		case Essentials::SimulationState::INIT:
 			for (auto& [id, entity] : SimulationInstance.GetEntities()) {
 				entity->Initialize();
 			}
-			SimulationInstance.SetSimulationState(SimulationState::IDLE);
+			SimulationInstance.SetSimulationState(Essentials::SimulationState::IDLE);
 			break;
-		case SimulationState::SIMULATION:
+		case Essentials::SimulationState::SIMULATION:
 			for (auto& [id, entity] : SimulationInstance.GetEntities()) {
 				PhysicsDispatch::UpdateDeltaTime();
 				entity->Calculate();

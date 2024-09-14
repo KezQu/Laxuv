@@ -1,9 +1,5 @@
 #include "PhysicsDispatch.h"
 
-#include <imgui.h>
-#include <span>
-#include <HydroTest.h>
-
 uint64_t PhysicsDispatch::_timestamp{};
 float PhysicsDispatch::_dt{};
 
@@ -24,7 +20,7 @@ void PhysicsDispatch::Bind() const
 	_particleMesh.Bind(_physicsGenerator.ID());
 }
 
-ShaderStorageBuffer<PhysicsProperties> const& PhysicsDispatch::GetParticleMeshBuffer() const
+ShaderStorageBuffer<Essentials::PhysicsProperties> const& PhysicsDispatch::GetParticleMeshBuffer() const
 {
 	return _particleMesh;
 }
@@ -43,7 +39,7 @@ void PhysicsDispatch::UpdateMeshDimensions(glm::uvec3 dimensions)
 	}
 }
 
-void PhysicsDispatch::InitDefaultShape(DistributionShape initObjectBounds, PhysicsType objectPhysicsType, uint32_t shapeRadius)
+void PhysicsDispatch::InitDefaultShape(Essentials::DistributionShape initObjectBounds, Essentials::PhysicsType objectPhysicsType, uint32_t shapeRadius)
 {
 	_timestamp = 0U;
 	Bind();
@@ -53,7 +49,7 @@ void PhysicsDispatch::InitDefaultShape(DistributionShape initObjectBounds, Physi
 	GLint physicsTypeLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "physicsType");
 	GLint shapeRadiusLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "shapeRadius");
 	if (simulatorStateLoc != -1) {
-		glUniform1ui(simulatorStateLoc, static_cast<uint32_t>(SimulationState::INIT));
+		glUniform1ui(simulatorStateLoc, static_cast<uint32_t>(Essentials::SimulationState::INIT));
 	}
 	if (distributionShapeLoc != -1) {
 		glUniform1i(distributionShapeLoc, static_cast<int32_t>(initObjectBounds));
@@ -78,9 +74,10 @@ void PhysicsDispatch::InitDefaultShape(DistributionShape initObjectBounds, Physi
 	//		__debugbreak();
 	//	}
 	//}
+	testing_suite.Init();
 }
 
-void PhysicsDispatch::GenerateForces(PhysicsType objectPhysicsType)
+void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
 {
 	Bind();
 
@@ -90,7 +87,7 @@ void PhysicsDispatch::GenerateForces(PhysicsType objectPhysicsType)
 	GLint dtLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "dt");
 
 	if (simulatorStateLoc != -1) {
-		glUniform1ui(simulatorStateLoc, static_cast<uint32_t>(SimulationState::SIMULATION));
+		glUniform1ui(simulatorStateLoc, static_cast<uint32_t>(Essentials::SimulationState::SIMULATION));
 	}
 	if (physicsTypeLoc != -1) {
 		glUniform1ui(physicsTypeLoc, static_cast<uint32_t>(objectPhysicsType));
@@ -105,28 +102,37 @@ void PhysicsDispatch::GenerateForces(PhysicsType objectPhysicsType)
 	_(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
 	auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
 	
-	static Vector particleQn[64];
-	static std::span<PhysicsProperties> lookupTest{ Init(), 64 };
 
-	for (int i = 0; i < 64; i++)
+	Vector Q_n1[64];
+	for (int i = 0; i < testing_suite.maxParticles; i++)
 	{
-		particleQn[i] = GenerateHydrodynamics(i);
+		Q_n1[i] = testing_suite.GenerateHydrodynamics(i);
 	}
-	for (int i = 0; i < 64; i++)
+	for (int i = 0; i < testing_suite.maxParticles; i++)
 	{
-		lookupTest[i].velocity = glm::vec4(particleQn[i].y / particleQn[i].x, 0);
-		lookupTest[i].VolumeDensityPressureMass.y = particleQn[i].x;
-		lookupTest[i].force.x = particleQn[i].x;
-		lookupTest[i].force.y = glm::length(particleQn[i].y);
-		lookupTest[i].force.w = particleQn[i].z;
+		testing_suite.particle[i].velocity = glm::vec4(Q_n1[i].y / Q_n1[i].x, 0);
+		testing_suite.particle[i].position.x = testing_suite.particle[i].position.x + testing_suite.particle[i].velocity.x * _dt;
+		testing_suite.particle[i].position.y = testing_suite.particle[i].position.y + testing_suite.particle[i].velocity.y * _dt;
+		testing_suite.particle[i].position.z = testing_suite.particle[i].position.z + testing_suite.particle[i].velocity.z * _dt;
+		
+		testing_suite.particle[i].VolumeDensityPressureMass.x = 1. / testing_suite.CalculateOmega(i);
+		testing_suite.particle[i].VolumeDensityPressureMass.w = Q_n1[i].x;
+		
+		auto energy1 = Q_n1[i].z / testing_suite.particle[i].VolumeDensityPressureMass.w;
+		auto energy2 = testing_suite.particle[i].VolumeDensityPressureMass.w * pow(length(testing_suite.particle[i].velocity), 2) * 0.5;
+
+		testing_suite.particle[i].VolumeDensityPressureMass.y = testing_suite.particle[i].VolumeDensityPressureMass.w / testing_suite.particle[i].VolumeDensityPressureMass.x;
+		testing_suite.particle[i].VolumeDensityPressureMass.z = energy1 / testing_suite.particle[i].VolumeDensityPressureMass.x;
 	}
-	//for (auto& particle : lookupBuffer) {
-	//	std::cout << particle;
-	//}
+	for (int i = 0; i < testing_suite.maxParticles; i++)
+	{
+		testing_suite.FindNeighbours(i, testing_suite.maxParticles);
+	}
 }
 
 void PhysicsDispatch::UpdateDeltaTime()
 {
 	_timestamp++;
-	_dt = 1.f / ImGui::GetIO().Framerate;
+	//_dt = 1.f / ImGui::GetIO().Framerate;
+	_dt = 0.01667f;
 }

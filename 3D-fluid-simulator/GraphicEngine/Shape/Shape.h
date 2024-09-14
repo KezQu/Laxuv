@@ -45,7 +45,7 @@ public:
 	bool& EnableTesselation();
 	uint32_t& GetSubdivision();
 	uint32_t& GetRadius();
-	virtual DistributionShape GetParticleDistribution() = 0;
+	virtual Essentials::DistributionShape GetParticleDistribution() = 0;
 };
 
 template<GLenum Prim>

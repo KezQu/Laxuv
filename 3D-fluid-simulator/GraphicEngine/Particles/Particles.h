@@ -10,7 +10,7 @@ class Particles : public Entity {
 private:
 	std::unique_ptr<Shape<Prim>> _particleShape;
 	uint32_t _meshRadius;
-	DistributionShape _distributionShape{ DistributionShape::QUBE };
+	Essentials::DistributionShape _distributionShape{ Essentials::DistributionShape::QUBE };
 public:
 	Particles(Shape<Prim> * const particleShape, uint32_t meshRadius);
 	Particles(Particles<Prim> const& obj_copy) = delete;
@@ -24,13 +24,13 @@ public:
 	void Bind() const;
 	void UpdateBoundingDimensions();
 	details_map Details() override;
-	DistributionShape& GetDistributionShape();
+	Essentials::DistributionShape& GetDistributionShape();
 	uint32_t& GetMeshRadius();
 };
 
 template<GLenum Prim>
 Particles<Prim>::Particles(Shape<Prim>* const particleShape, uint32_t _meshRadius)
-	:Entity(PhysicsType::DYNAMIC),
+	:Entity(Essentials::PhysicsType::DYNAMIC),
 	_particleShape{ std::unique_ptr<Shape<Prim>>(particleShape) },
 	_meshRadius{ _meshRadius }
 {
@@ -84,7 +84,7 @@ Particles<Prim>::details_map Particles<Prim>::Details()
 }
 
 template<GLenum Prim>
-DistributionShape& Particles<Prim>::GetDistributionShape()
+Essentials::DistributionShape& Particles<Prim>::GetDistributionShape()
 {
 	return _distributionShape;
 }

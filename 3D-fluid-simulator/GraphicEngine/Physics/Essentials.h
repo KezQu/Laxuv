@@ -1,8 +1,11 @@
 #pragma once
+
 #include <glm/vec4.hpp>
-#include <iostream>
+#include <ostream>
 #include <cstdint>
-#include <cstdlib>
+
+
+namespace Essentials {
 
 const uint32_t KernelRadius = 1;
 const uint32_t MaxNeighbours = KernelRadius * KernelRadius * 4 * 4 * 2;
@@ -37,11 +40,12 @@ enum class PhysicsType : uint8_t {
 |      Volume   |     Density   |     Pressure     |       Mass       |
 */
 struct PhysicsProperties {
-	glm::vec4 force = glm::vec4(0, 0, 0, 0);
-	glm::vec4 velocity = glm::vec4(std::rand() % 10, std::rand() % 10, std::rand() % 10, 0);
-	glm::vec4 position = glm::vec4(0, 0, 0, 0);
-	glm::vec4 VolumeDensityPressureMass = glm::vec4(0.01, 5, 100, 0.05);
-	uint32_t neighbours[MaxNeighbours] = { 0xffffffff };
+	glm::vec4 force{ 0 };
+	glm::vec4 velocity{ 0 };
+	glm::vec4 position{ 0 };
+	glm::vec4 VolumeDensityPressureMass{ 0 };
+	uint32_t neighbours[MaxNeighbours];
 };
+}
 
-std::ostream& operator<<(std::ostream& out, PhysicsProperties const& particle);
+std::ostream& operator<<(std::ostream& out, Essentials::PhysicsProperties const& particle);

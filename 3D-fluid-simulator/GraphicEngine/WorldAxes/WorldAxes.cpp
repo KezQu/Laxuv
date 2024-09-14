@@ -1,7 +1,7 @@
 #include <WorldAxes.h>
 
 WorldAxes::WorldAxes()
-	:Entity(PhysicsType::NONE),
+	:Entity(Essentials::PhysicsType::NONE),
 	_axes{ 
 		{ { { -1.f,  0.f,  0.f }, { 255, 255, 255, 255 } },
 		  { {  1.f,  0.f,  0.f }, {   0,   0, 255, 255 } } },

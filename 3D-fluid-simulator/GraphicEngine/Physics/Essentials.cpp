@@ -1,7 +1,7 @@
 #include "Essentials.h"
 #include <iostream>
 
-std::ostream& operator<<(std::ostream& out, PhysicsProperties const& particle) {
+std::ostream& operator<<(std::ostream& out, Essentials::PhysicsProperties const& particle) {
 	out << "- - - - - - - -" << std::endl;
 	out << "(" << particle.force.x << "," << particle.force.y << "," << particle.force.z << "," << particle.force.w << ")" << std::endl;
 	out << "(" << particle.velocity.x << "," << particle.velocity.y << "," << particle.velocity.z << "," << particle.velocity.w << ")" << std::endl;

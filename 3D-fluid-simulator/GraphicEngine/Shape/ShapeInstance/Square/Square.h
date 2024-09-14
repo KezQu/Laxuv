@@ -10,7 +10,7 @@ public:
 	Square& operator=(Square const& obj_copy) = delete;
 	Square& operator=(Square&& obj_move) = default;
 	~Square() override = default;
-	DistributionShape GetParticleDistribution() override;
+	Essentials::DistributionShape GetParticleDistribution() override;
 protected:
 	Square(Vertex v0, Vertex v1, Vertex v2, Vertex v3, uint64_t radius);
 };

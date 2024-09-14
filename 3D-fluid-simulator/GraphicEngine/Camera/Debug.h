@@ -2,10 +2,7 @@
 
 #include <GL/glew.h>
 #include <iostream>
-#include <sstream>
 #include <chrono>
-#include <deque>
-#include <regex>
 
 template<typename T>
 concept is_streamable = requires(std::ostringstream stream, T value) {
