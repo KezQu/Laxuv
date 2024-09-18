@@ -1,16 +1,18 @@
 ﻿#include "Toolbar.h"
 #include <GLFW/glfw3.h>
+#include <Camera.h>
 
 bool Toolbar::_fullscreen = false;
 std::unordered_map<Essentials::SimulationState, std::string> Toolbar::simulationState{
 	{Essentials::SimulationState::IDLE, "Start"},
 	{Essentials::SimulationState::INIT, "Start"},
-	{Essentials::SimulationState::SIMULATION, "Stop"}
+	{Essentials::SimulationState::SIMULATION, "Stop"},
+	{Essentials::SimulationState::GEN_FRAME, "Stop"},
 };
 
 Toolbar::Toolbar(ImVec2 const& size, ImVec2 const& position)
 	:Interface(size, position, ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoResize |
+		//ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoDecoration |
@@ -28,6 +30,14 @@ void Toolbar::Generate() {
 				Essentials::SimulationState::INIT :
 				Essentials::SimulationState::SIMULATION);
 		}
+		if (simulatorInstance.GetSimulationState() != Essentials::SimulationState::SIMULATION) {
+			ImGui::SameLine();
+			if (ImGui::Button("Generate frame")) {
+				simulatorInstance.SetSimulationState(Essentials::SimulationState::GEN_FRAME);
+			}
+		}
+		ImGui::SameLine(_size.x - 300);
+		ImGui::Text("%mouse speed: %.0f", Camera::GetCamera().GetMoveSpeed());
 		ImGui::SameLine(_size.x - 150);
 		ImGui::Text("%.0f", ImGui::GetIO().Framerate);
 		ImGui::SameLine(_size.x - 100);

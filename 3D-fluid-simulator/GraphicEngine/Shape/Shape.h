@@ -89,6 +89,7 @@ void Shape<Prim>::Bind() const {
 	GLint diffuseLightColorLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "diffuseLightColor");
 	GLint diffuseLightDirectionLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "diffuseLightDirection");
 	GLint shapeRadiusLocation = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "shapeRadius");
+	GLint kernelRadiusLoc = glGetProgramResourceLocation(renderer.ID(), GL_UNIFORM, "KernelRadius");
 
 	if (modelLocation != -1)
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(Model()));
@@ -117,6 +118,9 @@ void Shape<Prim>::Bind() const {
 	}
 	if (shapeRadiusLocation != -1) {
 		glUniform1ui(shapeRadiusLocation, _shapeRadius);
+	}
+	if (kernelRadiusLoc != -1) {
+		glUniform1ui(kernelRadiusLoc, static_cast<uint32_t>(4));
 	}
 }
 

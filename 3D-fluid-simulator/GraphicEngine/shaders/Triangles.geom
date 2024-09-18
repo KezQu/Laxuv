@@ -9,8 +9,6 @@ layout(triangle_strip, max_vertices = 24) out;
 layout(location = 0) out vec4 outColor; 
 layout(location = 1) out vec3 normal;
 
-uniform int shapeRadius;
-
 vec3 CalculateNormal(in vec4 primitiveVertices[3]);
 vec4 CalculateNDC(in vec3 position);
 

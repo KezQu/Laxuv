@@ -7,7 +7,7 @@
 
 Explorer::Explorer(ImVec2 const& size, ImVec2 const& position) 
 	:Interface(size, position, ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoResize |
+		//ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_NoScrollbar |

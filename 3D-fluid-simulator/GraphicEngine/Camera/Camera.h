@@ -30,4 +30,6 @@ public:
 	void ProjectionRescale(int width, int height);
 	void Move(ImGuiKey direction);
 	void Rotate(glm::vec3 rotation);
+	void AddMoveSpeed(float delta_speed);
+	float GetMoveSpeed();
 };

@@ -4,7 +4,7 @@ std::deque<std::string> Logger::_logHistory;
 
 Logger::Logger(std::ostringstream& log, ImVec2 const& size, ImVec2 const& position)
 	:Interface(size, position, ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoResize |
+		//ImGuiWindowFlags_NoResize |
 		ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_AlwaysAutoResize)

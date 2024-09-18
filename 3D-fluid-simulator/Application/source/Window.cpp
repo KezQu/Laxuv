@@ -48,8 +48,6 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
 
 		_(glDebugMessageCallback(Window::OpenGLErrorCallback, nullptr));
 		glfwSetFramebufferSizeCallback(_window, Window::GLFWFrameBufferResizeCallback);
-		//glfwSetKeyCallback(_window, Window::GLFWKeyCallback);
-		//glfwSetInputMode(_window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
@@ -98,6 +96,13 @@ void Window::EventLoop() {
 				entity->Calculate();
 			}
 			break;
+		case Essentials::SimulationState::GEN_FRAME:
+			for (auto& [id, entity] : SimulationInstance.GetEntities()) {
+				PhysicsDispatch::UpdateDeltaTime();
+				entity->Calculate();
+			}
+			SimulationInstance.SetSimulationState(Essentials::SimulationState::IDLE);
+			break;
 		}
 		for (auto& [id, entity] : SimulationInstance.GetEntities()) {
 			entity->Draw();
@@ -131,6 +136,13 @@ void Window::FramebufferResizeCheck() {
 	_windowSize = { static_cast<float>(width), static_cast<float>(height) };
 }
 void Window::ProcessKeyInputs() {
+	if (ImGui::IsKeyPressed(ImGuiKey_MouseWheelY) && ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
+		float delta_speed = ImGui::GetKeyData(ImGuiKey_MouseWheelY)->AnalogValue;
+		if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
+			delta_speed *= 10;
+		}
+		Camera::GetCamera().AddMoveSpeed(delta_speed);
+	}
 	if (ImGui::IsKeyPressed(ImGuiKey_W)) {
 		Camera::GetCamera().Move(ImGuiKey_W);
 	}
@@ -158,10 +170,7 @@ void Window::ProcessKeyInputs() {
 		if (glfwGetInputMode(glfwGetCurrentContext(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
 			static glm::dvec2 mousePosPrev{ 0.0 }, mousePosCurr{ 0.0 }, mouseDeltaPos{ 0.0 };
 			glfwGetCursorPos(glfwGetCurrentContext(), &mousePosCurr.x, &mousePosCurr.y);
-			mousePosCurr;
 			mouseDeltaPos = mousePosCurr - mousePosPrev;
-
-			auto viewportSize = CalculateViewport(_windowSize);
 			Camera::GetCamera().Rotate({ mouseDeltaPos.x, mouseDeltaPos.y, 0.f });
 			mousePosPrev = mousePosCurr;
 		}

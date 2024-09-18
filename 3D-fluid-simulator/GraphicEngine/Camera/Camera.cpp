@@ -59,6 +59,9 @@ void Camera::Move(ImGuiKey direction) {
 	default:
 		break;
 	}
+	if (_moveSpeed < 0) {
+		_moveSpeed = 0;
+	}
 	_position += moveDir * _moveSpeed;
 }
 void Camera::Rotate(glm::vec3 rotation) {
@@ -76,5 +79,14 @@ void Camera::Rotate(glm::vec3 rotation) {
 	if (glm::dot(tmpRightDir, tmpRightDir) > 5e-5) {
 		_forwardDir = nextforwardDir;
 	}
-	//_upDir = glm::normalize(glm::cross(tmpRightDir, _forwardDir));
+}
+
+void Camera::AddMoveSpeed(float delta_speed)
+{
+	_moveSpeed += delta_speed;
+}
+
+float Camera::GetMoveSpeed()
+{
+	return _moveSpeed;
 }

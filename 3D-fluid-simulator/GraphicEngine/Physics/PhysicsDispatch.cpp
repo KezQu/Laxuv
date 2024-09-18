@@ -1,4 +1,5 @@
 #include "PhysicsDispatch.h"
+#include <imgui.h>
 
 uint64_t PhysicsDispatch::_timestamp{};
 float PhysicsDispatch::_dt{};
@@ -48,6 +49,7 @@ void PhysicsDispatch::InitDefaultShape(Essentials::DistributionShape initObjectB
 	GLint distributionShapeLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "DistributionShape");
 	GLint physicsTypeLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "physicsType");
 	GLint shapeRadiusLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "shapeRadius");
+	GLint kernelRadiusLoc = glGetProgramResourceLocation(_physicsGenerator.ID(), GL_UNIFORM, "KernelRadius");
 	if (simulatorStateLoc != -1) {
 		glUniform1ui(simulatorStateLoc, static_cast<uint32_t>(Essentials::SimulationState::INIT));
 	}
@@ -60,7 +62,11 @@ void PhysicsDispatch::InitDefaultShape(Essentials::DistributionShape initObjectB
 	if (shapeRadiusLoc != -1) {
 		glUniform1ui(shapeRadiusLoc, static_cast<uint32_t>(shapeRadius));
 	}
+	if (kernelRadiusLoc != -1) {
+		glUniform1ui(kernelRadiusLoc, static_cast<uint32_t>(4));
+	}
 	_(glDispatchCompute(_meshDimensions.x / 10, _meshDimensions.y / 10, _meshDimensions.z / 10));
+	//_(glDispatchCompute(_meshDimensions.x, _meshDimensions.y, _meshDimensions.z));
 	_(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
 	auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
 	
@@ -74,7 +80,7 @@ void PhysicsDispatch::InitDefaultShape(Essentials::DistributionShape initObjectB
 	//		__debugbreak();
 	//	}
 	//}
-	testing_suite.Init();
+	//testing_suite.Init();
 }
 
 void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
@@ -98,41 +104,41 @@ void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
 	if (dtLoc != -1) {
 		glUniform1f(dtLoc, _dt);
 	}
-	_(glDispatchCompute(_meshDimensions.x / 10, _meshDimensions.y / 10, _meshDimensions.z / 10));
+	_(glDispatchCompute(_meshDimensions.x / 10., _meshDimensions.y / 10., _meshDimensions.z / 10.));
+	//_(glDispatchCompute(_meshDimensions.x, _meshDimensions.y, _meshDimensions.z));
 	_(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
 	auto lookupBuffer = _particleMesh.GetBufferSubData(0U, _meshDimensions.x * _meshDimensions.y * _meshDimensions.z);
 	
-
-	Vector Q_n1[64];
-	for (int i = 0; i < testing_suite.maxParticles; i++)
-	{
-		Q_n1[i] = testing_suite.GenerateHydrodynamics(i);
-	}
-	for (int i = 0; i < testing_suite.maxParticles; i++)
-	{
-		testing_suite.particle[i].velocity = glm::vec4(Q_n1[i].y / Q_n1[i].x, 0);
-		testing_suite.particle[i].position.x = testing_suite.particle[i].position.x + testing_suite.particle[i].velocity.x * _dt;
-		testing_suite.particle[i].position.y = testing_suite.particle[i].position.y + testing_suite.particle[i].velocity.y * _dt;
-		testing_suite.particle[i].position.z = testing_suite.particle[i].position.z + testing_suite.particle[i].velocity.z * _dt;
-		
-		testing_suite.particle[i].VolumeDensityPressureMass.x = 1. / testing_suite.CalculateOmega(i);
-		testing_suite.particle[i].VolumeDensityPressureMass.w = Q_n1[i].x;
-		
-		auto energy1 = Q_n1[i].z / testing_suite.particle[i].VolumeDensityPressureMass.w;
-		auto energy2 = testing_suite.particle[i].VolumeDensityPressureMass.w * pow(length(testing_suite.particle[i].velocity), 2) * 0.5;
-
-		testing_suite.particle[i].VolumeDensityPressureMass.y = testing_suite.particle[i].VolumeDensityPressureMass.w / testing_suite.particle[i].VolumeDensityPressureMass.x;
-		testing_suite.particle[i].VolumeDensityPressureMass.z = energy1 / testing_suite.particle[i].VolumeDensityPressureMass.x;
-	}
-	for (int i = 0; i < testing_suite.maxParticles; i++)
-	{
-		testing_suite.FindNeighbours(i, testing_suite.maxParticles);
-	}
+	//Vector Q_n1[Essentials::MaxParticles];
+	//for (int i = 0; i < Essentials::MaxParticles; i++)
+	//{
+	//	Q_n1[i] = testing_suite.GenerateHydrodynamics(i);
+	//}
+	//for (int i = 0; i < Essentials::MaxParticles; i++)
+	//{
+	//	testing_suite.particle[i].velocity = glm::vec4(Q_n1[i].y / Q_n1[i].x, 0);
+	//	testing_suite.particle[i].position = testing_suite.particle[i].position + testing_suite.particle[i].velocity * _dt;
+	//}
+	//for (int i = 0; i < Essentials::MaxParticles; i++)
+	//{
+	//	testing_suite.FindNeighbours(i, Essentials::MaxParticles);
+	//}
+	//for (int i = 0; i < Essentials::MaxParticles; i++)
+	//{
+	//	const float volume = 1. / testing_suite.CalculateOmega(i);
+	//	int n = 0;
+	//	while (testing_suite.particle[i].neighbours[n] != 0xffff) n++;
+	//	const float pressure = testing_suite.R * (n + 1) * 273.f / volume;
+	//	testing_suite.particle[i].VolumeDensityPressureMass.x = volume;
+	//	testing_suite.particle[i].VolumeDensityPressureMass.y = Q_n1[i].x / volume;
+	//	testing_suite.particle[i].VolumeDensityPressureMass.z = pressure;
+	//	testing_suite.particle[i].VolumeDensityPressureMass.w = Q_n1[i].x;
+	//}
 }
 
 void PhysicsDispatch::UpdateDeltaTime()
 {
 	_timestamp++;
 	//_dt = 1.f / ImGui::GetIO().Framerate;
-	_dt = 0.01667f;
+	_dt = 0.01f;
 }
