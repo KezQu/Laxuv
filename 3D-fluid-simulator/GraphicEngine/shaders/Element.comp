@@ -13,9 +13,8 @@ const uint32_t INIT = 1;
 const uint32_t SIMULATION = 2;
 const uint32_t GEN_FRAME = 3;
 
-const uint32_t forcesCount = 10;
-const uint32_t KernelRadius = 4;
-const uint32_t MaxNeighbours =  uint32_t(4 * pow(KernelRadius, 3));
+uniform uint32_t KernelRadius = 4;
+const uint32_t MaxNeighbours = 512;
 const uint16_t MaxValueNeighbour = uint16_t(0xffff);
 
 const float R = 8.31446261815324;

@@ -35,7 +35,7 @@ vec4 Disk(in uint32_t idx, in uvec3 invocation, in uint32_t maxParticles){
 vec4 Qube(in uint32_t idx, in uvec3 invocation, in uint32_t maxParticles){
 	return vec4(
 		invocation.x, 
-		invocation.y, 
+		invocation.y,
 		invocation.z,
 		0.f);
 }
@@ -79,5 +79,5 @@ vec4 InitDefaultShape(in uint32_t idx, in uvec3 invocation, in uint32_t maxParti
 	default:
 		break;
 	}
-	return positionCandidate;// * vec4(0.1, 0.1, 0.1, 1);
+	return positionCandidate;
 }

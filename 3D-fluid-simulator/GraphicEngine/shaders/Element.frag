@@ -5,9 +5,9 @@ layout(location = 3) in vec3 normal;
 
 out vec4 BaseColor;
 
-uniform vec3 ambientLightColor;
-uniform vec3 diffuseLightDirection;
-uniform vec3 diffuseLightColor;
+uniform vec3 ambientLightColor = vec3(1.0);
+uniform vec3 diffuseLightDirection = vec3(1.0);
+uniform vec3 diffuseLightColor = vec3(0.0);
 
 void main(){
 	if(gl_FrontFacing){

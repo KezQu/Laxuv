@@ -1,0 +1,30 @@
+# .clang-tidy
+Checks: >
+  -*,
+  google-*,
+  modernize-*,
+  readability-*,
+  performance-*,
+  clang-analyzer-*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  misc-*,
+  hicpp-*,
+  cert-*,
+  portability-*,
+  # Enable other checks if needed
+
+WarningsAsErrors: # Treat these checks as errors
+  - google-runtime-int,
+  - google-runtime-references,
+  - google-global-names-in-headers
+
+HeaderFilterRegex: '.*' # Apply the checks to all headers
+FormatStyle: google
+CheckOptions:
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE

@@ -8,8 +8,8 @@ const mat3 I = mat3(1, 0, 0,
         0, 1, 0,
         0, 0, 1);
 
-const uint32_t KernelRadius = 4;
-const uint MaxNeighbours =  uint32_t(4 * pow(KernelRadius, 3));
+uniform uint32_t KernelRadius = 4;
+const uint32_t MaxNeighbours = 512;
 const uint16_t MaxValueNeighbour = uint16_t(0xffff);
 
 uniform float dt;
@@ -44,7 +44,7 @@ void FindNeighbours(uint32_t index, uint32_t MaxParticles) {
     for (int j = 0; j < MaxNeighbours; j++) {
         particle[index].neighbours[j] = MaxValueNeighbour;
     }
-    uint32_t neighbourCount = 0;
+    uint32_t neighbourCount = 0; //TODO: Introduce bounding for out of range
     for (uint32_t j = 0; j < MaxParticles && neighbourCount < MaxNeighbours; j++) {
         vec3 x_j = vec3(particle[j].position.x, particle[j].position.y, particle[j].position.z);
         if (distance(x_i, x_j) <= 2 * KernelRadius && (index != j)) {
