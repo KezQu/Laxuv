@@ -9,8 +9,6 @@ layout(line_strip, max_vertices = vertexPrimitiveCount) out;
 layout(location = 0) out vec4 outColor; 
 layout(location = 1) out vec3 normal;
 
-uniform int shapeRadius;
-
 vec4 CalculateNDC(in vec3 position);
 
 void main(){

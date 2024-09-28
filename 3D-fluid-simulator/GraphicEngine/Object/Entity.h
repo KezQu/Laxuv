@@ -33,7 +33,7 @@ protected:
 	static uint64_t _internalID;
 	uint64_t _id;
 	std::string _name;
-	PhysicsType _physics;
+	Essentials::PhysicsType _physics;
 	bool _visible{ true };
 public:
 	using details_map = std::vector<std::pair<std::string, 
@@ -44,8 +44,8 @@ public:
 		std::function<uint8_t& ()>,
 		std::function<uint32_t& ()>,
 		std::function<uint64_t& ()>,
-		std::function<DistributionShape& ()>,
-		std::function<PhysicsType& ()>,
+		std::function<Essentials::DistributionShape& ()>,
+		std::function<Essentials::PhysicsType& ()>,
 		std::function<float& ()>,
 		std::function<glm::vec2& ()>,
 		std::function<glm::vec3& ()>,
@@ -59,7 +59,7 @@ public:
 
 	std::string& Name();
 	bool& Visible();
-	PhysicsType& GetPhysicsType();
+	Essentials::PhysicsType& GetPhysicsType();
 	uint64_t ID() const;
 	virtual void Initialize();
 	virtual void Calculate();
@@ -68,5 +68,5 @@ public:
 	virtual details_map Details();
 
 protected:
-	Entity(PhysicsType physics);
+	Entity(Essentials::PhysicsType physics);
 };

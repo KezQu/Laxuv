@@ -1,76 +1,125 @@
 #version 460 core
+#extension GL_NV_gpu_shader5 : enable
 
+//layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout (local_size_x = 10, local_size_y = 10, local_size_z = 10) in;
 
-struct PhysicsProperties {
-	vec4 forceMass;
-	vec4 velocity;
-	vec4 position;
-};
+const uint32_t NONE = 0;
+const uint32_t STATIC = 1;
+const uint32_t DYNAMIC = 2;
 
-layout(std140, binding = 0) buffer dataBuffer{
-	PhysicsProperties particle[];
-};
+const uint32_t IDLE = 0;
+const uint32_t INIT = 1;
+const uint32_t SIMULATION = 2;
+const uint32_t GEN_FRAME = 3;
 
-const uint NONE = 0;
-const uint STATIC = 1;
-const uint DYNAMIC = 2;
+uniform uint32_t KernelRadius = 4;
+const uint32_t MaxNeighbours = 512;
+const uint16_t MaxValueNeighbour = uint16_t(0xffff);
 
-uniform uint physicsType = NONE;
+const float R = 8.31446261815324;
 
-const uint IDLE = 0;
-const uint INIT = 1;
-const uint SIMULATION = 2;
+const uvec3 MeshSize = gl_NumWorkGroups * gl_WorkGroupSize;
 
-uniform uint SimulatorState = IDLE;
-uniform uint shapeRadius = 1;
-uniform float dt = 0.f;
-
-vec4 ApplyGravitation(in vec4 particleForceMass, in float dt);
-vec4 InitDefaultShape(in uint idx, in uint maxParticles);
-
-uvec3 MeshSize = gl_NumWorkGroups * gl_WorkGroupSize;
-
-uint index = gl_GlobalInvocationID.x + 
+const uint32_t MaxParticles = MeshSize.x * 
+						  MeshSize.y * 
+						  MeshSize.z;
+const uint32_t index = gl_GlobalInvocationID.x + 
 			(gl_GlobalInvocationID.y * MeshSize.x) + 
 			(gl_GlobalInvocationID.z * MeshSize.y * MeshSize.x);
 
-const uint maxParticles = gl_NumWorkGroups.x * 
-						gl_NumWorkGroups.y * 
-						gl_NumWorkGroups.z *
-						gl_WorkGroupSize.x *
-						gl_WorkGroupSize.y *
-						gl_WorkGroupSize.z;
 
-const uint forcesCount = 10;
-vec4 appliedForcesMass[forcesCount];
+uniform uint32_t physicsType = NONE;
+uniform uint32_t SimulatorState = IDLE;
+uniform uint32_t shapeRadius = 1;
+uniform float dt;
+
+struct PhysicsProperties {
+	vec4 force;
+	vec4 velocity;
+	vec4 position;
+	vec4 VolumeDensityPressureMass;
+	uint16_t neighbours[MaxNeighbours];
+};
+
+struct Vector{
+	float x;
+	vec3 y;
+	float z;
+};
+
+struct Flux {
+	vec3 x;
+	mat3 y;
+	vec3 z;
+};
+
+layout(std430, binding = 0) buffer dataBuffer{
+	PhysicsProperties particle[];
+};
+
+vec4 InitDefaultShape(in uint32_t idx, in uvec3 invocation, in uint32_t maxParticles);
+
+mat3 GetRotationZMatrix(float alpha_z);
+mat3 GetRotationYMatrix(float alpha_y);
+
+float CalculateKernelWeight(vec3 x);
+vec3 CalculateFrameVelocity(uint32_t index_i, uint32_t index_j);
+void FindNeighbours(uint32_t index, uint32_t MaxParticles);
+
+float CalculateOmega(uint32_t index_x);
+
+float CalculatePsi(uint32_t index_i, uint32_t index_x);
+vec3 CalculateNearPsi(uint32_t index_i, uint32_t index_x);
+mat3 CalculateGradW(uint32_t index_x, Vector Wp);
+
+Vector CalculateTimeDerivativeOfW(uint32_t index_x, Vector Wp);
+Vector PrepareRiemmanProblemSide(uint32_t index_x, vec3 v_frame, vec3 x_mean_x, out vec3 dir_versor);
+Flux CalculateReimannProblem(uint32_t index_i, uint32_t index_j);
+	
+Vector GenerateHydrodynamics(uint32_t index_i);
 
 void main(){
 	if(SimulatorState == INIT){
-		particle[index].forceMass = vec4(0,0,0,1);
-		particle[index].velocity = vec4(0);
+		particle[index].force = vec4(0);
+		uint32_t i = index;
+//		particle[index].velocity = vec4((i % 10), (-i % 7), (i % 5), 0) / 10.;
+//		particle[index].velocity = vec4(1.f / ((index % 3) + 1));
+		particle[index].velocity= vec4(0);
 		particle[index].position= vec4(0);
+		for(uint32_t i = 0; i < MaxNeighbours; i++){
+			particle[index].neighbours[i] = MaxValueNeighbour;
+		}
 		if(physicsType != NONE){
-			particle[index].position = InitDefaultShape(index, maxParticles) * shapeRadius;
+			particle[index].position = InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * shapeRadius * 2;
+			FindNeighbours(index, MaxParticles);
 		}
+		const float volume = 1. / CalculateOmega(index);
+		const float density = 1.2754f;
+		int32_t n = 0;
+		while (particle[index].neighbours[n] != MaxValueNeighbour) n++;
+		const float pressure = R* (n + 1) * 273.f / volume;
+		particle[index].VolumeDensityPressureMass = vec4(volume, density, pressure, density * volume);
 	}
-	else if(SimulatorState == SIMULATION && physicsType == DYNAMIC){
-		for(int i = 0; i < forcesCount; i++){
-			appliedForcesMass[i] = vec4(0);
-		}
-		appliedForcesMass[0] = ApplyGravitation(particle[index].forceMass, dt);
+	else if((SimulatorState == GEN_FRAME || SimulatorState == SIMULATION) && physicsType == DYNAMIC){
 
-		vec4 netForceMass = vec4(0);
+		Vector Q_n1 = Vector(0, vec3(0), 0);
+		Q_n1 = GenerateHydrodynamics(index);
+		barrier();
+		particle[index].velocity = vec4(Q_n1.y / Q_n1.x, 0);
+		particle[index].position = particle[index].position + particle[index].velocity * dt;
 
-		for(int i = 0; i < forcesCount; i++){
-			netForceMass += appliedForcesMass[i];
+		for(uint32_t i = 0; i < MaxNeighbours; i++){
+			particle[index].neighbours[i] = MaxValueNeighbour;
 		}
-
-		particle[index].forceMass = netForceMass;
-		if(particle[index].forceMass.w != 0){
-			vec3 a = particle[index].forceMass.xyz / particle[index].forceMass.w;
-			particle[index].velocity.xyz = particle[index].velocity.xyz + a * dt;
-			particle[index].position.xyz = particle[index].position.xyz + particle[index].velocity.xyz * dt;
-		}
+		FindNeighbours(index, MaxParticles);
+		const float volume = 1. / CalculateOmega(index);
+		int32_t n = 0;
+		while (particle[index].neighbours[n] != MaxValueNeighbour) n++;
+		const float pressure = R * (n + 1) * 273.f / volume;
+		particle[index].VolumeDensityPressureMass.x = volume;
+		particle[index].VolumeDensityPressureMass.y = Q_n1.x / volume;
+		particle[index].VolumeDensityPressureMass.z = pressure;
+		particle[index].VolumeDensityPressureMass.w = Q_n1.x;
 	}
 }

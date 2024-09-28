@@ -24,7 +24,7 @@ Qube::Qube(Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5, Vertex v6, Ver
 	auto& coordBufferData = _vertexArray.Data().coordinateBuffer.Data();
 }
 
-DistributionShape Qube::GetParticleDistribution()
+Essentials::DistributionShape Qube::GetParticleDistribution()
 {
-	return DistributionShape::QUBE;
+	return Essentials::DistributionShape::QUBE;
 }

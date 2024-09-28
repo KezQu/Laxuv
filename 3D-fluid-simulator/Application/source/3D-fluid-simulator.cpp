@@ -2,6 +2,7 @@
 
 int main()
 {
+	std::srand(0);
 	try {
 		Window mainWindow({ 1280, 720 }, "Laxuv");
 		mainWindow.EventLoop();

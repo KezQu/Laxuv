@@ -1,0 +1,9 @@
+# .clang-format
+BasedOnStyle: Google
+IndentWidth: 2
+ColumnLimit: 80
+AllowShortFunctionsOnASingleLine: Empty # Keeps single-line empty functions
+BreakBeforeBraces: Allman # Google Style uses LLVM brace formatting (adjust if needed)
+SpacesInAngles: false # No spaces in angle brackets for templates
+DerivePointerAlignment: false # Explicitly define pointer alignment
+PointerAlignment: Left # Google style places the '*' or '&' aligned to the type

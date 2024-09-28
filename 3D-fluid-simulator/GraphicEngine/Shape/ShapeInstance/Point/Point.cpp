@@ -5,7 +5,7 @@ Point::Point(Vertex center, uint64_t radius)
 {
 }
 
-DistributionShape Point::GetParticleDistribution()
+Essentials::DistributionShape Point::GetParticleDistribution()
 {
-	return DistributionShape::SPHERE;
+	return Essentials::DistributionShape::SPHERE;
 }

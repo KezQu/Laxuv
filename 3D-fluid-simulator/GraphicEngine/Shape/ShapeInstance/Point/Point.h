@@ -11,5 +11,5 @@ public:
 	Point& operator=(Point const& obj_copy) = delete;
 	Point& operator=(Point&& obj_move) = default;
 	~Point() override = default;
-	DistributionShape GetParticleDistribution() override;
+	Essentials::DistributionShape GetParticleDistribution() override;
 };
