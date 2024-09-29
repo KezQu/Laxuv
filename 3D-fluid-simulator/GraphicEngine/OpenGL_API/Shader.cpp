@@ -1,15 +1,34 @@
 #include "Shader.h"
 
+#include <utility>
+
 Shader::Shader(GLenum type, std::string const& filepath) : _type{type}
 {
   _id = _(glCreateShader(type));
   AddSource(filepath);
 }
 
+// Shader::Shader(Shader const& objCopy)
+//	:_source{objCopy._source},
+//	_type{ objCopy._type }
+//{
+//	_id = _(glCreateShader(_type));
+// }
+
 Shader::Shader(Shader&& objMove)
 {
   *this = std::move(objMove);
 }
+
+// Shader& Shader::operator=(Shader const& objCopy)
+//{
+//	this->~Shader();
+//	_source = objCopy._source;
+//	_type = objCopy._type;
+//	_id = _(glCreateShader(_type));
+//
+//	return *this;
+// }
 
 Shader& Shader::operator=(Shader&& objMove)
 {
@@ -24,7 +43,7 @@ Shader& Shader::operator=(Shader&& objMove)
 
 Shader::~Shader()
 {
-  if (_id != 0)
+  if (glIsShader(_id))
   {
     _(glDeleteShader(_id));
   }

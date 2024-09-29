@@ -19,11 +19,11 @@ Uniform<glm::mat4> Camera::View()
   auto view = glm::lookAt(_position, _position + _forwardDir, _upDir);
   return Uniform<glm::mat4>{view, "view"};
 }
-Uniform<glm::mat4> const& Camera::Projection() const
+Uniform<glm::mat4> const Camera::Projection() const
 {
   return Uniform<glm::mat4>{_projection, "projection"};
 }
-Uniform<glm::vec2> const& Camera::Viewport() const
+Uniform<glm::vec2> const Camera::Viewport() const
 {
   return Uniform<glm::vec2>{{_worldSize.width, _worldSize.height}, "viewport"};
 }

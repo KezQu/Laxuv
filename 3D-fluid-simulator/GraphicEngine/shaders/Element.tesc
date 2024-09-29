@@ -1,16 +1,16 @@
 #version 460 core
 
-layout(location = 0) in vec4 inColor[];
+layout(location = 0) in vec4 inColorTesc[];
 layout(location = 3) in vec4 inShapeOffset[];
 
 layout(vertices = 3) out;
-layout(location = 0) out vec4 outColor[];
+layout(location = 0) out vec4 outColorTesc[];
 layout(location = 3) out vec4 outShapeOffset[];
 
-uniform int subdivision;
+uniform uint subdivision;
 
 void main(){
-	outColor[gl_InvocationID] = inColor[gl_InvocationID];
+	outColorTesc[gl_InvocationID] = inColorTesc[gl_InvocationID];
 	outShapeOffset[gl_InvocationID] = inShapeOffset[gl_InvocationID];
 	gl_TessLevelOuter[gl_InvocationID] = subdivision;
 	gl_TessLevelInner[0] = subdivision;

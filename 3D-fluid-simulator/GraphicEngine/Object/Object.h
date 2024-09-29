@@ -21,7 +21,6 @@ class Object : public Entity
   void Initialize() override;
   void Calculate() override;
   void Draw() const override;
-  void UpdateBoundingDimensions();
   details_map Details() override;
 };
 
@@ -35,9 +34,8 @@ Object<Prim>::Object(Shape<Prim>* const shape, Essentials::PhysicsType physics)
 template <GLenum Prim>
 void Object<Prim>::Initialize()
 {
-  UpdateBoundingDimensions();
-  _physicsDispatch.InitDefaultShape(_shape->GetParticleDistribution(),
-                                    GetPhysicsType(), 1);
+  // _physicsDispatch.InitDefaultShape(_shape->GetParticleDistribution(),
+  //                                   GetPhysicsType(), 1);
 }
 template <GLenum Prim>
 void Object<Prim>::Calculate()
@@ -63,37 +61,34 @@ void Object<Prim>::Draw() const
 }
 
 template <GLenum Prim>
-inline void Object<Prim>::UpdateBoundingDimensions()
-{
-  glm::uvec3 newMeshDimensions{_shape->GetRadius() / 10};
-
-  _physicsDispatch.UpdateMeshDimensions(newMeshDimensions);
-}
-template <GLenum Prim>
 Object<Prim>::details_map Object<Prim>::Details()
 {
   details_map details = Entity::Details();
-  details.push_back({"Location",
-                     {[=]() { return std::ref(this->_shape->GetLocation()); },
-                      DetailsType::VEC3}});
+  details.push_back(
+      {"Location",
+       {[this]() { return std::ref(this->_shape->GetLocation()); },
+        DetailsType::VEC3}});
   details.push_back({"Rotation",
-                     {[=]() { return std::ref(this->_shape->GetRotate()); },
+                     {[this]() { return std::ref(this->_shape->GetRotate()); },
                       DetailsType::VEC3}});
   details.push_back({"Scale",
-                     {[=]() { return std::ref(this->_shape->GetScale()); },
+                     {[this]() { return std::ref(this->_shape->GetScale()); },
                       DetailsType::VEC3}});
-  details.push_back({"Light",
-                     {[=]() { return std::ref(this->_shape->EnableLight()); },
-                      DetailsType::BOOL}});
+  details.push_back(
+      {"Light",
+       {[this]() { return std::ref(this->_shape->EnableLight()); },
+        DetailsType::BOOL}});
   details.push_back(
       {"Subdivision",
-       {[=]() { return std::ref(this->_shape->GetSubdivision()); },
+       {[this]()
+        { return std::ref(this->_shape->GetSubdivision().GetValue()); },
         DetailsType::UINT32}});
-  details.push_back({"Radius",
-                     {[=]() { return std::ref(this->_shape->GetRadius()); },
-                      DetailsType::UINT32}});
+  details.push_back(
+      {"Radius",
+       {[this]() { return std::ref(this->_shape->GetRadius().GetValue()); },
+        DetailsType::UINT32}});
   details.push_back({"Physics type",
-                     {[=]() { return std::ref(this->GetPhysicsType()); },
+                     {[this]() { return std::ref(this->GetPhysicsType()); },
                       DetailsType::PHYSTYPE}});
   return details;
 }

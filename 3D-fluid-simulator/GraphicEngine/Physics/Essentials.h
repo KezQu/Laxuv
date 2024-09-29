@@ -46,22 +46,28 @@ enum class PhysicsType : uint8_t
 |    XXXXXXXXXXX   | |      Position
 |    XXXXXXXXXXX   | |      Volume   |     Density   |     Pressure     | Mass |
 */
-struct PhysicsProperties
+struct ParticleProperties
 {
   glm::vec4 force{0};
   glm::vec4 velocity{0};
   glm::vec4 position{0};
   glm::vec4 VolumeDensityPressureMass{0};
-  uint16_t neighbours[512];
+  uint32_t neighbours[512];
 };
 
 struct FluidProperties
 {
+  uint32_t mesh_radius{1U};
   Uniform<float> gamma{1.4f, "gamma"};
+  Uniform<float> mass{1.2754f, "mass"};
+  Uniform<float> pressure0{0.f, "pressure0"};
   Uniform<uint32_t> kernel_radius{4U, "kernelRadius"};
+  Uniform<uint32_t> particle_radius{0U, "particleRadius"};
+  Uniform<uint8_t> distribution_shape{
+      static_cast<uint8_t>(DistributionShape::QUBE), "DistributionShape"};
 };
 
 }  // namespace Essentials
 
 std::ostream& operator<<(std::ostream& out,
-                         Essentials::PhysicsProperties const& particle);
+                         Essentials::ParticleProperties const& particle);

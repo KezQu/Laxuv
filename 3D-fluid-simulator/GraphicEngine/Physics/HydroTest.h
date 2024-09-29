@@ -31,9 +31,10 @@ struct HydroTest
   const glm::mat3 I = glm::mat3(1, 0, 0, 0, 1, 0, 0, 0, 1);
   const uint16_t MaxValueNeighbour = uint16_t(0xffff);
 
-  std::vector<Essentials::PhysicsProperties> particle{Essentials::MaxParticles};
+  std::vector<Essentials::ParticleProperties> particle{
+      Essentials::MaxParticles};
 
-  std::vector<Essentials::PhysicsProperties> Init()
+  std::vector<Essentials::ParticleProperties> Init()
   {
     for (int i = 0; i < Essentials::MaxParticles; i++)
     {

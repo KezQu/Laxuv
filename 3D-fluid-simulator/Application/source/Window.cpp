@@ -243,10 +243,16 @@ void Window::LoadFont(std::vector<std::string> const& font_paths)
     {
       ImGuiIO& io = ImGui::GetIO();
       const ImWchar ranges[] = {
-          0x2300,  0x23ff,   // Miscellaneous Technical
-          0x1f300, 0x1f5ff,  // Miscellaneous Symbols and Pictograms
-          0x020,   0x007f,   // Latin
-          0,
+          static_cast<uint16_t>(0x2300),
+          static_cast<uint16_t>(0x23ff),
+          // Miscellaneous Technical
+          static_cast<uint16_t>(0x1f300),
+          static_cast<uint16_t>(0x1f5ff),
+          // Miscellaneous Symbols and Pictograms
+          static_cast<uint16_t>(0x020),
+          static_cast<uint16_t>(0x007f),
+          // Latin
+          0U,
       };
       ImFontConfig config;
       config.OversampleH = 1;

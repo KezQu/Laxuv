@@ -25,7 +25,7 @@ class Shape
   glm::vec3 _translation{0.f};
   glm::vec3 _scale{1.f};
   glm::vec3 _rotation{0.f};
-  Uniform<glm::vec3> _center{0.f, "center "};
+  Uniform<glm::vec3> _center{glm::vec3{0.f}, "center "};
   Uniform<uint32_t> _subdivision{1U, "subdivision"};
   Uniform<uint32_t> _shapeRadius{0U, "shapeRadius"};
   bool _enableTesselation{false};
@@ -47,11 +47,11 @@ class Shape
   void Bind() const;
   GLenum GetDrawPrimitive() const;
   VertexArray const& GetVA() const;
-  glm::vec3 const& GetCenter() const;
+  Uniform<glm::vec3> const& GetCenter() const;
   bool& EnableLight();
   bool& EnableTesselation();
-  uint32_t& GetSubdivision();
-  uint32_t& GetRadius();
+  Uniform<uint32_t>& GetSubdivision();
+  Uniform<uint32_t>& GetRadius();
   virtual Essentials::DistributionShape GetParticleDistribution() = 0;
 };
 
@@ -59,7 +59,7 @@ template <GLenum Prim>
 Shape<Prim>::Shape(VertexArray&& vertexArray, uint32_t shapeRadius,
                    bool enableTess)
     : _vertexArray{std::move(vertexArray)},
-      _shapeRadius{shapeRadius},
+      _shapeRadius{shapeRadius, "shapeRadius"},
       _enableTesselation{enableTess}
 {
   if (_enableTesselation == true)
@@ -73,7 +73,7 @@ Shape<Prim>::Shape(VertexArray&& vertexArray, uint32_t shapeRadius,
     _center += glm::vec3(coordBuffer.Data()[i + 0], coordBuffer.Data()[i + 1],
                          coordBuffer.Data()[i + 2]);
   }
-  _center /= coordBuffer.Size() / coordBuffer.AttribSize();
+  _center /= static_cast<float>(coordBuffer.Size() / coordBuffer.AttribSize());
 }
 
 template <GLenum Prim>
@@ -90,8 +90,8 @@ void Shape<Prim>::Bind() const
   renderer.Bind();
 
   Model().MapUniform(renderer.ID());
-  View().MapUniform(renderer.ID());
-  Projection().MapUniform(renderer.ID());
+  Camera::GetCamera().View().MapUniform(renderer.ID());
+  Camera::GetCamera().Projection().MapUniform(renderer.ID());
   Camera::GetCamera().Viewport().MapUniform(renderer.ID());
   _center.MapUniform(renderer.ID());
   _subdivision.MapUniform(renderer.ID());
@@ -143,7 +143,7 @@ Uniform<glm::mat4> Shape<Prim>::Model() const
                ? glm::rotate(I, glm::radians(angle), glm::normalize(_rotation))
                : I;
   auto S = glm::dot(_scale, _scale) != 0.f ? glm::scale(I, _scale) : I;
-  return Unifrom<glm::mat4>{T * R * S, "model"};
+  return Uniform<glm::mat4>{T * R * S, "model"};
 }
 
 template <GLenum Prim>
@@ -159,7 +159,7 @@ VertexArray const& Shape<Prim>::GetVA() const
 }
 
 template <GLenum Prim>
-glm::vec3 const& Shape<Prim>::GetCenter() const
+Uniform<glm::vec3> const& Shape<Prim>::GetCenter() const
 {
   return _center;
 }
@@ -175,12 +175,12 @@ bool& Shape<Prim>::EnableTesselation()
   return _enableTesselation;
 }
 template <GLenum Prim>
-uint32_t& Shape<Prim>::GetSubdivision()
+Uniform<uint32_t>& Shape<Prim>::GetSubdivision()
 {
   return _subdivision;
 }
 template <GLenum Prim>
-uint32_t& Shape<Prim>::GetRadius()
+Uniform<uint32_t>& Shape<Prim>::GetRadius()
 {
   return _shapeRadius;
 }

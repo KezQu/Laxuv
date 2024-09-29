@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Qube.h>
 #include <Line.h>
 #include <Point.h>
+#include <Qube.h>
 #include <Sphere.h>
 #include <Square.h>

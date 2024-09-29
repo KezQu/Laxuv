@@ -16,18 +16,17 @@
 class PhysicsDispatch
 {
  private:
-  ShaderStorageBuffer<Essentials::PhysicsProperties> _particleMesh;
+  ShaderStorageBuffer<Essentials::ParticleProperties> _particleMesh;
+  Essentials::FluidProperties _fluid_properties;
   Program _physicsGenerator;
   HydroTest testing_suite{};
-  Essentials::FluidProperties _fluidProperties;
-  glm::uvec3 _meshDimensions;
+  uint32_t _work_groups{1U};
   static Uniform<float> _dt;
 
  private:
   void Bind() const;
-  void BindUniforms(Essentials::DistributionShape initObjectBounds,
-                    Essentials::PhysicsType objectPhysicsType,
-                    uint32_t shapeRadius) const;
+  void BindUniforms(Essentials::PhysicsType objectPhysicsType,
+                    Essentials::SimulationState current_sim_state) const;
 
  public:
   PhysicsDispatch(glm::ivec3 dimensions);
@@ -37,13 +36,13 @@ class PhysicsDispatch
   PhysicsDispatch& operator=(PhysicsDispatch&& obj_move) = default;
   ~PhysicsDispatch() = default;
 
-  ShaderStorageBuffer<Essentials::PhysicsProperties> const&
+  ShaderStorageBuffer<Essentials::ParticleProperties> const&
   GetParticleMeshBuffer() const;
-  glm::uvec3 const& GetMeshDimensions() const;
-  void UpdateMeshDimensions(glm::uvec3 dimensions);
-  void InitDefaultShape(Essentials::DistributionShape initObjectBounds,
-                        Essentials::PhysicsType objectPhysicsType,
-                        uint32_t shapeRadius);
+  Essentials::FluidProperties& GetFluidProperties();
+  void UpdateMeshDimensions();
+  void InitDefaultShape(Essentials::PhysicsType objectPhysicsType,
+                        uint32_t particleRadius);
   void GenerateForces(Essentials::PhysicsType objectPhysicsType);
+  void Calculate(uint32_t work_groups, bool create_snapshot);
   static void UpdateDeltaTime();
 };

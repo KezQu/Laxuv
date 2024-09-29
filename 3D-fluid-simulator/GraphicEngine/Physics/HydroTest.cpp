@@ -1,5 +1,3 @@
-#pragma once
-
 #include "HydroTest.h"
 
 #include "glm/glm.hpp"

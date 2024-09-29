@@ -9,7 +9,7 @@ Explorer::Explorer(ImVec2 const& size, ImVec2 const& position)
     : Interface(size, position,
                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
-                    ImGuiWindowFlags_NoScrollbar |
+                    // ImGuiWindowFlags_NoScrollbar |
                     ImGuiWindowFlags_AlwaysAutoResize)
 {
 }
@@ -20,64 +20,69 @@ void Explorer::Generate()
   ImGui::SetNextWindowSize(_size);
 
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {0, 0});
+  // ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, {0, 0});
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 0});
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, {0, 0});
 
   static std::uint64_t selected = 0;
   if (ImGui::Begin("##Explorer", nullptr, _flags))
   {
     static std::pair<int, int> objectSelect = {0, 0};
-
-    ImGui::SetNextItemWidth(_size.x / 3.f);
-    ImGui::Combo("##EntityType", &objectSelect.first, " \0Object\0Particle\0");
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(_size.x / 3.f);
-    ImGui::Combo("##EntityShape", &objectSelect.second,
-                 " \0Point\0Line\0Square\0Qube\0Sphere\0");
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(_size.x / 3.f);
-    if (ImGui::Button("Add Entity##AddEntity") && objectSelect.first != 0 &&
-        objectSelect.second != 0)
+    if (ImGui::BeginChild("##SelectObject", ImVec2(_size.x, 20)))
     {
-      switch (objectSelect.second)
+      ImGui::SameLine();
+      ImGui::SetNextItemWidth(_size.x / 3.);
+      ImGui::Combo("##EntityType", &objectSelect.first,
+                   " \0Object\0Particle\0");
+      ImGui::SameLine();
+      ImGui::SetNextItemWidth(_size.x / 3.);
+      ImGui::Combo("##EntityShape", &objectSelect.second,
+                   " \0Point\0Line\0Square\0Qube\0Sphere\0");
+      ImGui::SameLine();
+      ImGui::SetNextItemWidth(_size.x / 3.);
+      if (ImGui::Button("Add Entity##AddEntity") && objectSelect.first != 0 &&
+          objectSelect.second != 0)
       {
-        case 1:
-          objectSelect.first == 1
-              ? simulatorInstance.Append(Object(new Point()))
-              : simulatorInstance.Append(Particles(new Point(), 1U));
-          break;
-        case 2:
-          objectSelect.first == 1
-              ? simulatorInstance.Append(Object(new Line()))
-              : simulatorInstance.Append(Particles(new Line(), 1U));
-          break;
-        case 3:
-          objectSelect.first == 1
-              ? simulatorInstance.Append(Object(new Square()))
-              : simulatorInstance.Append(Particles(new Square(), 1U));
-          break;
-        case 4:
-          objectSelect.first == 1
-              ? simulatorInstance.Append(Object(new Qube()))
-              : simulatorInstance.Append(Particles(new Qube(), 1U));
-          break;
-        case 5:
-          objectSelect.first == 1
-              ? simulatorInstance.Append(Object(new Sphere()))
-              : simulatorInstance.Append(Particles(new Sphere(), 1U));
-          break;
+        switch (objectSelect.second)
+        {
+          case 1:
+            objectSelect.first == 1
+                ? simulatorInstance.Append(Object(new Point()))
+                : simulatorInstance.Append(Particles(new Point(), 1U));
+            break;
+          case 2:
+            objectSelect.first == 1
+                ? simulatorInstance.Append(Object(new Line()))
+                : simulatorInstance.Append(Particles(new Line(), 1U));
+            break;
+          case 3:
+            objectSelect.first == 1
+                ? simulatorInstance.Append(Object(new Square()))
+                : simulatorInstance.Append(Particles(new Square(), 1U));
+            break;
+          case 4:
+            objectSelect.first == 1
+                ? simulatorInstance.Append(Object(new Qube()))
+                : simulatorInstance.Append(Particles(new Qube(), 1U));
+            break;
+          case 5:
+            objectSelect.first == 1
+                ? simulatorInstance.Append(Object(new Sphere()))
+                : simulatorInstance.Append(Particles(new Sphere(), 1U));
+            break;
+        }
       }
     }
-    if (ImGui::BeginChild("##ObjectExplorer", ImVec2(_size.x, _size.y / 2),
-                          ImGuiChildFlags_None,
-                          ImGuiWindowFlags_HorizontalScrollbar))
+    ImGui::EndChild();
+    if (ImGui::BeginChild("##ObjectExplorer",
+                          ImVec2(_size.x, _size.y / 2 - 10)))
     {
-      if (ImGui::BeginTable("##NamesTable", 2,
-                            ImGuiTableFlags_Borders |
-                                ImGuiTableFlags_NoHostExtendY |
-                                ImGuiTableFlags_NoHostExtendX,
-                            ImVec2(_size.x, _size.y / 2)))
+      if (ImGui::BeginTable("##NamesTable", 2, ImGuiTableFlags_Borders,
+                            ImVec2(_size.x, _size.y / 2 - 10)))
       {
-        ImGui::TableSetupColumn("##Visibilty",
-                                ImGuiTableColumnFlags_WidthFixed);
+        ImGui::TableSetupColumn("##Visibilty", ImGuiTableColumnFlags_WidthFixed,
+                                8.);
         ImGui::TableSetupColumn("##Name", ImGuiTableColumnFlags_WidthStretch);
         for (auto& [k, v] : simulatorInstance.GetEntities())
         {
@@ -97,15 +102,10 @@ void Explorer::Generate()
       ImGui::EndTable();
     }
     ImGui::EndChild();
-    if (ImGui::BeginChild("##ObjectDetails", ImVec2(_size.x, _size.y / 2),
-                          ImGuiChildFlags_None,
-                          ImGuiWindowFlags_HorizontalScrollbar))
+    if (ImGui::BeginChild("##ObjectDetails", ImVec2(_size.x, _size.y / 2 - 10)))
     {
-      if (ImGui::BeginTable("##DetailsTable", 2,
-                            ImGuiTableFlags_Borders |
-                                ImGuiTableFlags_NoHostExtendY |
-                                ImGuiTableFlags_NoHostExtendX,
-                            ImVec2(_size.x, _size.y / 2)) &&
+      if (ImGui::BeginTable("##DetailsTable", 2, ImGuiTableFlags_Borders,
+                            ImVec2(_size.x, _size.y / 2 - 10)) &&
           selected != 0)
       {
         ImGui::TableSetupColumn("##InfoName", ImGuiTableColumnFlags_WidthFixed,
@@ -141,6 +141,12 @@ void Explorer::Generate()
                              1, INT_MIN / 2, INT_MAX / 2, "%d",
                              ImGuiSliderFlags_AlwaysClamp);
               break;
+            case DetailsType::UINT8:
+              ImGui::DragScalar(
+                  ("##" + info.first).c_str(), ImGuiDataType_U8,
+                  &std::get<DetailsType::UINT8>(info.second.first)(), 1,
+                  (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
+              break;
             case DetailsType::UINT32:
               ImGui::DragScalar(
                   ("##" + info.first).c_str(), ImGuiDataType_U32,
@@ -153,12 +159,12 @@ void Explorer::Generate()
                   &std::get<DetailsType::UINT64>(info.second.first)(), 1,
                   (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
               break;
-            case DetailsType::DISTSHAPE:
-              ImGui::DragScalar(
-                  ("##" + info.first).c_str(), ImGuiDataType_U8,
-                  &std::get<DetailsType::DISTSHAPE>(info.second.first)(), 1,
-                  (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
-              break;
+            // case DetailsType::DISTSHAPE:
+            //   ImGui::DragScalar(
+            //       ("##" + info.first).c_str(), ImGuiDataType_U8,
+            //       &std::get<DetailsType::DISTSHAPE>(info.second.first)(), 1,
+            //       (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
+            //   break;
             case DetailsType::PHYSTYPE:
               ImGui::DragScalar(
                   ("##" + info.first).c_str(), ImGuiDataType_U8,
@@ -200,12 +206,13 @@ void Explorer::Generate()
         }
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        if (ImGui::Button("Delete"))
+        if (ImGui::Button("Delete", ImVec2(-1, -1)))
         {
           simulatorInstance.Delete(selected);
           selected = 0;
         }
-        if (ImGui::Button("Recompile"))
+        ImGui::TableSetColumnIndex(1);
+        if (ImGui::Button("Recompile", ImVec2(-1, -1)))
         {
           simulatorInstance.GetEntities()[selected]->Initialize();
         }
@@ -215,5 +222,5 @@ void Explorer::Generate()
     ImGui::EndChild();
   }
   ImGui::End();
-  ImGui::PopStyleVar();
+  ImGui::PopStyleVar(4);
 }
