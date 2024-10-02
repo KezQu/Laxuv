@@ -1,13 +1,7 @@
 #pragma once
 
-#include <GL/glew.h>
 #include <HydroTest.h>
 #include <Uniform.h>
-
-#include <glm/ext/scalar_constants.hpp>
-#include <glm/geometric.hpp>
-#include <glm/gtc/constants.hpp>
-#include <glm/vec3.hpp>
 
 #include "Essentials.h"
 #include "Program.h"
@@ -19,8 +13,8 @@ class PhysicsDispatch
   ShaderStorageBuffer<Essentials::ParticleProperties> _particleMesh;
   Essentials::FluidProperties _fluid_properties;
   Program _physicsGenerator;
-  HydroTest testing_suite{};
-  uint32_t _work_groups{1U};
+  // HydroTest testing_suite{};
+  uint32_t _work_groups{5U};
   static Uniform<float> _dt;
 
  private:
@@ -45,4 +39,5 @@ class PhysicsDispatch
   void GenerateForces(Essentials::PhysicsType objectPhysicsType);
   void Calculate(uint32_t work_groups, bool create_snapshot);
   static void UpdateDeltaTime();
+  Uniform<float>& GetDeltaTime();
 };

@@ -6,12 +6,13 @@ std::ostream& operator<<(std::ostream& out,
                          Essentials::ParticleProperties const& particle)
 {
   out << "- - - - - - - -" << std::endl;
-  out << "(" << particle.force.x << "," << particle.force.y << ","
-      << particle.force.z << "," << particle.force.w << ")" << std::endl;
+  // out << "(" << particle.force.x << "," << particle.force.y << ","
+  //     << particle.force.z << "," << particle.force.w << ")" << std::endl;
   out << "(" << particle.velocity.x << "," << particle.velocity.y << ","
       << particle.velocity.z << "," << particle.velocity.w << ")" << std::endl;
-  out << "(" << particle.position.x << "," << particle.position.y << ","
-      << particle.position.z << "," << particle.position.w << ")" << std::endl;
+  out << "(" << particle.positionGroup.x << "," << particle.positionGroup.y
+      << "," << particle.positionGroup.z << "," << particle.positionGroup.w
+      << ")" << std::endl;
   out << "(" << particle.VolumeDensityPressureMass.x << ","
       << particle.VolumeDensityPressureMass.y << ","
       << particle.VolumeDensityPressureMass.z << ","

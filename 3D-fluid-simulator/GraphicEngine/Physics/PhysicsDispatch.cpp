@@ -7,6 +7,7 @@ Uniform<float> PhysicsDispatch::_dt{0.f, "dt"};
 
 PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
     : _particleMesh{
+          "dataBuffer",
           static_cast<uint64_t>(dimensions.x * dimensions.y * dimensions.z)}
 {
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Element.comp");
@@ -37,9 +38,16 @@ void PhysicsDispatch::BindUniforms(
   _fluid_properties.gamma.MapUniform(_physicsGenerator.ID());
   _fluid_properties.mass.MapUniform(_physicsGenerator.ID());
   _fluid_properties.pressure0.MapUniform(_physicsGenerator.ID());
-  _fluid_properties.kernel_radius.MapUniform(_physicsGenerator.ID());
-  _fluid_properties.particle_radius.MapUniform(_physicsGenerator.ID());
+
+  _fluid_properties.influence_kernel.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.infl_kernel_smoother.MapUniform(_physicsGenerator.ID());
+
+  _fluid_properties.space_limiter.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.bounds_viscosity.MapUniform(_physicsGenerator.ID());
+
   _fluid_properties.distribution_shape.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.particle_radius.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.particle_spacing.MapUniform(_physicsGenerator.ID());
 
   _dt.MapUniform(_physicsGenerator.ID());
 }
@@ -94,7 +102,7 @@ void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
   Bind();
   BindUniforms(objectPhysicsType,
                Simulator::GetInstance().GetSimulationState());
-  Calculate(_work_groups, false);
+  Calculate(_work_groups, true);
 
   // Vector Q_n1[Essentials::MaxParticles];
   // for (int i = 0; i < Essentials::MaxParticles; i++)
@@ -129,5 +137,10 @@ void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
 void PhysicsDispatch::UpdateDeltaTime()
 {
   //_dt = 1.f / ImGui::GetIO().Framerate;
-  _dt = 0.01f;
+  _dt = 0.0001f;
+}
+
+Uniform<float>& PhysicsDispatch::GetDeltaTime()
+{
+  return _dt;
 }

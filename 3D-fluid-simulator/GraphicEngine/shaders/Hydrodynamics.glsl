@@ -7,12 +7,13 @@ const mat3 I = mat3(1, 0, 0,
         0, 1, 0,
         0, 0, 1);
 
-const uint MaxNeighbours = 512;
+const uint MaxNeighbours = 16;
 const uint MaxValueNeighbour = uint(0xffff);
 
-uniform uint KernelRadius;
+uniform uint influenceKernel = 4;
 uniform float dt;
 uniform float gamma = 1.4f;
+uniform float inflKernelSmoother;
 
 struct Vector{
 	float x;
@@ -27,9 +28,8 @@ struct Flux {
 };
 
 struct ParticleProperties {
-	vec4 force;
 	vec4 velocity;
-	vec4 position;
+	vec4 positionGroup;
 	vec4 VolumeDensityPressureMass;
 	uint neighbours[MaxNeighbours];
 };
@@ -38,15 +38,20 @@ layout(std430, binding = 0) buffer dataBuffer{
 	ParticleProperties particle[];
 };
 
+float CalculateKernelWeight(vec3 x) {
+    const float abs_x = length(x);
+    return pow(E, -pow(abs_x / influenceKernel, 2. / 1.) / (2 * pow(inflKernelSmoother, 2.))) / pow(2 * PI * pow(inflKernelSmoother, 2.), 1. / 2.);
+}
+
 void FindNeighbours(uint index, uint MaxParticles) {
-    vec3 x_i = vec3(particle[index].position.x, particle[index].position.y, particle[index].position.z);
+    vec3 x_i = vec3(particle[index].positionGroup.x, particle[index].positionGroup.y, particle[index].positionGroup.z);
     for (int j = 0; j < MaxNeighbours; j++) {
         particle[index].neighbours[j] = MaxValueNeighbour;
     }
-    uint neighbourCount = 0; //TODO: Introduce bounding for out of range
+    uint neighbourCount = 0;
     for (uint j = 0; j < MaxParticles && neighbourCount < MaxNeighbours; j++) {
-        vec3 x_j = vec3(particle[j].position.x, particle[j].position.y, particle[j].position.z);
-        if (distance(x_i, x_j) <= 2 * KernelRadius && (index != j)) {
+        vec3 x_j = vec3(particle[j].positionGroup.x, particle[j].positionGroup.y, particle[j].positionGroup.z);
+        if (distance(x_i, x_j) <= 6 * influenceKernel && (index != j)) {
             particle[index].neighbours[neighbourCount] = uint(j);
             neighbourCount++;
         }
@@ -64,17 +69,17 @@ mat3 GetRotationYMatrix(float alpha_y) {
         -sin(alpha_y), 0, cos(alpha_y));
 }
 
-float CalculateKernelWeight(vec3 x) {
-    const float b = 0.4f;
-    const float abs_x = length(x);
-    return pow(E, -pow(abs_x / KernelRadius, 2. / 3.) / (2 * b * b)) / pow(2 * PI * b * b, 1. / 2.);
-}
+//float CalculateDerivativeKernelWeight(vec3 x) {
+//    const float abs_x = length(x);
+//    return abs_x * pow(E, -pow(abs_x / influenceKernel, 2.) / (2 * pow(inflKernelSmoother, 2.)))
+//    / (pow(2 * PI * pow(inflKernelSmoother, 6.) , 1. / 2.) * pow(influenceKernel, 2.));
+//}
 
 vec3 CalculateFrameVelocity(uint index_i, uint index_j) {
     vec3 v_i = vec3(particle[index_i].velocity.x, particle[index_i].velocity.y, particle[index_i].velocity.z);
     vec3 v_j = vec3(particle[index_j].velocity.x, particle[index_j].velocity.y, particle[index_j].velocity.z);
-    vec3 x_i = vec3(particle[index_i].position.x, particle[index_i].position.y, particle[index_i].position.z);
-    vec3 x_j = vec3(particle[index_j].position.x, particle[index_j].position.y, particle[index_j].position.z);
+    vec3 x_i = vec3(particle[index_i].positionGroup.x, particle[index_i].positionGroup.y, particle[index_i].positionGroup.z);
+    vec3 x_j = vec3(particle[index_j].positionGroup.x, particle[index_j].positionGroup.y, particle[index_j].positionGroup.z);
     vec3 x_ij = vec3((x_i.x + x_j.x) / 2., (x_i.y + x_j.y) / 2., (x_i.z + x_j.z) / 2.);
 
     return v_i + (v_j - v_i) * vec3(
@@ -85,54 +90,60 @@ vec3 CalculateFrameVelocity(uint index_i, uint index_j) {
 
 float CalculateOmega(uint index_x) {
 
-    float omega = CalculateKernelWeight(vec3(particle[index_x].position.x, particle[index_x].position.y, particle[index_x].position.z) -
-        vec3(particle[index_x].position.x, particle[index_x].position.y, particle[index_x].position.z));
+    float omega = CalculateKernelWeight(vec3(particle[index_x].positionGroup.x, particle[index_x].positionGroup.y, particle[index_x].positionGroup.z) -
+        vec3(particle[index_x].positionGroup.x, particle[index_x].positionGroup.y, particle[index_x].positionGroup.z));
     for (uint j = 0; j < MaxNeighbours && particle[index_x].neighbours[j] != MaxValueNeighbour; j++) {
-         uint neighbour_index = particle[index_x].neighbours[j];
-        omega += CalculateKernelWeight(vec3(particle[index_x].position.x, particle[index_x].position.y, particle[index_x].position.z) -
-                                       vec3(particle[neighbour_index].position.x, particle[neighbour_index].position.y, particle[neighbour_index].position.z));
+        uint neighbour_index = particle[index_x].neighbours[j];
+        omega += CalculateKernelWeight(vec3(particle[index_x].positionGroup.x, particle[index_x].positionGroup.y, particle[index_x].positionGroup.z) -
+                                        vec3(particle[neighbour_index].positionGroup.x, particle[neighbour_index].positionGroup.y, particle[neighbour_index].positionGroup.z));
     }
     return omega;
 }
 
 float CalculatePsi(uint index_i, uint index_x) {
-    return CalculateKernelWeight(vec3(particle[index_x].position.x, particle[index_x].position.y, particle[index_x].position.z) - 
-                                 vec3(particle[index_i].position.x, particle[index_i].position.y, particle[index_i].position.z)) / CalculateOmega(index_x);
+    return CalculateKernelWeight(vec3(particle[index_x].positionGroup.x, particle[index_x].positionGroup.y, particle[index_x].positionGroup.z) - 
+                                 vec3(particle[index_i].positionGroup.x, particle[index_i].positionGroup.y, particle[index_i].positionGroup.z)) / CalculateOmega(index_x);
 }
 
 vec3 CalculateNearPsi(uint index_i, uint index_x) {
 
     mat3 E_x = mat3(0);
     for (uint j = 0; j < MaxNeighbours && particle[index_x].neighbours[j] != MaxValueNeighbour; j++) {
-         uint neighbour_index = particle[index_x].neighbours[j];
-        vec3 neighbour_x_diff = vec3(particle[neighbour_index].position.x, particle[neighbour_index].position.y, particle[neighbour_index].position.z) -
-            vec3(particle[index_x].position.x, particle[index_x].position.y, particle[index_x].position.z);
+        uint neighbour_index = particle[index_x].neighbours[j];
+        vec3 neighbour_x_diff = vec3(particle[neighbour_index].positionGroup.x, particle[neighbour_index].positionGroup.y, particle[neighbour_index].positionGroup.z) -
+            vec3(particle[index_x].positionGroup.x, particle[index_x].positionGroup.y, particle[index_x].positionGroup.z);
         E_x += outerProduct(neighbour_x_diff, neighbour_x_diff) * CalculatePsi(neighbour_index, index_x);
     }
+    for(int i = 0; i < 3; i++){
+        if(E_x[i][i] < 1e-6f){
+            E_x[i][i] = 1;
+        }
+    }
     mat3 B_x = inverse(E_x);
-    vec3 nearPsi_j = B_x * (vec3(particle[index_i].position.x, particle[index_i].position.y, particle[index_i].position.z) - vec3(particle[index_x].position.x, particle[index_x].position.y, particle[index_x].position.z)) * CalculatePsi(index_i, index_x);
+    vec3 nearPsi_j = B_x * (vec3(particle[index_i].positionGroup.x, particle[index_i].positionGroup.y, particle[index_i].positionGroup.z) - vec3(particle[index_x].positionGroup.x, particle[index_x].positionGroup.y, particle[index_x].positionGroup.z)) * CalculatePsi(index_i, index_x);
     return nearPsi_j;
 }
 
 mat3 CalculateGradW(uint index_x, Vector Wp) {
     mat3 gradWp = mat3(0);
 
-    for (uint j = 0; j < MaxNeighbours && particle[index_x].neighbours[j] != MaxValueNeighbour; j++) {
-        uint neighbour_index = particle[index_x].neighbours[j];
-        vec3 nearPsi_i = CalculateNearPsi(neighbour_index, index_x);
-        Vector Wp_temp_j = Vector(particle[neighbour_index].VolumeDensityPressureMass.y,
-                                  vec3(particle[neighbour_index].velocity.x, particle[neighbour_index].velocity.y, particle[neighbour_index].velocity.z) - CalculateFrameVelocity(index_x, neighbour_index),
-                                  particle[neighbour_index].VolumeDensityPressureMass.z);
-
-        gradWp[0] += (Wp_temp_j.x - Wp.x) * nearPsi_i;
-        gradWp[1] += (Wp_temp_j.y - Wp.y) * nearPsi_i;
-        gradWp[2] += (Wp_temp_j.z - Wp.z) * nearPsi_i;
+    for (uint j = 0; j < MaxNeighbours; j++) {
+        if(particle[index_x].neighbours[j] != MaxValueNeighbour){
+            uint neighbour_index = particle[index_x].neighbours[j];
+            vec3 nearPsi_i = CalculateNearPsi(neighbour_index, index_x);
+            Vector Wp_temp_j = Vector(particle[neighbour_index].VolumeDensityPressureMass.y,
+                                      vec3(particle[neighbour_index].velocity.x, particle[neighbour_index].velocity.y, particle[neighbour_index].velocity.z) - CalculateFrameVelocity(index_x, neighbour_index),
+                                      particle[neighbour_index].VolumeDensityPressureMass.z);
+       
+            gradWp[0] += (Wp_temp_j.x - Wp.x) * nearPsi_i;
+            gradWp[1] += (Wp_temp_j.y - Wp.y) * nearPsi_i;
+            gradWp[2] += (Wp_temp_j.z - Wp.z) * nearPsi_i;
+        }
     }
     return gradWp;
 }
 
-Vector CalculateTimeDerivativeOfW(uint index_x, Vector Wp) {
-    mat3 gradWp = CalculateGradW(index_x, Wp);
+Vector CalculateTimeDerivativeOfW(uint index_x, mat3 gradWp) {
     Vector dW_dt = Vector(0, vec3(0), 0);
     const vec3 v = vec3(particle[index_x].velocity.x, particle[index_x].velocity.y, particle[index_x].velocity.z);
     const float density = particle[index_x].VolumeDensityPressureMass.y;
@@ -157,7 +168,7 @@ Vector PrepareRiemmanProblemSide(uint index_x, vec3 v_frame, vec3 x_mean_x, out 
                                  gradW_x[1] * x_mean_x,
                                  dot(gradW_x[2], x_mean_x));
 
-    Vector dW_dt_x = CalculateTimeDerivativeOfW(index_x, Wp_x);
+    Vector dW_dt_x = CalculateTimeDerivativeOfW(index_x, gradW_x);
 
 
     Vector Wpp_x = Vector(0, vec3(0), 0);
@@ -173,8 +184,8 @@ Vector PrepareRiemmanProblemSide(uint index_x, vec3 v_frame, vec3 x_mean_x, out 
 
 Flux CalculateReimannProblem(uint index_i, uint index_j) {
     /////////////////////////////////////PREPARATION//////////////////////////////////////////
-    vec3 x_i = vec3(particle[index_i].position.x, particle[index_i].position.y, particle[index_i].position.z);
-    vec3 x_j = vec3(particle[index_j].position.x, particle[index_j].position.y, particle[index_j].position.z);
+    vec3 x_i = vec3(particle[index_i].positionGroup.x, particle[index_i].positionGroup.y, particle[index_i].positionGroup.z);
+    vec3 x_j = vec3(particle[index_j].positionGroup.x, particle[index_j].positionGroup.y, particle[index_j].positionGroup.z);
     vec3 x_ij = vec3((x_i + x_j).x / 2., (x_i + x_j).y / 2., (x_i + x_j).z / 2.);
     vec3 v_frameij = CalculateFrameVelocity(index_i, index_j);
 
@@ -300,7 +311,7 @@ Vector GenerateHydrodynamics(uint index_i) {
         uint neighbour_index = particle[index_i].neighbours[j];
         Flux F_ij = CalculateReimannProblem(index_i, neighbour_index);
         vec3 nearPsi_ji = CalculateNearPsi(neighbour_index, index_i);
-        vec3 nearPsi_ij = vec3(0);//= CalculateNearPsi(index_i, neighbour_index);
+        vec3 nearPsi_ij = CalculateNearPsi(index_i, neighbour_index);
         float V_j = particle[neighbour_index].VolumeDensityPressureMass.x;
 
         Aij_Fij.x += dot(F_ij.x, (V_i * nearPsi_ji - V_j * nearPsi_ij));

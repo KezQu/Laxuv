@@ -20,8 +20,8 @@ void Explorer::Generate()
   ImGui::SetNextWindowSize(_size);
 
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
-  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {0, 0});
-  // ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, {0, 0});
+  // ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, {0, 0});
+  ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, {0, 0});
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 0});
   ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, {0, 0});
 
@@ -59,17 +59,20 @@ void Explorer::Generate()
           case 3:
             objectSelect.first == 1
                 ? simulatorInstance.Append(Object(new Square()))
-                : simulatorInstance.Append(Particles(new Square(), 1U));
+                : simulatorInstance.Append(
+                      Particles(new Square(Vertex{}, 4), 1U));
             break;
           case 4:
             objectSelect.first == 1
                 ? simulatorInstance.Append(Object(new Qube()))
-                : simulatorInstance.Append(Particles(new Qube(), 1U));
+                : simulatorInstance.Append(
+                      Particles(new Qube(Vertex{}, 4), 1U));
             break;
           case 5:
             objectSelect.first == 1
                 ? simulatorInstance.Append(Object(new Sphere()))
-                : simulatorInstance.Append(Particles(new Sphere(), 1U));
+                : simulatorInstance.Append(
+                      Particles(new Sphere(Vertex{}, 4), 1U));
             break;
         }
       }
@@ -82,7 +85,7 @@ void Explorer::Generate()
                             ImVec2(_size.x, _size.y / 2 - 10)))
       {
         ImGui::TableSetupColumn("##Visibilty", ImGuiTableColumnFlags_WidthFixed,
-                                8.);
+                                20.);
         ImGui::TableSetupColumn("##Name", ImGuiTableColumnFlags_WidthStretch);
         for (auto& [k, v] : simulatorInstance.GetEntities())
         {
@@ -109,7 +112,7 @@ void Explorer::Generate()
           selected != 0)
       {
         ImGui::TableSetupColumn("##InfoName", ImGuiTableColumnFlags_WidthFixed,
-                                _size.x / 3.);
+                                _size.x / 2.);
         ImGui::TableSetupColumn("##InfoValues",
                                 ImGuiTableColumnFlags_WidthStretch);
 

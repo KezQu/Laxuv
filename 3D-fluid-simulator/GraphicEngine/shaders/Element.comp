@@ -1,8 +1,8 @@
 #version 460 core
 
-layout (local_size_x = 1,
-				local_size_y = 1,
-				local_size_z = 1) in;
+layout (local_size_x = 5,
+		local_size_y = 5,
+		local_size_z = 5) in;
 
 const uint NONE = 0;
 const uint STATIC = 1;
@@ -13,7 +13,7 @@ const uint INIT = 1;
 const uint SIMULATION = 2;
 const uint GEN_FRAME = 3;
 
-const uint MaxNeighbours = 512;
+const uint MaxNeighbours = 16;
 const uint MaxValueNeighbour = uint(0xffff);
 
 const float R = 8.31446261815324;
@@ -27,18 +27,19 @@ const uint index = gl_GlobalInvocationID.x +
 			(gl_GlobalInvocationID.y * MeshSize.x) + 
 			(gl_GlobalInvocationID.z * MeshSize.y * MeshSize.x);
 
-
+uniform uint spaceLimiter;
+uniform float boundsViscosity;
 uniform uint physicsType = NONE;
 uniform uint SimulatorState = IDLE;
 uniform uint particleRadius = 1;
+uniform uint particleSpacing;
 uniform float dt;
 uniform float mass;
 uniform float pressure0;
 
 struct ParticleProperties {
-	vec4 force;
 	vec4 velocity;
-	vec4 position;
+	vec4 positionGroup;
 	vec4 VolumeDensityPressureMass;
 	uint neighbours[MaxNeighbours];
 };
@@ -84,22 +85,22 @@ float FindPressure(float volume){
 		int n = 0;
 		while (particle[index].neighbours[n] != MaxValueNeighbour) n++;
 		const float pressure = R * (n + 1) * 273.f / volume;
-		return pressure - pressure0;
+		return (pressure - pressure0) * 1e-0;
+	//	return 2.5;
 }
 
 void main(){
 	if(SimulatorState == INIT){
-		particle[index].force = vec4(0);
 		uint i = index;
+		particle[index].velocity= vec4(0);
 //		particle[index].velocity = vec4((i % 10), (-i % 7), (i % 5), 0) / 10.;
 //		particle[index].velocity = vec4(1.f / ((index % 3) + 1));
-		particle[index].velocity= vec4(0);
-		particle[index].position= vec4(0);
+		particle[index].positionGroup= vec4(0);
 		for(uint i = 0; i < MaxNeighbours; i++){
 			particle[index].neighbours[i] = MaxValueNeighbour;
 		}
 		if(physicsType != NONE){
-			particle[index].position = InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * particleRadius;
+			particle[index].positionGroup = InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * particleRadius * particleSpacing;
 			FindNeighbours(index, MaxParticles);
 		}
 		const float volume = 1. / CalculateOmega(index);
@@ -110,13 +111,19 @@ void main(){
 
 		Vector Q_n1 = Vector(0, vec3(0), 0);
 		Q_n1 = GenerateHydrodynamics(index);
+		memoryBarrierShared();
 		barrier();
-		particle[index].velocity = vec4(Q_n1.y / Q_n1.x, 0);
-		particle[index].position = particle[index].position + particle[index].velocity * dt;
-
+		particle[index].velocity.xyz = Q_n1.y / Q_n1.x;
+		particle[index].positionGroup.xyz = particle[index].positionGroup.xyz + particle[index].velocity.xyz * dt;
+		if(length(particle[index].positionGroup) > spaceLimiter){
+			particle[index].velocity = -particle[index].velocity / boundsViscosity;
+			particle[index].positionGroup.xyz *= spaceLimiter / length(particle[index].positionGroup.xyz);
+		}
 		for(uint i = 0; i < MaxNeighbours; i++){
 			particle[index].neighbours[i] = MaxValueNeighbour;
 		}
+		memoryBarrierShared();
+		barrier();
 		FindNeighbours(index, MaxParticles);
 		const float volume = 1. / CalculateOmega(index);
 		float pressure = FindPressure(volume);

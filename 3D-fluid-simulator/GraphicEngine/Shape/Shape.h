@@ -109,8 +109,6 @@ void Shape<Prim>::Bind() const
     diffuse_light_dir.MapUniform(renderer.ID());
   }
   _shapeRadius.MapUniform(renderer.ID());
-  Uniform<uint32_t> const _kernel_radius{4U, "KernelRadius"};
-  _kernel_radius.MapUniform(renderer.ID());
 }
 
 template <GLenum Prim>

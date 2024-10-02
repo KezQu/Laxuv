@@ -39,20 +39,12 @@ enum class PhysicsType : uint8_t
   DYNAMIC
 };
 
-/* Physics properties memory layout in bytes
-| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14| 15 | 16 |
-|      Force
-|      Energy      | |      Velocity
-|    XXXXXXXXXXX   | |      Position
-|    XXXXXXXXXXX   | |      Volume   |     Density   |     Pressure     | Mass |
-*/
 struct ParticleProperties
 {
-  glm::vec4 force{0};
   glm::vec4 velocity{0};
-  glm::vec4 position{0};
+  glm::vec4 positionGroup{0};
   glm::vec4 VolumeDensityPressureMass{0};
-  uint32_t neighbours[512];
+  uint32_t neighbours[16];
 };
 
 struct FluidProperties
@@ -61,8 +53,12 @@ struct FluidProperties
   Uniform<float> gamma{1.4f, "gamma"};
   Uniform<float> mass{1.2754f, "mass"};
   Uniform<float> pressure0{0.f, "pressure0"};
-  Uniform<uint32_t> kernel_radius{4U, "kernelRadius"};
+  Uniform<uint32_t> influence_kernel{4U, "influenceKernel"};
+  Uniform<float> infl_kernel_smoother{0.7f, "inflKernelSmoother"};
   Uniform<uint32_t> particle_radius{0U, "particleRadius"};
+  Uniform<uint32_t> particle_spacing{3U, "particleSpacing"};
+  Uniform<uint32_t> space_limiter{1200U, "spaceLimiter"};
+  Uniform<float> bounds_viscosity{5.f, "boundsViscosity"};
   Uniform<uint8_t> distribution_shape{
       static_cast<uint8_t>(DistributionShape::QUBE), "DistributionShape"};
 };

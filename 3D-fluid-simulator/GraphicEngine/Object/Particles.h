@@ -97,6 +97,14 @@ Particles<Prim>::details_map Particles<Prim>::Details()
        {[this]()
         { return std::ref(this->_particleShape->GetRadius().GetValue()); },
         DetailsType::UINT32}});
+  details.push_back({"Particle spacing",
+                     {[this]()
+                      {
+                        return std::ref(
+                            this->_physicsDispatch.GetFluidProperties()
+                                .particle_spacing.GetValue());
+                      },
+                      DetailsType::UINT32}});
   details.push_back({"Distribution",
                      {[this]()
                       {
@@ -105,6 +113,9 @@ Particles<Prim>::details_map Particles<Prim>::Details()
                                 .distribution_shape.GetValue());
                       },
                       DetailsType::UINT8}});
+  details.push_back({"Physics",
+                     {[this]() { return std::ref(this->GetPhysicsType()); },
+                      DetailsType::PHYSTYPE}});
   details.push_back(
       {"Gamma",
        {[this]()
@@ -113,14 +124,22 @@ Particles<Prim>::details_map Particles<Prim>::Details()
               this->_physicsDispatch.GetFluidProperties().gamma.GetValue());
         },
         DetailsType::FLOAT}});
-  details.push_back({"Kernel",
+  details.push_back({"Influence kernel",
                      {[this]()
                       {
                         return std::ref(
                             this->_physicsDispatch.GetFluidProperties()
-                                .kernel_radius.GetValue());
+                                .influence_kernel.GetValue());
                       },
                       DetailsType::UINT32}});
+  details.push_back({"Infl kernel smoother",
+                     {[this]()
+                      {
+                        return std::ref(
+                            this->_physicsDispatch.GetFluidProperties()
+                                .infl_kernel_smoother.GetValue());
+                      },
+                      DetailsType::FLOAT}});
   details.push_back(
       {"Mass",
        {[this]()
@@ -144,9 +163,21 @@ Particles<Prim>::details_map Particles<Prim>::Details()
               this->_physicsDispatch.GetFluidProperties().pressure0.GetValue());
         },
         DetailsType::FLOAT}});
-
-  details.push_back({"Physics",
-                     {[this]() { return std::ref(this->GetPhysicsType()); },
-                      DetailsType::PHYSTYPE}});
+  details.push_back({"Space bounds",
+                     {[this]()
+                      {
+                        return std::ref(
+                            this->_physicsDispatch.GetFluidProperties()
+                                .space_limiter.GetValue());
+                      },
+                      DetailsType::UINT32}});
+  details.push_back({"Bounds viscosity",
+                     {[this]()
+                      {
+                        return std::ref(
+                            this->_physicsDispatch.GetFluidProperties()
+                                .bounds_viscosity.GetValue());
+                      },
+                      DetailsType::FLOAT}});
   return details;
 }
