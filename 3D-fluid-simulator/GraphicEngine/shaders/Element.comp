@@ -44,7 +44,7 @@ struct ParticleProperties {
 	uint neighbours[MaxNeighbours];
 };
 
-struct Vector{
+struct stateVector{
 	float x;
 	vec3 y;
 	float z;
@@ -62,32 +62,6 @@ layout(std430, binding = 0) buffer dataBuffer{
 
 vec4 InitDefaultShape(in uint idx, in uvec3 invocation, in uint maxParticles);
 
-mat3 GetRotationZMatrix(float alpha_z);
-mat3 GetRotationYMatrix(float alpha_y);
-
-float CalculateKernelWeight(vec3 x);
-vec3 CalculateFrameVelocity(uint index_i, uint index_j);
-void FindNeighbours(uint index, uint MaxParticles);
-
-float CalculateOmega(uint index_x);
-
-float CalculatePsi(uint index_i, uint index_x);
-vec3 CalculateNearPsi(uint index_i, uint index_x);
-mat3 CalculateGradW(uint index_x, Vector Wp);
-
-Vector CalculateTimeDerivativeOfW(uint index_x, Vector Wp);
-Vector PrepareRiemmanProblemSide(uint index_x, vec3 v_frame, vec3 x_mean_x, out vec3 dir_versor);
-Flux CalculateReimannProblem(uint index_i, uint index_j);
-	
-Vector GenerateHydrodynamics(uint index_i);
-
-float FindPressure(float volume){
-		int n = 0;
-		while (particle[index].neighbours[n] != MaxValueNeighbour) n++;
-		const float pressure = R * (n + 1) * 273.f / volume;
-		return (pressure - pressure0) * 1e-0;
-	//	return 2.5;
-}
 
 void main(){
 	if(SimulatorState == INIT){
@@ -101,32 +75,8 @@ void main(){
 		}
 		if(physicsType != NONE){
 			particle[index].positionGroup = InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * particleRadius * particleSpacing;
-			FindNeighbours(index, MaxParticles);
 		}
-		const float volume = 1. / CalculateOmega(index);
-		float pressure = FindPressure(volume);
-		particle[index].VolumeDensityPressureMass = vec4(volume, mass / volume, pressure, mass);
 	}
 	else if((SimulatorState == GEN_FRAME || SimulatorState == SIMULATION) && physicsType == DYNAMIC){
-
-		Vector Q_n1 = Vector(0, vec3(0), 0);
-		Q_n1 = GenerateHydrodynamics(index);
-		memoryBarrierShared();
-		barrier();
-		particle[index].velocity.xyz = Q_n1.y / Q_n1.x;
-		particle[index].positionGroup.xyz = particle[index].positionGroup.xyz + particle[index].velocity.xyz * dt;
-		if(length(particle[index].positionGroup) > spaceLimiter){
-			particle[index].velocity = -particle[index].velocity / boundsViscosity;
-			particle[index].positionGroup.xyz *= spaceLimiter / length(particle[index].positionGroup.xyz);
-		}
-		for(uint i = 0; i < MaxNeighbours; i++){
-			particle[index].neighbours[i] = MaxValueNeighbour;
-		}
-		memoryBarrierShared();
-		barrier();
-		FindNeighbours(index, MaxParticles);
-		const float volume = 1. / CalculateOmega(index);
-		float pressure = FindPressure(volume);
-		particle[index].VolumeDensityPressureMass= vec4(volume, Q_n1.x / volume, pressure, Q_n1.x);
 	}
 }
