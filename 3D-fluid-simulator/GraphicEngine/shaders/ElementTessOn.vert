@@ -6,7 +6,7 @@ layout(location = 1) in vec4 inColorVert;
 layout(location = 0) out vec4 outColorVert;
 layout(location = 3) out vec4 outShapeOffset;
 
-const uint MaxNeighbours =  16;
+const uint MaxNeighbours =  512;
 
 struct ParticleProperties {
 	vec4 velocity;

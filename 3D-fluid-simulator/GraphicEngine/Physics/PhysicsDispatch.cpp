@@ -12,7 +12,6 @@ PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
 {
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Element.comp");
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/InitDefaultShape.glsl");
-  _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Gravitation.glsl");
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Hydrodynamics.glsl");
 }
 
@@ -35,19 +34,20 @@ void PhysicsDispatch::BindUniforms(
   simulation_state.MapUniform(_physicsGenerator.ID());
   physics_type.MapUniform(_physicsGenerator.ID());
 
-  _fluid_properties.gamma.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.eos_factor.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.viscosity_factor.MapUniform(_physicsGenerator.ID());
   _fluid_properties.mass.MapUniform(_physicsGenerator.ID());
-  _fluid_properties.pressure0.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.density0.MapUniform(_physicsGenerator.ID());
 
   _fluid_properties.influence_kernel.MapUniform(_physicsGenerator.ID());
-  _fluid_properties.infl_kernel_smoother.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.search_kernel.MapUniform(_physicsGenerator.ID());
+  //_fluid_properties.infl_kernel_smoother.MapUniform(_physicsGenerator.ID());
 
-  _fluid_properties.space_limiter.MapUniform(_physicsGenerator.ID());
-  _fluid_properties.bounds_viscosity.MapUniform(_physicsGenerator.ID());
-
-  _fluid_properties.distribution_shape.MapUniform(_physicsGenerator.ID());
   _fluid_properties.particle_radius.MapUniform(_physicsGenerator.ID());
   _fluid_properties.particle_spacing.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.space_limiter.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.bounds_viscosity.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.distribution_shape.MapUniform(_physicsGenerator.ID());
 
   _dt.MapUniform(_physicsGenerator.ID());
 }
@@ -102,7 +102,7 @@ void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
   Bind();
   BindUniforms(objectPhysicsType,
                Simulator::GetInstance().GetSimulationState());
-  Calculate(_work_groups, true);
+  Calculate(_work_groups, false);
 
   // Vector Q_n1[Essentials::MaxParticles];
   // for (int i = 0; i < Essentials::MaxParticles; i++)
@@ -136,8 +136,8 @@ void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
 
 void PhysicsDispatch::UpdateDeltaTime()
 {
-  //_dt = 1.f / ImGui::GetIO().Framerate;
-  _dt = 0.0001f;
+  _dt = 1.f / ImGui::GetIO().Framerate;
+  //_dt = 0.0001f;
 }
 
 Uniform<float>& PhysicsDispatch::GetDeltaTime()
