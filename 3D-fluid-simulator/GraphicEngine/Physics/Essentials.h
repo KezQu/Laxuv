@@ -41,7 +41,7 @@ enum class PhysicsType : uint8_t
 
 struct ParticleProperties
 {
-  glm::vec4 velocity{0};
+  glm::vec4 velocityDFSPHfactor{0};
   glm::vec4 positionGroup{0};
   glm::vec4 VolumeDensityPressureMass{0};
   uint32_t neighbours[512];
@@ -50,12 +50,12 @@ struct ParticleProperties
 struct FluidProperties
 {
   uint32_t mesh_radius{1U};
-  Uniform<float> mass{1.2754f, "mass"};
+  Uniform<float> mass{0.1f, "mass"};
   Uniform<float> eos_factor{50.f, "EOSFactor"};
   Uniform<float> viscosity_factor{0.2f, "viscosityFactor"};
-  Uniform<float> density0{200.f, "density0"};
-  Uniform<uint32_t> influence_kernel{16U, "influenceKernel"};
-  Uniform<uint32_t> search_kernel{32U, "searchKernel"};
+  Uniform<float> density0{0.15f, "density0"};
+  Uniform<uint32_t> influence_kernel{1U, "influenceKernel"};
+  Uniform<uint32_t> search_kernel{8U, "searchKernel"};
   Uniform<uint32_t> particle_radius{0U, "particleRadius"};
   Uniform<uint32_t> particle_spacing{1U, "particleSpacing"};
   Uniform<uint32_t> space_limiter{100U, "spaceLimiter"};

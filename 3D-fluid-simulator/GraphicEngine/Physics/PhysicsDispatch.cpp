@@ -102,7 +102,7 @@ void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
   Bind();
   BindUniforms(objectPhysicsType,
                Simulator::GetInstance().GetSimulationState());
-  Calculate(_work_groups, false);
+  Calculate(_work_groups, true);
 
   // Vector Q_n1[Essentials::MaxParticles];
   // for (int i = 0; i < Essentials::MaxParticles; i++)

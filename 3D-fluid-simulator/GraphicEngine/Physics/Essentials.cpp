@@ -8,8 +8,9 @@ std::ostream& operator<<(std::ostream& out,
   out << "- - - - - - - -" << std::endl;
   // out << "(" << particle.force.x << "," << particle.force.y << ","
   //     << particle.force.z << "," << particle.force.w << ")" << std::endl;
-  out << "(" << particle.velocity.x << "," << particle.velocity.y << ","
-      << particle.velocity.z << "," << particle.velocity.w << ")" << std::endl;
+  out << "(" << particle.velocityDFSPHfactor.x << ","
+      << particle.velocityDFSPHfactor.y << "," << particle.velocityDFSPHfactor.z
+      << "," << particle.velocityDFSPHfactor.w << ")" << std::endl;
   out << "(" << particle.positionGroup.x << "," << particle.positionGroup.y
       << "," << particle.positionGroup.z << "," << particle.positionGroup.w
       << ")" << std::endl;

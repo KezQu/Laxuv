@@ -187,14 +187,13 @@ Particles<Prim>::details_map Particles<Prim>::Details()
                                 .space_limiter.GetValue());
                       },
                       DetailsType::UINT32}});
-  details.push_back(
-      {"Bounds viscosity",
-       {[this]()
-        {
-          return std::ref(
+  details.push_back({"Bounds viscosity",
+                     {[this]()
+                      {
+                        return std::ref(
                             this->_physicsDispatch.GetFluidProperties()
                                 .bounds_viscosity.GetValue());
-        },
-        DetailsType::FLOAT}});
+                      },
+                      DetailsType::FLOAT}});
   return details;
 }

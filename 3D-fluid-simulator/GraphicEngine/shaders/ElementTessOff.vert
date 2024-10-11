@@ -9,7 +9,7 @@ layout(location = 1) out vec3 normal;
 const uint MaxNeighbours =  512;
 
 struct ParticleProperties {
-	vec4 velocity;
+	vec4 velocityDFSPHfactor;
 	vec4 positionGroup;
 	vec4 VolumeDensityPressureMass;
 	uint neighbours[MaxNeighbours];

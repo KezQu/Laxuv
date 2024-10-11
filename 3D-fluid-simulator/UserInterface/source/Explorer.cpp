@@ -60,19 +60,19 @@ void Explorer::Generate()
             objectSelect.first == 1
                 ? simulatorInstance.Append(Object(new Square()))
                 : simulatorInstance.Append(
-                      Particles(new Square(Vertex{}, 4), 1U));
+                      Particles(new Square(Vertex{}, 1), 1U));
             break;
           case 4:
             objectSelect.first == 1
                 ? simulatorInstance.Append(Object(new Qube()))
                 : simulatorInstance.Append(
-                      Particles(new Qube(Vertex{}, 4), 1U));
+                      Particles(new Qube(Vertex{}, 1), 1U));
             break;
           case 5:
             objectSelect.first == 1
                 ? simulatorInstance.Append(Object(new Sphere()))
                 : simulatorInstance.Append(
-                      Particles(new Sphere(Vertex{}, 4), 1U));
+                      Particles(new Sphere(Vertex{}, 1), 1U));
             break;
         }
       }
