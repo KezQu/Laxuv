@@ -9,8 +9,6 @@
 namespace Essentials
 {
 
-constexpr uint32_t KernelRadius = 4;
-constexpr uint32_t MaxParticles = 27;
 constexpr uint32_t MaxNeighbours = 512;
 
 enum class DistributionShape : uint8_t
@@ -43,21 +41,21 @@ struct ParticleProperties
 {
   glm::vec4 velocityDFSPHfactor{0};
   glm::vec4 positionGroup{0};
-  glm::vec4 VolumeDensityPressureMass{0};
-  uint32_t neighbours[512];
+  glm::vec4 VolumeDensityPressureRohash{0};
+  uint32_t neighbours[MaxNeighbours];
 };
 
 struct FluidProperties
 {
   uint32_t mesh_radius{1U};
-  Uniform<float> mass{0.1f, "mass"};
-  Uniform<float> eos_factor{50.f, "EOSFactor"};
-  Uniform<float> viscosity_factor{0.2f, "viscosityFactor"};
-  Uniform<float> density0{0.15f, "density0"};
-  Uniform<uint32_t> influence_kernel{1U, "influenceKernel"};
-  Uniform<uint32_t> search_kernel{8U, "searchKernel"};
-  Uniform<uint32_t> particle_radius{0U, "particleRadius"};
-  Uniform<uint32_t> particle_spacing{1U, "particleSpacing"};
+  Uniform<float> mass{600.f, "mass"};
+  Uniform<float> viscosity_factor{0.01f, "viscosityFactor"};
+  Uniform<float> density0{997.f, "density0"};
+  Uniform<float> influence_kernel{10.f, "influenceKernel"};
+  Uniform<float> search_kernel{32.f, "searchKernel"};
+  Uniform<float> kernel_a{3.f, "kernel_a"};
+  Uniform<float> particle_radius{0U, "particleRadius"};
+  Uniform<float> particle_spacing{1.5f, "particleSpacing"};
   Uniform<uint32_t> space_limiter{100U, "spaceLimiter"};
   Uniform<float> bounds_viscosity{0.95f, "boundsViscosity"};
   Uniform<uint8_t> distribution_shape{

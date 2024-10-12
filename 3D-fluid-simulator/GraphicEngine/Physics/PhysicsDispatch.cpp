@@ -34,14 +34,13 @@ void PhysicsDispatch::BindUniforms(
   simulation_state.MapUniform(_physicsGenerator.ID());
   physics_type.MapUniform(_physicsGenerator.ID());
 
-  _fluid_properties.eos_factor.MapUniform(_physicsGenerator.ID());
   _fluid_properties.viscosity_factor.MapUniform(_physicsGenerator.ID());
   _fluid_properties.mass.MapUniform(_physicsGenerator.ID());
   _fluid_properties.density0.MapUniform(_physicsGenerator.ID());
 
+  _fluid_properties.kernel_a.MapUniform(_physicsGenerator.ID());
   _fluid_properties.influence_kernel.MapUniform(_physicsGenerator.ID());
   _fluid_properties.search_kernel.MapUniform(_physicsGenerator.ID());
-  //_fluid_properties.infl_kernel_smoother.MapUniform(_physicsGenerator.ID());
 
   _fluid_properties.particle_radius.MapUniform(_physicsGenerator.ID());
   _fluid_properties.particle_spacing.MapUniform(_physicsGenerator.ID());
@@ -94,7 +93,16 @@ void PhysicsDispatch::InitDefaultShape(
   Bind();
   BindUniforms(objectPhysicsType, Essentials::SimulationState::INIT);
   Calculate(_work_groups, true);
-  // testing_suite.Init();
+
+  uint32_t MaxParticles =
+      std::pow(_fluid_properties.mesh_radius * _work_groups, 3);
+  // testing_suite.Init(_fluid_properties.mass.GetValue(),
+  //                    _fluid_properties.particle_radius.GetValue(),
+  //                    _fluid_properties.particle_spacing.GetValue(),
+  //                    MaxParticles,
+  //                    _fluid_properties.influence_kernel.GetValue(),
+  //                    _fluid_properties.search_kernel.GetValue(),
+  //                    _fluid_properties.kernel_a.GetValue());
 }
 
 void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
@@ -102,42 +110,16 @@ void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
   Bind();
   BindUniforms(objectPhysicsType,
                Simulator::GetInstance().GetSimulationState());
-  Calculate(_work_groups, true);
-
-  // Vector Q_n1[Essentials::MaxParticles];
-  // for (int i = 0; i < Essentials::MaxParticles; i++)
-  //{
-  //	Q_n1[i] = testing_suite.GenerateHydrodynamics(i);
-  // }
-  // for (int i = 0; i < Essentials::MaxParticles; i++)
-  //{
-  //	testing_suite.particle[i].velocity = glm::vec4(Q_n1[i].y / Q_n1[i].x,
-  // 0); 	testing_suite.particle[i].position =
-  // testing_suite.particle[i].position
-  //+ testing_suite.particle[i].velocity * _dt;
-  // }
-  // for (int i = 0; i < Essentials::MaxParticles; i++)
-  //{
-  //	testing_suite.FindNeighbours(i, Essentials::MaxParticles);
-  // }
-  // for (int i = 0; i < Essentials::MaxParticles; i++)
-  //{
-  //	const float volume = 1. / testing_suite.CalculateOmega(i);
-  //	int n = 0;
-  //	while (testing_suite.particle[i].neighbours[n] != 0xffff) n++;
-  //	const float pressure = testing_suite.R * (n + 1) * 273.f / volume;
-  //	testing_suite.particle[i].VolumeDensityPressureMass.x = volume;
-  //	testing_suite.particle[i].VolumeDensityPressureMass.y = Q_n1[i].x /
-  // volume; 	testing_suite.particle[i].VolumeDensityPressureMass.z =
-  // pressure; 	testing_suite.particle[i].VolumeDensityPressureMass.w =
-  // Q_n1[i].x;
-  // }
+  Calculate(_work_groups, false);
+  // testing_suite.CalculateDFSPHSimulation(
+  //     std::pow(_fluid_properties.mesh_radius * _work_groups, 3), 0,
+  //     // 9.807f, _fluid_properties.density0.GetValue());
 }
 
 void PhysicsDispatch::UpdateDeltaTime()
 {
-  _dt = 1.f / ImGui::GetIO().Framerate;
-  //_dt = 0.0001f;
+  // _dt = 1.f / ImGui::GetIO().Framerate;
+  _dt = 0.016f;
 }
 
 Uniform<float>& PhysicsDispatch::GetDeltaTime()

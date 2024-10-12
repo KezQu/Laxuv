@@ -177,8 +177,8 @@ void Explorer::Generate()
             case DetailsType::FLOAT:
               ImGui::DragFloat(
                   ("##" + info.first).c_str(),
-                  &std::get<DetailsType::FLOAT>(info.second.first)(), 1e-6f,
-                  -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.6f",
+                  &std::get<DetailsType::FLOAT>(info.second.first)(), 1e-3f,
+                  -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f",
                   ImGuiSliderFlags_AlwaysClamp);
               break;
             case DetailsType::VEC2:

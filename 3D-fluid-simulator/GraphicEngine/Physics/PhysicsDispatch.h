@@ -14,7 +14,7 @@ class PhysicsDispatch
   Essentials::FluidProperties _fluid_properties;
   Program _physicsGenerator;
   // HydroTest testing_suite{};
-  uint32_t _work_groups{2U};
+  uint32_t _work_groups{1U};
   static Uniform<float> _dt;
 
  private:

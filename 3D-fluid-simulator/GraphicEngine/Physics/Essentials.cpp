@@ -14,10 +14,10 @@ std::ostream& operator<<(std::ostream& out,
   out << "(" << particle.positionGroup.x << "," << particle.positionGroup.y
       << "," << particle.positionGroup.z << "," << particle.positionGroup.w
       << ")" << std::endl;
-  out << "(" << particle.VolumeDensityPressureMass.x << ","
-      << particle.VolumeDensityPressureMass.y << ","
-      << particle.VolumeDensityPressureMass.z << ","
-      << particle.VolumeDensityPressureMass.w << ")" << std::endl;
+  out << "(" << particle.VolumeDensityPressureRohash.x << ","
+      << particle.VolumeDensityPressureRohash.y << ","
+      << particle.VolumeDensityPressureRohash.z << ","
+      << particle.VolumeDensityPressureRohash.w << ")" << std::endl;
   out << "[";
   for (auto& neighbour_id : particle.neighbours)
   {

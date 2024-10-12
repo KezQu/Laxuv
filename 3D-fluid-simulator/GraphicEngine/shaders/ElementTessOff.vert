@@ -11,7 +11,7 @@ const uint MaxNeighbours =  512;
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 positionGroup;
-	vec4 VolumeDensityPressureMass;
+	vec4 VolumeDensityPressureRohash;
 	uint neighbours[MaxNeighbours];
 };
 
