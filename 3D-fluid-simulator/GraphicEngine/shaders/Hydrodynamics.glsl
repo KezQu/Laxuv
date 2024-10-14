@@ -41,17 +41,34 @@ layout(std430, binding = 0) buffer dataBuffer{
 	ParticleProperties particle[];
 };
 
+//float CalculateKernelWeight(vec3 points_dist){
+//	const float abs_dist = length(points_dist);
+//	
+//	return pow(E, - pow(abs_dist, kernel_a) / influenceKernel);
+//}
+//
+//vec3 CalculateGradKernelWeight(vec3 points_dist){
+//	const float abs_dist = length(points_dist);
+//	const vec3 versor_ij = abs_dist > 0 ? normalize(points_dist): vec3(0);
+//	
+//	return -kernel_a * pow(abs_dist, kernel_a - 1) * CalculateKernelWeight(points_dist) * versor_ij;
+//}
+
 float CalculateKernelWeight(vec3 points_dist){
 	const float abs_dist = length(points_dist);
-	
-	return pow(E, - pow(abs_dist, kernel_a) / influenceKernel);
+	if(abs_dist > influenceKernel){
+		return 0.f;
+	}	
+	return 2 * pow(influenceKernel - abs_dist, 3) / pow(influenceKernel, kernel_a);
 }
 
 vec3 CalculateGradKernelWeight(vec3 points_dist){
 	const float abs_dist = length(points_dist);
 	const vec3 versor_ij = abs_dist > 0 ? normalize(points_dist): vec3(0);
-	
-	return -kernel_a * pow(abs_dist, kernel_a - 1) * CalculateKernelWeight(points_dist) * versor_ij;
+	if(abs_dist > influenceKernel){
+		return vec3(0);
+	}
+	return -6 * pow(influenceKernel - abs_dist, 2) / pow(influenceKernel, kernel_a) * versor_ij;
 }
 
 void FindNeighbours(uint index_x, uint MaxParticles){
@@ -62,13 +79,13 @@ void FindNeighbours(uint index_x, uint MaxParticles){
 	if(!isnan(pos_x.x)){
 		uint num_neighbours = 0;
 		for(uint i = 0; i < MaxParticles && num_neighbours < MaxNeighbours; i++){
-	//		if(i != index_x){
+			if(i != index_x){
 				const vec3 pos_neighbour = particle[i].positionGroup.xyz;
 				if(length(pos_x - pos_neighbour) < 2 * searchKernel){
 					particle[index_x].neighbours[num_neighbours] = i;
 					num_neighbours++;
 				}
-	//		}
+			}
 		}
 	}
 }
@@ -93,7 +110,7 @@ float CalculateDFSPHFactor(uint index_x){
 }
 
 float CalculateDensity(uint index_x){
-	float kernel_sum = 0;
+	float kernel_sum = mass;
 	uint curr_neighbour = 0;
 	for(int i = 0; i < MaxNeighbours; i++){
 		curr_neighbour = particle[index_x].neighbours[i];
@@ -196,4 +213,9 @@ float CalculateAvgDerivDensity(uint index_x){
 		kernel_sum += dro_j;
 	}
 	return kernel_sum / i;
+}
+
+float SolverFactor(uint index_x){
+	float scaler = 1e+2;
+	return scaler * abs(particle[index_x].VolumeDensityPressureRohash.w  - density0) / density0 + 1;
 }

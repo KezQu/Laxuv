@@ -118,8 +118,8 @@ void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
 
 void PhysicsDispatch::UpdateDeltaTime()
 {
-  // _dt = 1.f / ImGui::GetIO().Framerate;
-  _dt = 0.016f;
+  _dt = 1.f / ImGui::GetIO().Framerate;
+  //_dt = 0.016f;
 }
 
 Uniform<float>& PhysicsDispatch::GetDeltaTime()

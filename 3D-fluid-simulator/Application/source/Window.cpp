@@ -28,7 +28,7 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     }
 
     glfwMakeContextCurrent(_window);
-    // glfwSwapInterval(1);
+    glfwSwapInterval(1);
 
     GLenum errorCode = glewInit();
     if (errorCode != GLEW_OK)

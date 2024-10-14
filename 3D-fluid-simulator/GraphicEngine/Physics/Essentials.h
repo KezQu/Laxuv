@@ -48,15 +48,15 @@ struct ParticleProperties
 struct FluidProperties
 {
   uint32_t mesh_radius{1U};
-  Uniform<float> mass{600.f, "mass"};
+  Uniform<float> mass{0.018f, "mass"};
   Uniform<float> viscosity_factor{0.01f, "viscosityFactor"};
-  Uniform<float> density0{997.f, "density0"};
-  Uniform<float> influence_kernel{10.f, "influenceKernel"};
+  Uniform<float> density0{0.018f, "density0"};
+  Uniform<float> influence_kernel{2.5f, "influenceKernel"};
   Uniform<float> search_kernel{32.f, "searchKernel"};
-  Uniform<float> kernel_a{3.f, "kernel_a"};
+  Uniform<float> kernel_a{4.f, "kernel_a"};
   Uniform<float> particle_radius{0U, "particleRadius"};
   Uniform<float> particle_spacing{1.5f, "particleSpacing"};
-  Uniform<uint32_t> space_limiter{100U, "spaceLimiter"};
+  Uniform<float> space_limiter{100.f, "spaceLimiter"};
   Uniform<float> bounds_viscosity{0.95f, "boundsViscosity"};
   Uniform<uint8_t> distribution_shape{
       static_cast<uint8_t>(DistributionShape::QUBE), "DistributionShape"};
