@@ -3,12 +3,12 @@
 
 uint64_t Entity::_internalID = 0U;
 
-Entity::details_map Entity::Details()
+details::details_map Entity::Details()
 {
-  details_map details;
-  details.push_back(
-      {"Name",
-       {[this]() { return std::ref(this->Name()); }, DetailsType::STRING}});
+  details::details_map details;
+  details.push_back({"Name",
+                     {[this]() { return std::ref(this->Name()); },
+                      details::DetailsType::STRING}});
   return details;
 }
 

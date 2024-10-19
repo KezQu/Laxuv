@@ -118,14 +118,12 @@ void Window::EventLoop()
       case Essentials::SimulationState::SIMULATION:
         for (auto& [id, entity] : SimulationInstance.GetEntities())
         {
-          PhysicsDispatch::UpdateDeltaTime();
           entity->Calculate();
         }
         break;
       case Essentials::SimulationState::GEN_FRAME:
         for (auto& [id, entity] : SimulationInstance.GetEntities())
         {
-          PhysicsDispatch::UpdateDeltaTime();
           entity->Calculate();
         }
         SimulationInstance.SetSimulationState(

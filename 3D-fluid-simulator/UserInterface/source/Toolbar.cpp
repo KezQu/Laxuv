@@ -1,7 +1,6 @@
 ﻿#include "Toolbar.h"
 
-#include <Camera.h>
-#include <GLFW/glfw3.h>
+#include "Camera.h"
 
 bool Toolbar::_fullscreen = false;
 std::unordered_map<Essentials::SimulationState, std::string>
@@ -58,8 +57,24 @@ void Toolbar::Generate()
         simulatorInstance.SetSimulationState(Essentials::SimulationState::INIT);
       }
     }
-    ImGui::SameLine(_size.x - 300);
-    ImGui::Text("%mouse speed: %.0f", Camera::GetCamera().GetMoveSpeed());
+    ImGui::SameLine();
+    ImGui::PushItemWidth(100.f);
+    static float static_timestep = 6.f;
+    ImGui::DragFloat("##timestep_value", &static_timestep, 0.1f, 0.f, 1000.f,
+                     "%.1f ms", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::SameLine();
+    if (ImGui::Button("Set timestep") || static_timestep > 1e-6f)
+    {
+      simulatorInstance.UpdateDeltaTime(static_timestep);
+    }
+    else
+    {
+      simulatorInstance.UpdateDeltaTime();
+    }
+    ImGui::PopItemWidth();
+
+    ImGui::SameLine(_size.x - 200);
+    ImGui::Text("%mouse speed: %.1f", Camera::GetCamera().GetMoveSpeed());
     std::string framerate =
         std::to_string(static_cast<int>(ImGui::GetIO().Framerate)) + " FPS";
     auto FPS_text_size = ImGui::CalcTextSize(framerate.c_str()).x;

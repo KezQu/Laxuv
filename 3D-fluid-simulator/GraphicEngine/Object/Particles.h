@@ -22,7 +22,7 @@ class Particles : public Entity
   void Calculate() override;
   void Draw() const override;
   void Bind() const;
-  details_map Details() override;
+  details::details_map Details() override;
 };
 
 template <GLenum Prim>
@@ -68,35 +68,35 @@ void Particles<Prim>::Draw() const
 }
 
 template <GLenum Prim>
-Particles<Prim>::details_map Particles<Prim>::Details()
+details::details_map Particles<Prim>::Details()
 {
-  details_map details = Entity::Details();
+  details::details_map details = Entity::Details();
   details.push_back(
       {"Location",
        {[this]() { return std::ref(this->_particleShape->GetLocation()); },
-        DetailsType::VEC3}});
+        details::DetailsType::VEC3}});
   details.push_back(
       {"Rotation",
        {[this]() { return std::ref(this->_particleShape->GetRotate()); },
-        DetailsType::VEC3}});
+        details::DetailsType::VEC3}});
   details.push_back(
       {"Scale",
        {[this]() { return std::ref(this->_particleShape->GetScale()); },
-        DetailsType::VEC3}});
+        details::DetailsType::VEC3}});
   details.push_back(
       {"Light",
        {[this]() { return std::ref(this->_particleShape->EnableLight()); },
-        DetailsType::BOOL}});
+        details::DetailsType::BOOL}});
   details.push_back(
       {"Subdivision",
        {[this]()
         { return std::ref(this->_particleShape->GetSubdivision().GetValue()); },
-        DetailsType::UINT32}});
+        details::DetailsType::UINT32}});
   details.push_back(
       {"Radius",
        {[this]()
         { return std::ref(this->_particleShape->GetRadius().GetValue()); },
-        DetailsType::UINT32}});
+        details::DetailsType::UINT32}});
   details.push_back({"Particle spacing",
                      {[this]()
                       {
@@ -104,7 +104,7 @@ Particles<Prim>::details_map Particles<Prim>::Details()
                             this->_physicsDispatch.GetFluidProperties()
                                 .particle_spacing.GetValue());
                       },
-                      DetailsType::FLOAT}});
+                      details::DetailsType::FLOAT}});
   details.push_back({"Distribution",
                      {[this]()
                       {
@@ -112,10 +112,10 @@ Particles<Prim>::details_map Particles<Prim>::Details()
                             this->_physicsDispatch.GetFluidProperties()
                                 .distribution_shape.GetValue());
                       },
-                      DetailsType::UINT8}});
+                      details::DetailsType::UINT8}});
   details.push_back({"Physics",
                      {[this]() { return std::ref(this->GetPhysicsType()); },
-                      DetailsType::PHYSTYPE}});
+                      details::DetailsType::PHYSTYPE}});
   details.push_back({"Influence kernel",
                      {[this]()
                       {
@@ -123,7 +123,7 @@ Particles<Prim>::details_map Particles<Prim>::Details()
                             this->_physicsDispatch.GetFluidProperties()
                                 .influence_kernel.GetValue());
                       },
-                      DetailsType::FLOAT}});
+                      details::DetailsType::FLOAT}});
   details.push_back({"Search kernel",
                      {[this]()
                       {
@@ -131,7 +131,7 @@ Particles<Prim>::details_map Particles<Prim>::Details()
                             this->_physicsDispatch.GetFluidProperties()
                                 .search_kernel.GetValue());
                       },
-                      DetailsType::FLOAT}});
+                      details::DetailsType::FLOAT}});
   details.push_back(
       {"Kernel factor A",
        {[this]()
@@ -139,7 +139,7 @@ Particles<Prim>::details_map Particles<Prim>::Details()
           return std::ref(
               this->_physicsDispatch.GetFluidProperties().kernel_a.GetValue());
         },
-        DetailsType::FLOAT}});
+        details::DetailsType::FLOAT}});
   details.push_back(
       {"Mass",
        {[this]()
@@ -147,7 +147,7 @@ Particles<Prim>::details_map Particles<Prim>::Details()
           return std::ref(
               this->_physicsDispatch.GetFluidProperties().mass.GetValue());
         },
-        DetailsType::FLOAT}});
+        details::DetailsType::FLOAT}});
   details.push_back({"Viscosity factor",
                      {[this]()
                       {
@@ -155,7 +155,7 @@ Particles<Prim>::details_map Particles<Prim>::Details()
                             this->_physicsDispatch.GetFluidProperties()
                                 .viscosity_factor.GetValue());
                       },
-                      DetailsType::FLOAT}});
+                      details::DetailsType::FLOAT}});
   details.push_back(
       {"Rest density",
        {[this]()
@@ -163,29 +163,13 @@ Particles<Prim>::details_map Particles<Prim>::Details()
           return std::ref(
               this->_physicsDispatch.GetFluidProperties().density0.GetValue());
         },
-        DetailsType::FLOAT}});
+        details::DetailsType::FLOAT}});
   details.push_back(
       {"Mesh radius",
        {[this]() {
           return std::ref(
               this->_physicsDispatch.GetFluidProperties().mesh_radius);
         },
-        DetailsType::UINT32}});
-  details.push_back({"Space bounds",
-                     {[this]()
-                      {
-                        return std::ref(
-                            this->_physicsDispatch.GetFluidProperties()
-                                .space_limiter.GetValue());
-                      },
-                      DetailsType::FLOAT}});
-  details.push_back({"Bounds viscosity",
-                     {[this]()
-                      {
-                        return std::ref(
-                            this->_physicsDispatch.GetFluidProperties()
-                                .bounds_viscosity.GetValue());
-                      },
-                      DetailsType::FLOAT}});
+        details::DetailsType::UINT32}});
   return details;
 }

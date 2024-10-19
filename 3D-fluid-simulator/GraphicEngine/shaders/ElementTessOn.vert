@@ -10,7 +10,7 @@ const uint MaxNeighbours =  512;
 
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
-	vec4 positionGroup;
+	vec4 position;
 	vec4 VolumeDensityPressureRohash;
 	uint neighbours[MaxNeighbours];
 };
@@ -21,7 +21,7 @@ layout(std430, binding = 0) buffer dataBuffer{
 
 void main(){
 	outColorVert = inColorVert / 255.;
-	outShapeOffset = particle[gl_InstanceID].positionGroup;
+	outShapeOffset = particle[gl_InstanceID].position;
 	gl_Position = vec4(inPosition, 0);
 	gl_PointSize = 10;
 }

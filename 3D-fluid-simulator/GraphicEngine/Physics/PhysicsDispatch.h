@@ -14,8 +14,7 @@ class PhysicsDispatch
   Essentials::FluidProperties _fluid_properties;
   Program _physicsGenerator;
   // HydroTest testing_suite{};
-  uint32_t _work_groups{1U};
-  static Uniform<float> _dt;
+  uint32_t _work_groups{5U};
 
  private:
   void Bind() const;
@@ -38,6 +37,4 @@ class PhysicsDispatch
                         uint32_t particleRadius);
   void GenerateForces(Essentials::PhysicsType objectPhysicsType);
   void Calculate(uint32_t work_groups, bool create_snapshot);
-  static void UpdateDeltaTime();
-  Uniform<float>& GetDeltaTime();
 };

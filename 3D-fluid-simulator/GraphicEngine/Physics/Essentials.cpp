@@ -11,9 +11,8 @@ std::ostream& operator<<(std::ostream& out,
   out << "(" << particle.velocityDFSPHfactor.x << ","
       << particle.velocityDFSPHfactor.y << "," << particle.velocityDFSPHfactor.z
       << "," << particle.velocityDFSPHfactor.w << ")" << std::endl;
-  out << "(" << particle.positionGroup.x << "," << particle.positionGroup.y
-      << "," << particle.positionGroup.z << "," << particle.positionGroup.w
-      << ")" << std::endl;
+  out << "(" << particle.position.x << "," << particle.position.y << ","
+      << particle.position.z << "," << particle.position.w << ")" << std::endl;
   out << "(" << particle.VolumeDensityPressureRohash.x << ","
       << particle.VolumeDensityPressureRohash.y << ","
       << particle.VolumeDensityPressureRohash.z << ","

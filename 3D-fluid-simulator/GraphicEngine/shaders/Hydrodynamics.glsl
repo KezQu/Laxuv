@@ -11,6 +11,7 @@ const uint MaxNeighbours = 512;
 const uint MaxValueNeighbour = uint(0xffff);
 
 uniform float kernel_a;
+uniform float kernel_b = 2.5;
 uniform float influenceKernel;
 uniform float searchKernel;
 uniform float dt;
@@ -32,7 +33,7 @@ struct Flux {
 
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
-	vec4 positionGroup;
+	vec4 position;
 	vec4 VolumeDensityPressureRohash;
 	uint neighbours[MaxNeighbours];
 };
@@ -41,25 +42,13 @@ layout(std430, binding = 0) buffer dataBuffer{
 	ParticleProperties particle[];
 };
 
-//float CalculateKernelWeight(vec3 points_dist){
-//	const float abs_dist = length(points_dist);
-//	
-//	return pow(E, - pow(abs_dist, kernel_a) / influenceKernel);
-//}
-//
-//vec3 CalculateGradKernelWeight(vec3 points_dist){
-//	const float abs_dist = length(points_dist);
-//	const vec3 versor_ij = abs_dist > 0 ? normalize(points_dist): vec3(0);
-//	
-//	return -kernel_a * pow(abs_dist, kernel_a - 1) * CalculateKernelWeight(points_dist) * versor_ij;
-//}
-
 float CalculateKernelWeight(vec3 points_dist){
 	const float abs_dist = length(points_dist);
 	if(abs_dist > influenceKernel){
 		return 0.f;
 	}	
-	return 2 * pow(influenceKernel - abs_dist, 3) / pow(influenceKernel, kernel_a);
+//	return 2 * pow(influenceKernel - abs_dist, 3) / pow(influenceKernel, kernel_a);
+	return (influenceKernel/ kernel_b + abs_dist) * pow(influenceKernel - abs_dist, 3) / pow(influenceKernel, kernel_a);
 }
 
 vec3 CalculateGradKernelWeight(vec3 points_dist){
@@ -68,20 +57,21 @@ vec3 CalculateGradKernelWeight(vec3 points_dist){
 	if(abs_dist > influenceKernel){
 		return vec3(0);
 	}
-	return -6 * pow(influenceKernel - abs_dist, 2) / pow(influenceKernel, kernel_a) * versor_ij;
+//	return -6 * pow(influenceKernel - abs_dist, 2) / pow(influenceKernel, kernel_a) * versor_ij;
+	return (((kernel_b - 3) * influenceKernel - 4 * kernel_b * abs_dist) / kernel_b) * pow(influenceKernel - abs_dist, 2) / pow(influenceKernel, kernel_a) * versor_ij;
 }
 
 void FindNeighbours(uint index_x, uint MaxParticles){
 	for(uint i = 0; i < MaxNeighbours; i++){
 			particle[index_x].neighbours[i] = MaxValueNeighbour;
 	}
-	vec3 pos_x = particle[index_x].positionGroup.xyz;
+	vec3 pos_x = particle[index_x].position.xyz;
 	if(!isnan(pos_x.x)){
 		uint num_neighbours = 0;
 		for(uint i = 0; i < MaxParticles && num_neighbours < MaxNeighbours; i++){
 			if(i != index_x){
-				const vec3 pos_neighbour = particle[i].positionGroup.xyz;
-				if(length(pos_x - pos_neighbour) < 2 * searchKernel){
+				const vec3 pos_neighbour = particle[i].position.xyz;
+				if(length(pos_x - pos_neighbour) < searchKernel){
 					particle[index_x].neighbours[num_neighbours] = i;
 					num_neighbours++;
 				}
@@ -100,8 +90,8 @@ float CalculateDFSPHFactor(uint index_x){
 			break;
 		}
 		const float m_j = mass;
-		const vec3 x_i = particle[index_x].positionGroup.xyz;
-		const vec3 x_j = particle[curr_neighbour].positionGroup.xyz;
+		const vec3 x_i = particle[index_x].position.xyz;
+		const vec3 x_j = particle[curr_neighbour].position.xyz;
 		const vec3 gradW_ij = CalculateGradKernelWeight(x_i - x_j);
 		sum += m_j * gradW_ij;
 		sum_of_squared += pow(length(m_j * gradW_ij), 2);
@@ -118,7 +108,7 @@ float CalculateDensity(uint index_x){
 			break;
 		}
 		const float m_j = mass;
-		const vec3 x_ij = particle[index_x].positionGroup.xyz - particle[curr_neighbour].positionGroup.xyz;
+		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 		kernel_sum += m_j * CalculateKernelWeight(x_ij);
 	}
 	return kernel_sum;
@@ -136,7 +126,7 @@ float CalculateDerivDensity(uint index_x){
 		}
 		const float m_j = mass;
 		const vec3 v_j = particle[curr_neighbour].velocityDFSPHfactor.xyz;
-		const vec3 x_ij = particle[index_x].positionGroup.xyz - particle[curr_neighbour].positionGroup.xyz;
+		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 
 		kernel_sum += m_j * dot((v_i - v_j), CalculateGradKernelWeight(x_ij));
 	}
@@ -157,7 +147,7 @@ vec3 CalculateGradPressure(uint index_x){
 		const float m_j = mass;
 		const float ro_j = particle[curr_neighbour].VolumeDensityPressureRohash.y;
 		const float p_j = particle[curr_neighbour].VolumeDensityPressureRohash.z;
-		const vec3 x_ij = particle[index_x].positionGroup.xyz - particle[curr_neighbour].positionGroup.xyz;
+		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 
 		kernel_sum += m_j * (p_i / pow(ro_i, 2) + p_j / (ro_j * ro_i)) * CalculateGradKernelWeight(x_ij);
 	}
@@ -177,7 +167,7 @@ vec3 CalculateViscosity(uint index_x){
 		const float m_j = mass;
 		const float ro_j = particle[curr_neighbour].VolumeDensityPressureRohash.y;
 		const vec3 v_ij = particle[index_x].velocityDFSPHfactor.xyz - particle[curr_neighbour].velocityDFSPHfactor.xyz;
-		const vec3 x_ij = particle[index_x].positionGroup.xyz - particle[curr_neighbour].positionGroup.xyz;
+		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 		kernel_sum += (m_j * dot(v_ij, x_ij) * CalculateGradKernelWeight(x_ij)) / (ro_j * (pow(length(x_ij), 2) + 0.01));
 	}
 	return kernel_sum * viscosityFactor * 2 * (d + 2);
@@ -216,6 +206,14 @@ float CalculateAvgDerivDensity(uint index_x){
 }
 
 float SolverFactor(uint index_x){
-	float scaler = 1e+2;
-	return scaler * abs(particle[index_x].VolumeDensityPressureRohash.w  - density0) / density0 + 1;
+	float scaler = 1 / mass;
+//	return scaler * abs(particle[index_x].VolumeDensityPressureRohash.w  - density0) / density0 + 1;
+	return 1;
+}
+
+vec4 FindCell(uint index_x){
+	vec4 cell = vec4(0);
+
+
+	return cell;
 }

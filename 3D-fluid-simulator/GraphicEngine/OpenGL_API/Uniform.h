@@ -47,10 +47,11 @@ class Uniform
  private:
   std::string _uniform_name;
   T _value;
+  float _scale;
 
  public:
-  Uniform(T value, std::string uniform_name)
-      : _value{value}, _uniform_name{uniform_name}
+  Uniform(T value, std::string uniform_name, float scale = 1.f)
+      : _value{value}, _scale{scale}, _uniform_name{uniform_name}
   {
   }
   void MapUniform(uint32_t program_id) const
@@ -103,71 +104,78 @@ class Uniform
     requires std::signed_integral<T>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    if (location != -1) glUniform1i(location, _value);
+    if (location != -1) glUniform1i(location, static_cast<T>(_value * _scale));
   }
 
   void SetUniformIfExists(uint32_t program_id) const
     requires std::unsigned_integral<T>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    if (location != -1) glUniform1ui(location, _value);
+    if (location != -1) glUniform1ui(location, static_cast<T>(_value * _scale));
   }
 
   void SetUniformIfExists(uint32_t program_id) const
     requires std::same_as<float, T>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    if (location != -1) glUniform1f(location, _value);
+    if (location != -1) glUniform1f(location, static_cast<T>(_value * _scale));
   }
 
   void SetUniformIfExists(uint32_t program_id) const
     requires std::same_as<double, T>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    if (location != -1) glUniform1d(location, _value);
+    if (location != -1) glUniform1d(location, static_cast<T>(_value * _scale));
   }
 
   void SetUniformIfExists(uint32_t program_id) const
     requires is_vec2<T> && std::same_as<float, typename T::value_type>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    if (location != -1) glUniform2fv(location, 1, glm::value_ptr(_value));
+    T scaled_value = static_cast<T>(_value * _scale);
+    if (location != -1) glUniform2fv(location, 1, glm::value_ptr(scaled_value));
   }
 
   void SetUniformIfExists(uint32_t program_id) const
     requires is_vec3<T> && std::signed_integral<T>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    if (location != -1) glUniform3iv(location, 1, glm::value_ptr(_value));
+    T scaled_value = static_cast<T>(_value * _scale);
+    if (location != -1) glUniform3iv(location, 1, glm::value_ptr(scaled_value));
   }
 
   void SetUniformIfExists(uint32_t program_id) const
     requires is_vec3<T> && std::unsigned_integral<T>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    if (location != -1) glUniform3uiv(location, 1, glm::value_ptr(_value));
+    T scaled_value = static_cast<T>(_value * _scale);
+    if (location != -1)
+      glUniform3uiv(location, 1, glm::value_ptr(scaled_value));
   }
 
   void SetUniformIfExists(uint32_t program_id) const
     requires is_vec3<T> && std::same_as<float, typename T::value_type>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    if (location != -1) glUniform3fv(location, 1, glm::value_ptr(_value));
+    T scaled_value = static_cast<T>(_value * _scale);
+    if (location != -1) glUniform3fv(location, 1, glm::value_ptr(scaled_value));
   }
 
   void SetUniformIfExists(uint32_t program_id) const
     requires is_vec3<T> && std::same_as<double, typename T::value_type>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    if (location != -1) glUniform3dv(location, 1, glm::value_ptr(_value));
+    T scaled_value = static_cast<T>(_value * _scale);
+    if (location != -1) glUniform3dv(location, 1, glm::value_ptr(scaled_value));
   }
 
   void SetUniformIfExists(uint32_t program_id) const
     requires is_mat4<T> && std::same_as<float, typename T::value_type>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
+    T scaled_value = static_cast<T>(_value * _scale);
     if (location != -1)
-      glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(_value));
+      glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(scaled_value));
   }
 
   uint32_t CheckIfExists(uint32_t const program_id,

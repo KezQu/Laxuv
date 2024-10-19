@@ -3,8 +3,6 @@
 #include <Simulator.h>
 #include <imgui.h>
 
-Uniform<float> PhysicsDispatch::_dt{0.f, "dt"};
-
 PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
     : _particleMesh{
           "dataBuffer",
@@ -44,11 +42,7 @@ void PhysicsDispatch::BindUniforms(
 
   _fluid_properties.particle_radius.MapUniform(_physicsGenerator.ID());
   _fluid_properties.particle_spacing.MapUniform(_physicsGenerator.ID());
-  _fluid_properties.space_limiter.MapUniform(_physicsGenerator.ID());
-  _fluid_properties.bounds_viscosity.MapUniform(_physicsGenerator.ID());
   _fluid_properties.distribution_shape.MapUniform(_physicsGenerator.ID());
-
-  _dt.MapUniform(_physicsGenerator.ID());
 }
 
 ShaderStorageBuffer<Essentials::ParticleProperties> const&
@@ -93,16 +87,6 @@ void PhysicsDispatch::InitDefaultShape(
   Bind();
   BindUniforms(objectPhysicsType, Essentials::SimulationState::INIT);
   Calculate(_work_groups, true);
-
-  uint32_t MaxParticles =
-      std::pow(_fluid_properties.mesh_radius * _work_groups, 3);
-  // testing_suite.Init(_fluid_properties.mass.GetValue(),
-  //                    _fluid_properties.particle_radius.GetValue(),
-  //                    _fluid_properties.particle_spacing.GetValue(),
-  //                    MaxParticles,
-  //                    _fluid_properties.influence_kernel.GetValue(),
-  //                    _fluid_properties.search_kernel.GetValue(),
-  //                    _fluid_properties.kernel_a.GetValue());
 }
 
 void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
@@ -110,19 +94,6 @@ void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
   Bind();
   BindUniforms(objectPhysicsType,
                Simulator::GetInstance().GetSimulationState());
+  Simulator::GetInstance().BindUniforms(_physicsGenerator.ID());
   Calculate(_work_groups, false);
-  // testing_suite.CalculateDFSPHSimulation(
-  //     std::pow(_fluid_properties.mesh_radius * _work_groups, 3), 0,
-  //     // 9.807f, _fluid_properties.density0.GetValue());
-}
-
-void PhysicsDispatch::UpdateDeltaTime()
-{
-  _dt = 1.f / ImGui::GetIO().Framerate;
-  //_dt = 0.016f;
-}
-
-Uniform<float>& PhysicsDispatch::GetDeltaTime()
-{
-  return _dt;
 }

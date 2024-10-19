@@ -40,9 +40,8 @@ void Explorer::Generate()
       ImGui::Combo("##EntityShape", &objectSelect.second,
                    " \0Point\0Line\0Square\0Qube\0Sphere\0");
       ImGui::SameLine();
-      ImGui::SetNextItemWidth(_size.x / 3.);
-      if (ImGui::Button("Add Entity##AddEntity") && objectSelect.first != 0 &&
-          objectSelect.second != 0)
+      if (ImGui::Button("Add Entity##AddEntity", {_size.x / 3.f, 0.f}) &&
+          objectSelect.first != 0 && objectSelect.second != 0)
       {
         switch (objectSelect.second)
         {
@@ -79,10 +78,10 @@ void Explorer::Generate()
     }
     ImGui::EndChild();
     if (ImGui::BeginChild("##ObjectExplorer",
-                          ImVec2(_size.x, _size.y / 2 - 10)))
+                          ImVec2(_size.x, _size.y / 4 - 10)))
     {
       if (ImGui::BeginTable("##NamesTable", 2, ImGuiTableFlags_Borders,
-                            ImVec2(_size.x, _size.y / 2 - 10)))
+                            ImVec2(_size.x, _size.y / 4 - 10)))
       {
         ImGui::TableSetupColumn("##Visibilty", ImGuiTableColumnFlags_WidthFixed,
                                 20.);
@@ -100,6 +99,31 @@ void Explorer::Generate()
           {
             selected = k;
           }
+        }
+      }
+      ImGui::EndTable();
+    }
+    ImGui::EndChild();
+    if (ImGui::BeginChild("##WorldDetails", ImVec2(_size.x, _size.y / 4 - 10)))
+    {
+      if (ImGui::BeginTable("##WorldDetailsTable", 2, ImGuiTableFlags_Borders,
+                            ImVec2(_size.x, _size.y / 4 - 10)))
+      {
+        ImGui::TableSetupColumn("##WorldInfoName",
+                                ImGuiTableColumnFlags_WidthFixed, _size.x / 2.);
+        ImGui::TableSetupColumn("##WorldInfoValue",
+                                ImGuiTableColumnFlags_WidthStretch);
+        for (auto& info : simulatorInstance.GetDetails())
+        {
+          ImGui::TableNextRow();
+          ImGui::TableSetColumnIndex(0);
+          ImGui::Text(info.first.c_str());
+
+          ImGui::TableSetColumnIndex(1);
+          ImGui::SetNextItemWidth(-1);
+          CreateProperty(info);
+
+          ImGui::Spacing();
         }
       }
       ImGui::EndTable();
@@ -125,86 +149,8 @@ void Explorer::Generate()
 
           ImGui::TableSetColumnIndex(1);
           ImGui::SetNextItemWidth(-1);
-          switch (info.second.second)
-          {
-            case DetailsType::BOOL:
-              ImGui::Checkbox(
-                  ("##" + info.first).c_str(),
-                  &std::get<DetailsType::BOOL>(info.second.first)());
-              break;
-            case DetailsType::STRING:
-              ImGui::InputText(
-                  ("##" + info.first).c_str(),
-                  &std::get<DetailsType::STRING>(info.second.first)(),
-                  ImGuiInputTextFlags_EnterReturnsTrue);
-              break;
-            case DetailsType::INT32:
-              ImGui::DragInt(("##" + info.first).c_str(),
-                             &std::get<DetailsType::INT32>(info.second.first)(),
-                             1, INT_MIN / 2, INT_MAX / 2, "%d",
-                             ImGuiSliderFlags_AlwaysClamp);
-              break;
-            case DetailsType::UINT8:
-              ImGui::DragScalar(
-                  ("##" + info.first).c_str(), ImGuiDataType_U8,
-                  &std::get<DetailsType::UINT8>(info.second.first)(), 1,
-                  (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
-              break;
-            case DetailsType::UINT32:
-              ImGui::DragScalar(
-                  ("##" + info.first).c_str(), ImGuiDataType_U32,
-                  &std::get<DetailsType::UINT32>(info.second.first)(), 1,
-                  (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
-              break;
-            case DetailsType::UINT64:
-              ImGui::DragScalar(
-                  ("##" + info.first).c_str(), ImGuiDataType_U64,
-                  &std::get<DetailsType::UINT64>(info.second.first)(), 1,
-                  (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
-              break;
-            // case DetailsType::DISTSHAPE:
-            //   ImGui::DragScalar(
-            //       ("##" + info.first).c_str(), ImGuiDataType_U8,
-            //       &std::get<DetailsType::DISTSHAPE>(info.second.first)(), 1,
-            //       (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
-            //   break;
-            case DetailsType::PHYSTYPE:
-              ImGui::DragScalar(
-                  ("##" + info.first).c_str(), ImGuiDataType_U8,
-                  &std::get<DetailsType::PHYSTYPE>(info.second.first)(), 1,
-                  (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
-              break;
-            case DetailsType::FLOAT:
-              ImGui::DragFloat(
-                  ("##" + info.first).c_str(),
-                  &std::get<DetailsType::FLOAT>(info.second.first)(), 1e-3f,
-                  -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f",
-                  ImGuiSliderFlags_AlwaysClamp);
-              break;
-            case DetailsType::VEC2:
-              ImGui::DragFloat2(("##" + info.first).c_str(),
-                                glm::value_ptr(std::get<DetailsType::VEC2>(
-                                    info.second.first)()),
-                                1e-3f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f",
-                                ImGuiSliderFlags_AlwaysClamp);
-              break;
-            case DetailsType::VEC3:
-              ImGui::DragFloat3(("##" + info.first).c_str(),
-                                glm::value_ptr(std::get<DetailsType::VEC3>(
-                                    info.second.first)()),
-                                1e-3f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f",
-                                ImGuiSliderFlags_AlwaysClamp);
-              break;
-            case DetailsType::VEC4:
-              ImGui::DragFloat4(("##" + info.first).c_str(),
-                                glm::value_ptr(std::get<DetailsType::VEC4>(
-                                    info.second.first)()),
-                                1e-3f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.3f",
-                                ImGuiSliderFlags_AlwaysClamp);
-              break;
-            default:
-              break;
-          }
+          CreateProperty(info);
+
           ImGui::Spacing();
         }
         ImGui::TableNextRow();
@@ -226,4 +172,87 @@ void Explorer::Generate()
   }
   ImGui::End();
   ImGui::PopStyleVar(4);
+}
+
+void Explorer::CreateProperty(details::details_mapper& info)
+{
+  switch (info.second.second)
+  {
+    case details::DetailsType::BOOL:
+      ImGui::Checkbox(
+          ("##" + info.first).c_str(),
+          &std::get<details::DetailsType::BOOL>(info.second.first)());
+      break;
+    case details::DetailsType::STRING:
+      ImGui::InputText(
+          ("##" + info.first).c_str(),
+          &std::get<details::DetailsType::STRING>(info.second.first)(),
+          ImGuiInputTextFlags_EnterReturnsTrue);
+      break;
+    case details::DetailsType::INT32:
+      ImGui::DragInt(
+          ("##" + info.first).c_str(),
+          &std::get<details::DetailsType::INT32>(info.second.first)(), 1,
+          INT_MIN / 2, INT_MAX / 2, "%d", ImGuiSliderFlags_AlwaysClamp);
+      break;
+    case details::DetailsType::UINT8:
+      ImGui::DragScalar(
+          ("##" + info.first).c_str(), ImGuiDataType_U8,
+          &std::get<details::DetailsType::UINT8>(info.second.first)(), 1,
+          (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
+      break;
+    case details::DetailsType::UINT32:
+      ImGui::DragScalar(
+          ("##" + info.first).c_str(), ImGuiDataType_U32,
+          &std::get<details::DetailsType::UINT32>(info.second.first)(), 1,
+          (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
+      break;
+    case details::DetailsType::UINT64:
+      ImGui::DragScalar(
+          ("##" + info.first).c_str(), ImGuiDataType_U64,
+          &std::get<details::DetailsType::UINT64>(info.second.first)(), 1,
+          (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
+      break;
+    // case details::DetailsType::DISTSHAPE:
+    //   ImGui::DragScalar(
+    //       ("##" + info.first).c_str(), ImGuiDataType_U8,
+    //       &std::get<details::DetailsType::DISTSHAPE>(info.second.first)(),
+    //       1, (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
+    //   break;
+    case details::DetailsType::PHYSTYPE:
+      ImGui::DragScalar(
+          ("##" + info.first).c_str(), ImGuiDataType_U8,
+          &std::get<details::DetailsType::PHYSTYPE>(info.second.first)(), 1,
+          (void*)0, (void*)0, "%d", ImGuiSliderFlags_AlwaysClamp);
+      break;
+    case details::DetailsType::FLOAT:
+      ImGui::DragFloat(
+          ("##" + info.first).c_str(),
+          &std::get<details::DetailsType::FLOAT>(info.second.first)(), 1e-1f,
+          -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+      break;
+    case details::DetailsType::VEC2:
+      ImGui::DragFloat2(("##" + info.first).c_str(),
+                        glm::value_ptr(std::get<details::DetailsType::VEC2>(
+                            info.second.first)()),
+                        1e-1f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.1f",
+                        ImGuiSliderFlags_AlwaysClamp);
+      break;
+    case details::DetailsType::VEC3:
+      ImGui::DragFloat3(("##" + info.first).c_str(),
+                        glm::value_ptr(std::get<details::DetailsType::VEC3>(
+                            info.second.first)()),
+                        1e-1f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.1f",
+                        ImGuiSliderFlags_AlwaysClamp);
+      break;
+    case details::DetailsType::VEC4:
+      ImGui::DragFloat4(("##" + info.first).c_str(),
+                        glm::value_ptr(std::get<details::DetailsType::VEC4>(
+                            info.second.first)()),
+                        1e-1f, -FLT_MAX / 2.f, FLT_MAX / 2.f, "%.1f",
+                        ImGuiSliderFlags_AlwaysClamp);
+      break;
+    default:
+      break;
+  }
 }

@@ -10,7 +10,7 @@ const uint MaxNeighbours =  512;
 
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
-	vec4 positionGroup;
+	vec4 position;
 	vec4 VolumeDensityPressureRohash;
 	uint neighbours[MaxNeighbours];
 };
@@ -24,6 +24,6 @@ vec4 CalculateNDC(in vec3 position, in vec4 offset);
 void main(){
 	outColorVert = inColorVert / 255.;
 	normal = -inPosition;
-	gl_Position = CalculateNDC(inPosition, particle[gl_InstanceID].positionGroup);
+	gl_Position = CalculateNDC(inPosition, particle[gl_InstanceID].position);
 	gl_PointSize = 10;
 }

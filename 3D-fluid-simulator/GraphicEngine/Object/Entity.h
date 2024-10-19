@@ -12,6 +12,8 @@
 
 #include "PhysicsDispatch.h"
 
+namespace details
+{
 enum DetailsType
 {
   BOOL,
@@ -27,6 +29,20 @@ enum DetailsType
   VEC4
 };
 
+using details_mapper = std::pair<
+    std::string,
+    std::pair<
+        std::variant<std::function<bool&()>, std::function<std::string&()>,
+                     std::function<int32_t&()>, std::function<uint8_t&()>,
+                     std::function<uint32_t&()>, std::function<uint64_t&()>,
+                     std::function<Essentials::PhysicsType&()>,
+                     std::function<float&()>, std::function<glm::vec2&()>,
+                     std::function<glm::vec3&()>, std::function<glm::vec4&()>>,
+        DetailsType>>;
+
+using details_map = std::vector<details_mapper>;
+};  // namespace details
+
 class Entity
 {
  protected:
@@ -36,18 +52,6 @@ class Entity
   std::string _name;
   Essentials::PhysicsType _physics;
   bool _visible{true};
-
- public:
-  using details_map = std::vector<std::pair<
-      std::string,
-      std::pair<std::variant<
-                    std::function<bool&()>, std::function<std::string&()>,
-                    std::function<int32_t&()>, std::function<uint8_t&()>,
-                    std::function<uint32_t&()>, std::function<uint64_t&()>,
-                    std::function<Essentials::PhysicsType&()>,
-                    std::function<float&()>, std::function<glm::vec2&()>,
-                    std::function<glm::vec3&()>, std::function<glm::vec4&()>>,
-                DetailsType>>>;
 
  public:
   Entity(Entity const& objCopy) = delete;
@@ -79,7 +83,7 @@ class Entity
   virtual void Initialize() {}
   virtual void Calculate() {}
   virtual void Draw() const {}
-  virtual details_map Details();
+  virtual details::details_map Details();
 
  protected:
   Entity(Essentials::PhysicsType physics);
