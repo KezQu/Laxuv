@@ -12,6 +12,7 @@ struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
 	vec4 VolumeDensityPressureRohash;
+	uvec4 cell;
 	uint neighbours[MaxNeighbours];
 };
 

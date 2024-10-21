@@ -36,7 +36,7 @@ inline GPUBuffer<target, T>::GPUBuffer() : BufferI<target, T>{}
 
 template <GLenum target, typename T>
 inline GPUBuffer<target, T>::GPUBuffer(uint64_t initialBufferSize)
-    : BufferI<target, T>{GL_STREAM_COPY}, _bufferSize{initialBufferSize}
+    : BufferI<target, T>{GL_STATIC_DRAW}, _bufferSize{initialBufferSize}
 {
   _(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(),
                       this->_purpose));

@@ -11,10 +11,11 @@ class PhysicsDispatch
 {
  private:
   ShaderStorageBuffer<Essentials::ParticleProperties> _particleMesh;
+  ShaderStorageBuffer<Essentials::space_grid_t> _space_grid;
   Essentials::FluidProperties _fluid_properties;
   Program _physicsGenerator;
   // HydroTest testing_suite{};
-  uint32_t _work_groups{5U};
+  uint32_t _work_groups{10U};
 
  private:
   void Bind() const;

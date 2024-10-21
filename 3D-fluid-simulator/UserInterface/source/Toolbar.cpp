@@ -63,11 +63,11 @@ void Toolbar::Generate()
     ImGui::DragFloat("##timestep_value", &static_timestep, 0.1f, 0.f, 1000.f,
                      "%.1f ms", ImGuiSliderFlags_AlwaysClamp);
     ImGui::SameLine();
-    if (ImGui::Button("Set timestep") || static_timestep > 1e-6f)
+    if (ImGui::Button("Set timestep") && static_timestep > 1e-6f)
     {
       simulatorInstance.UpdateDeltaTime(static_timestep);
     }
-    else
+    else if (static_timestep < 1e-6f)
     {
       simulatorInstance.UpdateDeltaTime();
     }

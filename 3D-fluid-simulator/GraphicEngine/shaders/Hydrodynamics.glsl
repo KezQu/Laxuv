@@ -7,17 +7,22 @@ const mat3 I = mat3(1, 0, 0,
         0, 1, 0,
         0, 0, 1);
 
-const uint MaxNeighbours = 512;
 const uint MaxValueNeighbour = uint(0xffff);
+const float cellRadius = 5;
+const uint MaxCells = uint(1200 / cellRadius);
+const uint HashGridSize = MaxCells * MaxCells;
+const uint CellCapacity = uint(3.1415 * (4. / 3.) * pow(cellRadius, 3));
+const uint MaxNeighbours = 512;
 
+uniform float spaceLimiter;
 uniform float kernel_a;
-uniform float kernel_b = 2.5;
+uniform float kernel_b = 1.2;
+uniform float kernel_c = 3;
 uniform float influenceKernel;
 uniform float searchKernel;
+uniform float viscosityFactor;
 uniform float dt;
 uniform float mass;
-uniform float viscosityFactor;
-uniform float density0;
 
 struct stateVector{
 	float x;
@@ -35,11 +40,15 @@ struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
 	vec4 VolumeDensityPressureRohash;
+	uvec4 cell;
 	uint neighbours[MaxNeighbours];
 };
 
 layout(std430, binding = 0) buffer dataBuffer{
-	ParticleProperties particle[];
+	restrict ParticleProperties particle[];
+};
+layout(std430, binding = 1) buffer spaceGrid{
+	uint space_grid[HashGridSize][CellCapacity];
 };
 
 float CalculateKernelWeight(vec3 points_dist){
@@ -47,8 +56,8 @@ float CalculateKernelWeight(vec3 points_dist){
 	if(abs_dist > influenceKernel){
 		return 0.f;
 	}	
-//	return 2 * pow(influenceKernel - abs_dist, 3) / pow(influenceKernel, kernel_a);
-	return (influenceKernel/ kernel_b + abs_dist) * pow(influenceKernel - abs_dist, 3) / pow(influenceKernel, kernel_a);
+	return 1 * pow(influenceKernel - abs_dist, kernel_c) / pow(influenceKernel, kernel_a);
+//	return (influenceKernel/ kernel_b + abs_dist) * pow(influenceKernel - abs_dist, kernel_c) / pow(influenceKernel, kernel_a);
 }
 
 vec3 CalculateGradKernelWeight(vec3 points_dist){
@@ -57,9 +66,71 @@ vec3 CalculateGradKernelWeight(vec3 points_dist){
 	if(abs_dist > influenceKernel){
 		return vec3(0);
 	}
-//	return -6 * pow(influenceKernel - abs_dist, 2) / pow(influenceKernel, kernel_a) * versor_ij;
-	return (((kernel_b - 3) * influenceKernel - 4 * kernel_b * abs_dist) / kernel_b) * pow(influenceKernel - abs_dist, 2) / pow(influenceKernel, kernel_a) * versor_ij;
+	return -3 * pow(influenceKernel - abs_dist, kernel_c - 1) / pow(influenceKernel, kernel_a - 1) * versor_ij;
+//	return (kernel_b * ((influenceKernel - (kernel_c + 1) * abs_dist) - kernel_c * influenceKernel) / kernel_b) * pow(influenceKernel - abs_dist, kernel_c - 1) / pow(influenceKernel, kernel_a) * versor_ij;
 }
+
+void ClampVelocity(uint index_x){
+	float particle_speed = length(particle[index_x].velocityDFSPHfactor.xyz);
+	if(particle_speed > 50){
+//		particle[index_x].velocityDFSPHfactor.xyz *= 50 / particle_speed;
+	}
+}
+
+uint EncodeCellNumber(vec3 cell){
+	return uint(mod(73856093 * cell.x + 19349663 * cell.y + 83492791 * cell.z, HashGridSize));
+}
+
+vec3 BounceOfAWall(vec3 direction, vec3 normal){
+	return direction - 2 * dot(direction, normal) * normal;
+}
+
+void ClearSpaceGrid(uint index_x, uint MaxParticles){
+	uint clear_range = HashGridSize / MaxParticles;
+	for(uint i = index_x * clear_range; i < (index_x != MaxParticles ? (index_x + 1) * clear_range: HashGridSize); i++){
+			space_grid[i][0] = 0;
+	}
+}
+
+uint FindCell(uint index_x){
+	vec3 interim_cell = ceil((particle[index_x].position.xyz + 600) / cellRadius);
+	uint cell = EncodeCellNumber(interim_cell);
+	particle[index_x].cell = uvec4(interim_cell, cell.x);
+	return cell;
+}
+
+void AssignToCell(uint index_x){
+	uint cell = FindCell(index_x);
+	uint cell_index = atomicAdd(space_grid[cell.x][0], 1);
+	space_grid[cell.x][cell_index + 1] = index_x;
+}
+
+//void FindNeighbours(uint index_x, uint MaxParticles){
+//	for(uint i = 0; i < MaxNeighbours; i++){
+//			particle[index_x].neighbours[i] = MaxValueNeighbour;
+//	}
+//	const vec3 pos_x = particle[index_x].position.xyz;
+//	uint num_neighbours = 0;
+//	for(uint j = 0; j < 27; j++){
+/////////////////////////////////////////////////////////////////////////////////////	    
+//		const uint x = j % 3;
+//	    const uint y = (j / 3) % 3;
+//	    const uint z = j / (3 * 3);
+//		const uvec3 curr_cell = particle[index_x].cell.xyz + uvec3(x,y,z) - 1;
+//		const uint encoded_cell = EncodeCellNumber(curr_cell);
+/////////////////////////////////////////////////////////////////////////////////////	    
+//		for(uint i = 0; i < space_grid[encoded_cell][0] && num_neighbours < MaxNeighbours; i++){
+//			const uint neighbor_index = space_grid[encoded_cell][i + 1];
+//			if(neighbor_index != index_x){
+//				const vec3 pos_neighbour = particle[neighbor_index].position.xyz;
+//				if(length(pos_x - pos_neighbour) < searchKernel){
+//					particle[index_x].neighbours[num_neighbours] = neighbor_index;
+//					num_neighbours++;
+//				}
+//			}
+//		}
+//	}
+//}
 
 void FindNeighbours(uint index_x, uint MaxParticles){
 	for(uint i = 0; i < MaxNeighbours; i++){
@@ -203,17 +274,4 @@ float CalculateAvgDerivDensity(uint index_x){
 		kernel_sum += dro_j;
 	}
 	return kernel_sum / i;
-}
-
-float SolverFactor(uint index_x){
-	float scaler = 1 / mass;
-//	return scaler * abs(particle[index_x].VolumeDensityPressureRohash.w  - density0) / density0 + 1;
-	return 1;
-}
-
-vec4 FindCell(uint index_x){
-	vec4 cell = vec4(0);
-
-
-	return cell;
 }

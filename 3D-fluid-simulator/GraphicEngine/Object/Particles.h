@@ -156,14 +156,14 @@ details::details_map Particles<Prim>::Details()
                                 .viscosity_factor.GetValue());
                       },
                       details::DetailsType::FLOAT}});
-  details.push_back(
-      {"Rest density",
-       {[this]()
-        {
-          return std::ref(
-              this->_physicsDispatch.GetFluidProperties().density0.GetValue());
-        },
-        details::DetailsType::FLOAT}});
+  // details.push_back(
+  //     {"Rest density",
+  //      {[this]()
+  //       {
+  //         return std::ref(
+  //             this->_physicsDispatch.GetFluidProperties().density0.GetValue());
+  //       },
+  //       details::DetailsType::FLOAT}});
   details.push_back(
       {"Mesh radius",
        {[this]() {

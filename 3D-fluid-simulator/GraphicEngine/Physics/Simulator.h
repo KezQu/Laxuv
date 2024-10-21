@@ -13,7 +13,7 @@ class Simulator
   EntityContainer _entitiesContainer;
   Uniform<float> _space_boundries{100.f, "spaceLimiter"};
   Uniform<float> _bounds_viscosity{0.95f, "boundsViscosity"};
-  Uniform<float> _global_delta_time{0.f, "dt", 1e-3f};
+  Uniform<float> _global_delta_time{6.f, "dt", 1e-3f};
   Essentials::SimulationState _globalSimulationState;
 
  private:

@@ -22,7 +22,7 @@ Essentials::SimulationState Simulator::GetSimulationState()
 }
 void Simulator::UpdateDeltaTime()
 {
-  _global_delta_time = 1 / ImGui::GetIO().Framerate;
+  _global_delta_time = 1000.f / ImGui::GetIO().Framerate;
 }
 void Simulator::UpdateDeltaTime(float dt)
 {

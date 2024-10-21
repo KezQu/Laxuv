@@ -1,12 +1,13 @@
 #include "PhysicsDispatch.h"
 
+#include <Essentials.h>
 #include <Simulator.h>
-#include <imgui.h>
 
 PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
-    : _particleMesh{
-          "dataBuffer",
-          static_cast<uint64_t>(dimensions.x * dimensions.y * dimensions.z)}
+    : _particleMesh{"dataBuffer",
+                    static_cast<uint64_t>(dimensions.x * dimensions.y *
+                                          dimensions.z)},
+      _space_grid{"spaceGrid", 0}
 {
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Element.comp");
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/InitDefaultShape.glsl");
@@ -18,6 +19,7 @@ void PhysicsDispatch::Bind() const
   if (!_physicsGenerator.isLinked()) _physicsGenerator.Link();
   _physicsGenerator.Bind();
   _particleMesh.Bind(_physicsGenerator.ID());
+  _space_grid.Bind(_physicsGenerator.ID());
 }
 
 void PhysicsDispatch::BindUniforms(
@@ -34,7 +36,7 @@ void PhysicsDispatch::BindUniforms(
 
   _fluid_properties.viscosity_factor.MapUniform(_physicsGenerator.ID());
   _fluid_properties.mass.MapUniform(_physicsGenerator.ID());
-  _fluid_properties.density0.MapUniform(_physicsGenerator.ID());
+  //_fluid_properties.density0.MapUniform(_physicsGenerator.ID());
 
   _fluid_properties.kernel_a.MapUniform(_physicsGenerator.ID());
   _fluid_properties.influence_kernel.MapUniform(_physicsGenerator.ID());
@@ -63,6 +65,8 @@ void PhysicsDispatch::UpdateMeshDimensions()
   if (_particleMesh.Size() != new_buffer_size)
   {
     _particleMesh.SetBufferMemorySize(new_buffer_size);
+    //    _space_grid.SetBufferMemorySize(Essentials::MaxCells *
+    //                                    Essentials::MaxCells);
   }
 }
 
@@ -71,7 +75,8 @@ void PhysicsDispatch::Calculate(uint32_t work_groups, bool create_snapshot)
   _(glDispatchCompute(_fluid_properties.mesh_radius,
                       _fluid_properties.mesh_radius,
                       _fluid_properties.mesh_radius));
-  _(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
+  _(glMemoryBarrier(GL_ALL_BARRIER_BITS));
+  glFinish();
   if (create_snapshot)
   {
     auto lookupBuffer =
