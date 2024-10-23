@@ -117,13 +117,13 @@ void main(){
 		float factor_x = particle[index].velocityDFSPHfactor.w;
 		// 
 		float ro_hash = particle[index].VolumeDensityPressureRohash.y + dt * CalculateDerivDensity(index);
-		for(int i = 0; i < 1000; i++){
+		for(int i = 0; i < 500; i++){
 			particle[index].VolumeDensityPressureRohash.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
 
 			particle[index].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index);
 			ro_hash = particle[index].VolumeDensityPressureRohash.y + dt * CalculateDerivDensity(index);
 
-			if((abs((ro_hash  - density0)) / density0 < 1e-4) && i > 10){
+			if((abs((ro_hash  - density0)) / density0 < 2e-2) && i > 5){
 				break;
 			}
 		}
@@ -161,7 +161,7 @@ void main(){
 		factor_x = particle[index].velocityDFSPHfactor.w;
 
 		float d_ro = CalculateDerivDensity(index);
-		for(int i = 0; i < 1000 && !((abs(d_ro) < 1e-2) && i > 2); i++){
+		for(int i = 0; i < 500 && !((abs(d_ro) < 1e-2) && i > 2); i++){
 			particle[index].VolumeDensityPressureRohash.z = d_ro * factor_x / dt;
 			
 			particle[index].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index);

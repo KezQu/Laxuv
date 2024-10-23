@@ -1,15 +1,12 @@
 ﻿#include "Toolbar.h"
 
 #include "Camera.h"
+#include "Essentials.h"
+#include "Interface.h"
+#include "Simulator.h"
+#include "imgui.h"
 
-bool Toolbar::_fullscreen = false;
-std::unordered_map<Essentials::SimulationState, std::string>
-    Toolbar::simulationState{
-        {Essentials::SimulationState::IDLE, "Start"},
-        {Essentials::SimulationState::INIT, "Start"},
-        {Essentials::SimulationState::SIMULATION, "Stop"},
-        {Essentials::SimulationState::GEN_FRAME, "Stop"},
-    };
+float Toolbar::static_timestep = 6.f;
 
 Toolbar::Toolbar(ImVec2 const& size, ImVec2 const& position)
     : Interface(size, position,
@@ -59,18 +56,17 @@ void Toolbar::Generate()
     }
     ImGui::SameLine();
     ImGui::PushItemWidth(100.f);
-    static float static_timestep = 6.f;
     ImGui::DragFloat("##timestep_value", &static_timestep, 0.1f, 0.f, 1000.f,
                      "%.1f ms", ImGuiSliderFlags_AlwaysClamp);
     ImGui::SameLine();
-    if (ImGui::Button("Set timestep") && static_timestep > 1e-6f)
+    if (ImGui::Button(simulatorInstance.IsStaticDtUsed()
+                          ? "Use program latency"
+                          : "Use static timestep"))
     {
-      simulatorInstance.UpdateDeltaTime(static_timestep);
+      simulatorInstance.ToggleTimesetType();
     }
-    else if (static_timestep < 1e-6f)
-    {
-      simulatorInstance.UpdateDeltaTime();
-    }
+    simulatorInstance.UpdateDeltaTime(static_timestep);
+
     ImGui::PopItemWidth();
 
     ImGui::SameLine(_size.x - 200);

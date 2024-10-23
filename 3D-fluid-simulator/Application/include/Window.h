@@ -1,18 +1,21 @@
 #pragma once
 #define GLFW_INCLUDE_NONE
 
-#include <Explorer.h>
-#include <GLFW/glfw3.h>
-#include <Logger.h>
-#include <Object.h>
-#include <Particles.h>
-#include <PhysicsDispatch.h>
-#include <ShapeInstance.h>
-
-#include <Toolbar.h>
-#include <WorldAxes.h>
-
 #include <iostream>
+
+#include "Explorer.h"
+#include "GLFW/glfw3.h"
+#include "Line.h"
+#include "Logger.h"
+#include "Object.h"
+#include "Particles.h"
+#include "PhysicsDispatch.h"
+#include "Point.h"
+#include "Qube.h"
+#include "Sphere.h"
+#include "Square.h"
+#include "Toolbar.h"
+#include "WorldAxes.h"
 
 class Window
 {

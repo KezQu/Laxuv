@@ -20,13 +20,17 @@ Essentials::SimulationState Simulator::GetSimulationState()
 {
   return _globalSimulationState;
 }
-void Simulator::UpdateDeltaTime()
-{
-  _global_delta_time = 1000.f / ImGui::GetIO().Framerate;
-}
+
 void Simulator::UpdateDeltaTime(float dt)
 {
-  _global_delta_time = dt;
+  if (_static_timestep)
+  {
+    _global_delta_time = dt;
+  }
+  else
+  {
+    _global_delta_time = 1000.f / ImGui::GetIO().Framerate;
+  }
 }
 
 Uniform<float>& Simulator::GetDeltaTime()
@@ -34,17 +38,21 @@ Uniform<float>& Simulator::GetDeltaTime()
   return _global_delta_time;
 }
 
-details::details_map Simulator::GetDetails()
+bool Simulator::IsStaticDtUsed()
 {
-  details::details_map details;
-  details.push_back(
-      {"Space bounds",
-       {[this]() { return std::ref(this->_space_boundries.GetValue()); },
-        details::DetailsType::FLOAT}});
-  details.push_back(
-      {"Bounds viscosity",
-       {[this]() { return std::ref(this->_bounds_viscosity.GetValue()); },
-        details::DetailsType::FLOAT}});
+  return _static_timestep;
+}
+
+void Simulator::ToggleTimesetType()
+{
+  _static_timestep = !_static_timestep;
+}
+
+details::detail_controls_t Simulator::GetDetails()
+{
+  details::detail_controls_t details;
+  details.push_back({"Space bounds", this->_space_boundries.ExposeToUI()});
+  details.push_back({"Bounds viscosity", this->_bounds_viscosity.ExposeToUI()});
   return details;
 }
 

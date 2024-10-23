@@ -11,10 +11,14 @@ class Simulator
 
  private:
   EntityContainer _entitiesContainer;
-  Uniform<float> _space_boundries{100.f, "spaceLimiter"};
-  Uniform<float> _bounds_viscosity{0.95f, "boundsViscosity"};
-  Uniform<float> _global_delta_time{6.f, "dt", 1e-3f};
+  Uniform<float> _space_boundries{100.f, "spaceLimiter",
+                                  ValueProperties{1.f, 1200.f, 1.f, "%.1f mm"}};
+  Uniform<float> _bounds_viscosity{0.95f, "boundsViscosity",
+                                   ValueProperties{0.f, 1.f, 1.f, "%.2f"}};
+  Uniform<float> _global_delta_time{
+      6.f, "dt", ValueProperties{1.f, 1000.f, 1e-3f, "%1.f ms"}};
   Essentials::SimulationState _globalSimulationState;
+  bool _static_timestep{true};
 
  private:
   Simulator() = default;
@@ -23,10 +27,11 @@ class Simulator
   static Simulator& GetInstance();
   EntityContainer& GetEntities();
   Essentials::SimulationState GetSimulationState();
-  void UpdateDeltaTime();
   void UpdateDeltaTime(float dt);
   Uniform<float>& GetDeltaTime();
-  details::details_map GetDetails();
+  bool IsStaticDtUsed();
+  void ToggleTimesetType();
+  details::detail_controls_t GetDetails();
   void BindUniforms(uint32_t program_id);
   void SetSimulationState(Essentials::SimulationState newGlobalState);
   template <typename T>

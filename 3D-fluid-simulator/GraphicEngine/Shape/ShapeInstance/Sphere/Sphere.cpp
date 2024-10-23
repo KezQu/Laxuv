@@ -1,6 +1,10 @@
 #include "Sphere.h"
 
-Sphere::Sphere(Vertex center, uint64_t radius, bool enableTess)
+#include "Essentials.h"
+#include "Shape.h"
+#include "VertexArray.h"
+
+Sphere::Sphere(Vertex center, float radius, bool enableTess)
     // clang-format off
   :Shape(VertexArray({
       { (center.coordinate) + (1.f / radiusScaler) * glm::vec3{ 0, glm::golden_ratio<float>(), -1 } , center.color },

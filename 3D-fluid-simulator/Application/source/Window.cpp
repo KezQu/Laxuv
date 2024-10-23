@@ -171,7 +171,7 @@ void Window::ProcessKeyInputs()
       ImGui::IsMouseDown(ImGuiMouseButton_Right))
   {
     float delta_speed = ImGui::GetKeyData(ImGuiKey_MouseWheelY)->AnalogValue;
-    if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
+    if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
     {
       delta_speed *= 10;
     }

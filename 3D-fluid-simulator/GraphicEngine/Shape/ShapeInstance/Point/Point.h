@@ -1,15 +1,18 @@
 #pragma once
 
-#include <Shape.h>
-#include <Entity.h>
+#include "Essentials.h"
+#include "GL/glew.h"
+#include "Shape.h"
+#include "VertexArray.h"
 
-class Point : public Shape<GL_POINTS>{
-public:
-	Point(Vertex center = { {0,0,0} }, uint64_t radius = 150);
-	Point(Point const& obj_copy) = delete;
-	Point(Point&& obj_move) = default;
-	Point& operator=(Point const& obj_copy) = delete;
-	Point& operator=(Point&& obj_move) = default;
-	~Point() override = default;
-	Essentials::DistributionShape GetParticleDistribution() override;
+class Point : public Shape<GL_POINTS>
+{
+ public:
+  Point(Vertex center = {{0, 0, 0}}, float radius = 15.f);
+  Point(Point const& obj_copy) = delete;
+  Point(Point&& obj_move) = default;
+  Point& operator=(Point const& obj_copy) = delete;
+  Point& operator=(Point&& obj_move) = default;
+  ~Point() override = default;
+  Essentials::DistributionShape GetParticleDistribution() override;
 };

@@ -16,7 +16,6 @@ const uint MaxNeighbours = 512;
 
 uniform float spaceLimiter;
 uniform float kernel_a;
-uniform float kernel_b = 1.2;
 uniform float kernel_c = 3;
 uniform float influenceKernel;
 uniform float searchKernel;
@@ -55,9 +54,11 @@ float CalculateKernelWeight(vec3 points_dist){
 	const float abs_dist = length(points_dist);
 	if(abs_dist > influenceKernel){
 		return 0.f;
-	}	
-	return 1 * pow(influenceKernel - abs_dist, kernel_c) / pow(influenceKernel, kernel_a);
-//	return (influenceKernel/ kernel_b + abs_dist) * pow(influenceKernel - abs_dist, kernel_c) / pow(influenceKernel, kernel_a);
+	}
+	//TEST KERNEL 1
+	return 2 * pow(influenceKernel - abs_dist, kernel_c) / pow(influenceKernel, kernel_a);
+	//TEST KERNEL 2
+//	return (5 / 3.f) * (influenceKernel + abs_dist) * pow(influenceKernel - abs_dist, kernel_c) / pow(influenceKernel, kernel_a);
 }
 
 vec3 CalculateGradKernelWeight(vec3 points_dist){
@@ -66,8 +67,10 @@ vec3 CalculateGradKernelWeight(vec3 points_dist){
 	if(abs_dist > influenceKernel){
 		return vec3(0);
 	}
-	return -3 * pow(influenceKernel - abs_dist, kernel_c - 1) / pow(influenceKernel, kernel_a - 1) * versor_ij;
-//	return (kernel_b * ((influenceKernel - (kernel_c + 1) * abs_dist) - kernel_c * influenceKernel) / kernel_b) * pow(influenceKernel - abs_dist, kernel_c - 1) / pow(influenceKernel, kernel_a) * versor_ij;
+	//TEST KERNEL 1
+	return -2 * kernel_c * pow(influenceKernel - abs_dist, kernel_c - 1) / pow(influenceKernel, kernel_a) * versor_ij;
+	//TEST KERNEL 2
+//	return  -(5 / 3.f) * ((kernel_c - 1) * influenceKernel + (kernel_c + 1) * abs_dist) * pow(influenceKernel - abs_dist, kernel_c - 1) / pow(influenceKernel, kernel_a) * versor_ij;
 }
 
 void ClampVelocity(uint index_x){

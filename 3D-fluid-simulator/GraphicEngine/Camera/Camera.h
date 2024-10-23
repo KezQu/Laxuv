@@ -31,9 +31,9 @@ class Camera
   Camera& operator=(Camera const& objCopy) = delete;
   Camera& operator=(Camera&& objMove) = delete;
   static Camera& GetCamera();
-  Uniform<glm::mat4> View();
-  Uniform<glm::mat4> const Projection() const;
-  Uniform<glm::vec2> const Viewport() const;
+  Uniform<glm::mat4, float> View();
+  Uniform<glm::mat4, float> const Projection() const;
+  Uniform<glm::vec2, float> const Viewport() const;
   void ProjectionRescale(int width, int height);
   void Move(ImGuiKey direction);
   void Rotate(glm::vec3 rotation);

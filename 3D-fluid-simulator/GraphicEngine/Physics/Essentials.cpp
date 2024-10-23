@@ -26,3 +26,57 @@ std::ostream& operator<<(std::ostream& out,
   out << "- - - - - - - -" << std::endl;
   return out;
 }
+
+std::string Essentials::DistShapeToString(DistributionShape shape) noexcept
+{
+  switch (shape)
+  {
+    case DistributionShape::LINE:
+      return "Line";
+      break;
+    case DistributionShape::CIRCLE:
+      return "Circle";
+      break;
+    case DistributionShape::SQUARE:
+      return "Square";
+      break;
+    case DistributionShape::DISK:
+      return "Disk";
+      break;
+    case DistributionShape::QUBE:
+      return "Qube";
+      break;
+    case DistributionShape::SPHERE:
+      return "Sphere";
+      break;
+    default:
+      return "Undefined";
+      break;
+  }
+}
+
+char const* Essentials::DistShapeTolist() noexcept
+{
+  return " \0Point\0Line\0Square\0Qube\0Sphere\0";
+}
+
+std::string Essentials::PhysTypeToString(PhysicsType physics) noexcept
+{
+  switch (physics)
+  {
+    case PhysicsType::STATIC:
+      return "Static";
+      break;
+    case PhysicsType::DYNAMIC:
+      return "Dynamic";
+      break;
+    default:
+      return "Undefined";
+      break;
+  }
+}
+
+char const* Essentials::PhysTypesTolist() noexcept
+{
+  return "None\0Static\0Dynamic\0";
+}
