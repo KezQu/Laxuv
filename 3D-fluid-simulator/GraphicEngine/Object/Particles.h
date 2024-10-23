@@ -22,7 +22,7 @@ class Particles : public Entity
   void Calculate() override;
   void Draw() const override;
   void Bind() const;
-  details_map Details() override;
+  details::detail_controls_t Details() override;
 };
 
 template <GLenum Prim>
@@ -44,7 +44,10 @@ void Particles<Prim>::Initialize()
 template <GLenum Prim>
 void Particles<Prim>::Calculate()
 {
-  _physicsDispatch.GenerateForces(GetPhysicsType());
+  if (_visible)
+  {
+    _physicsDispatch.GenerateForces(GetPhysicsType());
+  }
 }
 
 template <GLenum Prim>
@@ -68,116 +71,43 @@ void Particles<Prim>::Draw() const
 }
 
 template <GLenum Prim>
-Particles<Prim>::details_map Particles<Prim>::Details()
+details::detail_controls_t Particles<Prim>::Details()
 {
-  details_map details = Entity::Details();
+  auto details = Entity::Details();
   details.push_back(
-      {"Location",
-       {[this]() { return std::ref(this->_particleShape->GetLocation()); },
-        DetailsType::VEC3}});
+      {"Location", this->_particleShape->GetLocation().ExposeToUI()});
   details.push_back(
-      {"Rotation",
-       {[this]() { return std::ref(this->_particleShape->GetRotate()); },
-        DetailsType::VEC3}});
+      {"Rotation", this->_particleShape->GetRotate().ExposeToUI()});
+  details.push_back({"Scale", this->_particleShape->GetScale().ExposeToUI()});
   details.push_back(
-      {"Scale",
-       {[this]() { return std::ref(this->_particleShape->GetScale()); },
-        DetailsType::VEC3}});
+      {"Subdivision", this->_particleShape->GetSubdivision().ExposeToUI()});
+  details.push_back({"Radius", this->_particleShape->GetRadius().ExposeToUI()});
   details.push_back(
-      {"Light",
-       {[this]() { return std::ref(this->_particleShape->EnableLight()); },
-        DetailsType::BOOL}});
+      {"Particle spacing", this->_physicsDispatch.GetFluidProperties()
+                               .particle_spacing.ExposeToUI()});
+  details.push_back({"Distribution", this->_physicsDispatch.GetFluidProperties()
+                                         .distribution_shape.ExposeToUI()});
   details.push_back(
-      {"Subdivision",
-       {[this]()
-        { return std::ref(this->_particleShape->GetSubdivision().GetValue()); },
-        DetailsType::UINT32}});
+      {"Influence kernel", this->_physicsDispatch.GetFluidProperties()
+                               .influence_kernel.ExposeToUI()});
   details.push_back(
-      {"Radius",
-       {[this]()
-        { return std::ref(this->_particleShape->GetRadius().GetValue()); },
-        DetailsType::UINT32}});
-  details.push_back({"Particle spacing",
-                     {[this]()
-                      {
-                        return std::ref(
-                            this->_physicsDispatch.GetFluidProperties()
-                                .particle_spacing.GetValue());
-                      },
-                      DetailsType::UINT32}});
-  details.push_back({"Distribution",
-                     {[this]()
-                      {
-                        return std::ref(
-                            this->_physicsDispatch.GetFluidProperties()
-                                .distribution_shape.GetValue());
-                      },
-                      DetailsType::UINT8}});
-  details.push_back({"Physics",
-                     {[this]() { return std::ref(this->GetPhysicsType()); },
-                      DetailsType::PHYSTYPE}});
+      {"Search kernel",
+       this->_physicsDispatch.GetFluidProperties().search_kernel.ExposeToUI()});
   details.push_back(
-      {"Gamma",
-       {[this]()
-        {
-          return std::ref(
-              this->_physicsDispatch.GetFluidProperties().gamma.GetValue());
-        },
-        DetailsType::FLOAT}});
-  details.push_back({"Influence kernel",
-                     {[this]()
-                      {
-                        return std::ref(
-                            this->_physicsDispatch.GetFluidProperties()
-                                .influence_kernel.GetValue());
-                      },
-                      DetailsType::UINT32}});
-  details.push_back({"Infl kernel smoother",
-                     {[this]()
-                      {
-                        return std::ref(
-                            this->_physicsDispatch.GetFluidProperties()
-                                .infl_kernel_smoother.GetValue());
-                      },
-                      DetailsType::FLOAT}});
+      {"Kernel factor A",
+       this->_physicsDispatch.GetFluidProperties().kernel_a.ExposeToUI()});
   details.push_back(
-      {"Mass",
-       {[this]()
-        {
-          return std::ref(
-              this->_physicsDispatch.GetFluidProperties().mass.GetValue());
-        },
-        DetailsType::FLOAT}});
+      {"Mass", this->_physicsDispatch.GetFluidProperties().mass.ExposeToUI()});
   details.push_back(
-      {"Mesh radius",
-       {[this]() {
-          return std::ref(
-              this->_physicsDispatch.GetFluidProperties().mesh_radius);
-        },
-        DetailsType::UINT32}});
+      {"Viscosity factor", this->_physicsDispatch.GetFluidProperties()
+                               .viscosity_factor.ExposeToUI()});
   details.push_back(
-      {"Pressure 0",
-       {[this]()
-        {
-          return std::ref(
-              this->_physicsDispatch.GetFluidProperties().pressure0.GetValue());
-        },
-        DetailsType::FLOAT}});
-  details.push_back({"Space bounds",
-                     {[this]()
-                      {
-                        return std::ref(
-                            this->_physicsDispatch.GetFluidProperties()
-                                .space_limiter.GetValue());
-                      },
-                      DetailsType::UINT32}});
-  details.push_back({"Bounds viscosity",
-                     {[this]()
-                      {
-                        return std::ref(
-                            this->_physicsDispatch.GetFluidProperties()
-                                .bounds_viscosity.GetValue());
-                      },
-                      DetailsType::FLOAT}});
+      {"Mesh radius", [this]()
+       {
+         ImGui::DragInt(
+             "##Mesh_radius",
+             (int32_t*)&this->_physicsDispatch.GetFluidProperties().mesh_radius,
+             1.f, 0, 100, "%d", ImGuiSliderFlags_AlwaysClamp);
+       }});
   return details;
 }

@@ -1,6 +1,9 @@
 #pragma once
 
-#include <Shape.h>
+#include "Essentials.h"
+#include "GL/glew.h"
+#include "Shape.h"
+#include "VertexArray.h"
 
 class Sphere : public Shape<GL_TRIANGLES>
 {
@@ -8,7 +11,7 @@ class Sphere : public Shape<GL_TRIANGLES>
   static constexpr float radiusScaler = 1.90211303259030714423287866675876428;
 
  public:
-  Sphere(Vertex center = {{0, 0, 0}}, uint64_t radius = 150,
+  Sphere(Vertex center = {{0, 0, 0}}, float radius = 15.f,
          bool enableTess = true);
   Sphere(Sphere const& obj_copy) = delete;
   Sphere(Sphere&& obj_move) = default;

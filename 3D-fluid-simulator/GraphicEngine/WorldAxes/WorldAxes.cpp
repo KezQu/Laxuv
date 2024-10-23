@@ -13,7 +13,7 @@ WorldAxes::WorldAxes()
   for (auto& axis : _axes)
   {
     axis.GetScale() = {1200, 1200, 1200};
-    axis.EnableLight() = false;
+    axis.EnableLight(false);
   }
   _floor.GetScale() = {1200, 1200, 1200};
 }

@@ -1,18 +1,24 @@
 #include "PhysicsDispatch.h"
 
-#include <Simulator.h>
-#include <imgui.h>
+#include <cmath>
+#include <cstdint>
 
-Uniform<float> PhysicsDispatch::_dt{0.f, "dt"};
+#include "Debug.h"
+#include "Essentials.h"
+#include "GL/glew.h"
+#include "ShaderStorageBuffer.h"
+#include "Simulator.h"
+#include "Uniform.h"
+#include "glm/fwd.hpp"
 
 PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
-    : _particleMesh{
-          "dataBuffer",
-          static_cast<uint64_t>(dimensions.x * dimensions.y * dimensions.z)}
+    : _particleMesh{"dataBuffer",
+                    static_cast<uint64_t>(dimensions.x * dimensions.y *
+                                          dimensions.z)},
+      _space_grid{"spaceGrid", 0}
 {
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Element.comp");
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/InitDefaultShape.glsl");
-  _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Gravitation.glsl");
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Hydrodynamics.glsl");
 }
 
@@ -21,6 +27,7 @@ void PhysicsDispatch::Bind() const
   if (!_physicsGenerator.isLinked()) _physicsGenerator.Link();
   _physicsGenerator.Bind();
   _particleMesh.Bind(_physicsGenerator.ID());
+  _space_grid.Bind(_physicsGenerator.ID());
 }
 
 void PhysicsDispatch::BindUniforms(
@@ -35,21 +42,17 @@ void PhysicsDispatch::BindUniforms(
   simulation_state.MapUniform(_physicsGenerator.ID());
   physics_type.MapUniform(_physicsGenerator.ID());
 
-  _fluid_properties.gamma.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.viscosity_factor.MapUniform(_physicsGenerator.ID());
   _fluid_properties.mass.MapUniform(_physicsGenerator.ID());
-  _fluid_properties.pressure0.MapUniform(_physicsGenerator.ID());
+  //_fluid_properties.density0.MapUniform(_physicsGenerator.ID());
 
+  _fluid_properties.kernel_a.MapUniform(_physicsGenerator.ID());
   _fluid_properties.influence_kernel.MapUniform(_physicsGenerator.ID());
-  _fluid_properties.infl_kernel_smoother.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.search_kernel.MapUniform(_physicsGenerator.ID());
 
-  _fluid_properties.space_limiter.MapUniform(_physicsGenerator.ID());
-  _fluid_properties.bounds_viscosity.MapUniform(_physicsGenerator.ID());
-
-  _fluid_properties.distribution_shape.MapUniform(_physicsGenerator.ID());
   _fluid_properties.particle_radius.MapUniform(_physicsGenerator.ID());
   _fluid_properties.particle_spacing.MapUniform(_physicsGenerator.ID());
-
-  _dt.MapUniform(_physicsGenerator.ID());
+  _fluid_properties.distribution_shape.MapUniform(_physicsGenerator.ID());
 }
 
 ShaderStorageBuffer<Essentials::ParticleProperties> const&
@@ -70,6 +73,8 @@ void PhysicsDispatch::UpdateMeshDimensions()
   if (_particleMesh.Size() != new_buffer_size)
   {
     _particleMesh.SetBufferMemorySize(new_buffer_size);
+    //    _space_grid.SetBufferMemorySize(Essentials::MaxCells *
+    //                                    Essentials::MaxCells);
   }
 }
 
@@ -78,7 +83,8 @@ void PhysicsDispatch::Calculate(uint32_t work_groups, bool create_snapshot)
   _(glDispatchCompute(_fluid_properties.mesh_radius,
                       _fluid_properties.mesh_radius,
                       _fluid_properties.mesh_radius));
-  _(glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT));
+  _(glMemoryBarrier(GL_ALL_BARRIER_BITS));
+  glFinish();
   if (create_snapshot)
   {
     auto lookupBuffer =
@@ -94,7 +100,6 @@ void PhysicsDispatch::InitDefaultShape(
   Bind();
   BindUniforms(objectPhysicsType, Essentials::SimulationState::INIT);
   Calculate(_work_groups, true);
-  // testing_suite.Init();
 }
 
 void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
@@ -102,45 +107,6 @@ void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
   Bind();
   BindUniforms(objectPhysicsType,
                Simulator::GetInstance().GetSimulationState());
-  Calculate(_work_groups, true);
-
-  // Vector Q_n1[Essentials::MaxParticles];
-  // for (int i = 0; i < Essentials::MaxParticles; i++)
-  //{
-  //	Q_n1[i] = testing_suite.GenerateHydrodynamics(i);
-  // }
-  // for (int i = 0; i < Essentials::MaxParticles; i++)
-  //{
-  //	testing_suite.particle[i].velocity = glm::vec4(Q_n1[i].y / Q_n1[i].x,
-  // 0); 	testing_suite.particle[i].position =
-  // testing_suite.particle[i].position
-  //+ testing_suite.particle[i].velocity * _dt;
-  // }
-  // for (int i = 0; i < Essentials::MaxParticles; i++)
-  //{
-  //	testing_suite.FindNeighbours(i, Essentials::MaxParticles);
-  // }
-  // for (int i = 0; i < Essentials::MaxParticles; i++)
-  //{
-  //	const float volume = 1. / testing_suite.CalculateOmega(i);
-  //	int n = 0;
-  //	while (testing_suite.particle[i].neighbours[n] != 0xffff) n++;
-  //	const float pressure = testing_suite.R * (n + 1) * 273.f / volume;
-  //	testing_suite.particle[i].VolumeDensityPressureMass.x = volume;
-  //	testing_suite.particle[i].VolumeDensityPressureMass.y = Q_n1[i].x /
-  // volume; 	testing_suite.particle[i].VolumeDensityPressureMass.z =
-  // pressure; 	testing_suite.particle[i].VolumeDensityPressureMass.w =
-  // Q_n1[i].x;
-  // }
-}
-
-void PhysicsDispatch::UpdateDeltaTime()
-{
-  //_dt = 1.f / ImGui::GetIO().Framerate;
-  _dt = 0.0001f;
-}
-
-Uniform<float>& PhysicsDispatch::GetDeltaTime()
-{
-  return _dt;
+  Simulator::GetInstance().BindUniforms(_physicsGenerator.ID());
+  Calculate(_work_groups, false);
 }

@@ -9,7 +9,7 @@ layout(points, max_vertices = vertexPrimitiveCount) out;
 layout(location = 0) out vec4 outColor; 
 layout(location = 1) out vec3 normal;
 
-uniform int shapeRadius;
+uniform float shapeRadius;
 
 vec4 CalculateNDC(in vec3 position);
 float PointSize(in vec4 position);

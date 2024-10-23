@@ -1,31 +1,19 @@
 #pragma once
 
-#include <Debug.h>
-
 #include <cstdint>
 #include <functional>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/matrix.hpp>
 #include <string>
-#include <unordered_map>
-#include <variant>
+#include <utility>
+#include <vector>
 
+#include "Essentials.h"
 #include "PhysicsDispatch.h"
 
-enum DetailsType
+namespace details
 {
-  BOOL,
-  STRING,
-  INT32,
-  UINT8,
-  UINT32,
-  UINT64,
-  PHYSTYPE,
-  FLOAT,
-  VEC2,
-  VEC3,
-  VEC4
-};
+using detail_controls_t =
+    std::vector<std::pair<std::string, std::function<void()>>>;
+};  // namespace details
 
 class Entity
 {
@@ -34,20 +22,9 @@ class Entity
   static uint64_t _internalID;
   uint64_t _id;
   std::string _name;
+  // TODO: change to Uniform
   Essentials::PhysicsType _physics;
   bool _visible{true};
-
- public:
-  using details_map = std::vector<std::pair<
-      std::string,
-      std::pair<std::variant<
-                    std::function<bool&()>, std::function<std::string&()>,
-                    std::function<int32_t&()>, std::function<uint8_t&()>,
-                    std::function<uint32_t&()>, std::function<uint64_t&()>,
-                    std::function<Essentials::PhysicsType&()>,
-                    std::function<float&()>, std::function<glm::vec2&()>,
-                    std::function<glm::vec3&()>, std::function<glm::vec4&()>>,
-                DetailsType>>>;
 
  public:
   Entity(Entity const& objCopy) = delete;
@@ -79,7 +56,7 @@ class Entity
   virtual void Initialize() {}
   virtual void Calculate() {}
   virtual void Draw() const {}
-  virtual details_map Details();
+  virtual details::detail_controls_t Details();
 
  protected:
   Entity(Essentials::PhysicsType physics);

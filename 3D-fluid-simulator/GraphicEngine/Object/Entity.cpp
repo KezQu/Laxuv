@@ -1,14 +1,18 @@
 #include <Entity.h>
 #include <Essentials.h>
+#include <imgui.h>
 
 uint64_t Entity::_internalID = 0U;
 
-Entity::details_map Entity::Details()
+details::detail_controls_t Entity::Details()
 {
-  details_map details;
-  details.push_back(
-      {"Name",
-       {[this]() { return std::ref(this->Name()); }, DetailsType::STRING}});
+  details::detail_controls_t details;
+  details.push_back({"Name", [this]() { ImGui::Text(this->Name().c_str()); }});
+  details.push_back({"Physics type", [this]()
+                     {
+                       ImGui::Combo("##Physics_type", (int32_t*)&this->_physics,
+                                    Essentials::PhysTypesTolist());
+                     }});
   return details;
 }
 

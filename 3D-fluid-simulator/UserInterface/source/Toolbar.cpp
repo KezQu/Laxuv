@@ -1,16 +1,12 @@
 ﻿#include "Toolbar.h"
 
-#include <Camera.h>
-#include <GLFW/glfw3.h>
+#include "Camera.h"
+#include "Essentials.h"
+#include "Interface.h"
+#include "Simulator.h"
+#include "imgui.h"
 
-bool Toolbar::_fullscreen = false;
-std::unordered_map<Essentials::SimulationState, std::string>
-    Toolbar::simulationState{
-        {Essentials::SimulationState::IDLE, "Start"},
-        {Essentials::SimulationState::INIT, "Start"},
-        {Essentials::SimulationState::SIMULATION, "Stop"},
-        {Essentials::SimulationState::GEN_FRAME, "Stop"},
-    };
+float Toolbar::static_timestep = 6.f;
 
 Toolbar::Toolbar(ImVec2 const& size, ImVec2 const& position)
     : Interface(size, position,
@@ -58,8 +54,23 @@ void Toolbar::Generate()
         simulatorInstance.SetSimulationState(Essentials::SimulationState::INIT);
       }
     }
-    ImGui::SameLine(_size.x - 300);
-    ImGui::Text("%mouse speed: %.0f", Camera::GetCamera().GetMoveSpeed());
+    ImGui::SameLine();
+    ImGui::PushItemWidth(100.f);
+    ImGui::DragFloat("##timestep_value", &static_timestep, 0.1f, 0.f, 1000.f,
+                     "%.1f ms", ImGuiSliderFlags_AlwaysClamp);
+    ImGui::SameLine();
+    if (ImGui::Button(simulatorInstance.IsStaticDtUsed()
+                          ? "Use program latency"
+                          : "Use static timestep"))
+    {
+      simulatorInstance.ToggleTimesetType();
+    }
+    simulatorInstance.UpdateDeltaTime(static_timestep);
+
+    ImGui::PopItemWidth();
+
+    ImGui::SameLine(_size.x - 200);
+    ImGui::Text("%mouse speed: %.1f", Camera::GetCamera().GetMoveSpeed());
     std::string framerate =
         std::to_string(static_cast<int>(ImGui::GetIO().Framerate)) + " FPS";
     auto FPS_text_size = ImGui::CalcTextSize(framerate.c_str()).x;

@@ -28,7 +28,7 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     }
 
     glfwMakeContextCurrent(_window);
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
     GLenum errorCode = glewInit();
     if (errorCode != GLEW_OK)
@@ -118,14 +118,12 @@ void Window::EventLoop()
       case Essentials::SimulationState::SIMULATION:
         for (auto& [id, entity] : SimulationInstance.GetEntities())
         {
-          PhysicsDispatch::UpdateDeltaTime();
           entity->Calculate();
         }
         break;
       case Essentials::SimulationState::GEN_FRAME:
         for (auto& [id, entity] : SimulationInstance.GetEntities())
         {
-          PhysicsDispatch::UpdateDeltaTime();
           entity->Calculate();
         }
         SimulationInstance.SetSimulationState(
@@ -173,7 +171,7 @@ void Window::ProcessKeyInputs()
       ImGui::IsMouseDown(ImGuiMouseButton_Right))
   {
     float delta_speed = ImGui::GetKeyData(ImGuiKey_MouseWheelY)->AnalogValue;
-    if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
+    if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
     {
       delta_speed *= 10;
     }

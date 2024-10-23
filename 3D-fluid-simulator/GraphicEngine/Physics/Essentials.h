@@ -4,16 +4,19 @@
 
 #include <cstdint>
 #include <glm/vec4.hpp>
-#include <ostream>
 
 namespace Essentials
 {
 
-constexpr uint32_t KernelRadius = 4;
-constexpr uint32_t MaxParticles = 27;
+constexpr float cellRadius = 5;
+constexpr uint64_t MaxCells = static_cast<uint64_t>(1200 / cellRadius);
+constexpr uint64_t CellCapacity = static_cast<uint64_t>(
+    3.1415 * (4. / 3.) * cellRadius * cellRadius * cellRadius);
 constexpr uint32_t MaxNeighbours = 512;
 
-enum class DistributionShape : uint8_t
+using space_grid_t = uint32_t[CellCapacity];
+
+enum class DistributionShape : uint32_t
 {
   UNDEFINED,
   LINE,
@@ -23,8 +26,10 @@ enum class DistributionShape : uint8_t
   QUBE,
   SPHERE
 };
+std::string DistShapeToString(DistributionShape shape) noexcept;
+char const* DistShapeTolist() noexcept;
 
-enum class SimulationState : uint8_t
+enum class SimulationState : uint32_t
 {
   IDLE,
   INIT,
@@ -32,35 +37,45 @@ enum class SimulationState : uint8_t
   GEN_FRAME
 };
 
-enum class PhysicsType : uint8_t
+enum class PhysicsType : uint32_t
 {
   NONE,
   STATIC,
   DYNAMIC
 };
+std::string PhysTypeToString(PhysicsType physics) noexcept;
+char const* PhysTypesTolist() noexcept;
 
 struct ParticleProperties
 {
-  glm::vec4 velocity{0};
-  glm::vec4 positionGroup{0};
-  glm::vec4 VolumeDensityPressureMass{0};
-  uint32_t neighbours[16];
+  glm::vec4 velocityDFSPHfactor{0};
+  glm::vec4 position{0};
+  glm::vec4 VolumeDensityPressureRohash{0};
+  glm::uvec4 cell{0};
+  uint32_t neighbours[MaxNeighbours];
 };
+
+auto const lengthDefaultProperties =
+    ValueProperties{1.f, 600.f, 1.f, "%.1f mm"};
 
 struct FluidProperties
 {
+  Uniform<float> particle_radius{0.f, "particleRadius",
+                                 lengthDefaultProperties};
+  Uniform<float> particle_spacing{1.f, "particleSpacing",
+                                  lengthDefaultProperties};
+  Uniform<uint32_t> distribution_shape{
+      static_cast<uint32_t>(DistributionShape::QUBE), "DistributionShape"};
+  Uniform<float> influence_kernel{2.5f, "influenceKernel",
+                                  lengthDefaultProperties};
+  Uniform<float> search_kernel{2.5f, "searchKernel", lengthDefaultProperties};
+  Uniform<float> kernel_a{4.f, "kernel_a"};
+  Uniform<float> mass{1.f, "mass",
+                      ValueProperties{0.1f, 1000.f, 1e-3f, "%.1f g"}};
+  Uniform<float> viscosity_factor{
+      10.f, "viscosityFactor",
+      ValueProperties{0.1f, 1000.f, 1e-3f, "%.1f Pa*s"}};
   uint32_t mesh_radius{1U};
-  Uniform<float> gamma{1.4f, "gamma"};
-  Uniform<float> mass{1.2754f, "mass"};
-  Uniform<float> pressure0{0.f, "pressure0"};
-  Uniform<uint32_t> influence_kernel{4U, "influenceKernel"};
-  Uniform<float> infl_kernel_smoother{0.7f, "inflKernelSmoother"};
-  Uniform<uint32_t> particle_radius{0U, "particleRadius"};
-  Uniform<uint32_t> particle_spacing{3U, "particleSpacing"};
-  Uniform<uint32_t> space_limiter{1200U, "spaceLimiter"};
-  Uniform<float> bounds_viscosity{5.f, "boundsViscosity"};
-  Uniform<uint8_t> distribution_shape{
-      static_cast<uint8_t>(DistributionShape::QUBE), "DistributionShape"};
 };
 
 }  // namespace Essentials

@@ -4,9 +4,8 @@
 
 Camera::Camera(WorldSpace area)
     : _worldSize{area},
-      _projection(glm::ortho(-_worldSize.width / 2.f, _worldSize.width / 2.f,
-                             -_worldSize.height / 2.f, _worldSize.height / 2.f,
-                             -_worldSize.depth / 2.f, _worldSize.depth / 2.f))
+      _projection{glm::infinitePerspective(
+          glm::radians(60.f), _worldSize.width / _worldSize.height, 10.f)}
 {
 }
 Camera& Camera::GetCamera()
@@ -14,18 +13,19 @@ Camera& Camera::GetCamera()
   static Camera cameraObj({2.f, 2.f, 2.f});
   return cameraObj;
 }
-Uniform<glm::mat4> Camera::View()
+Uniform<glm::mat4, float> Camera::View()
 {
   auto view = glm::lookAt(_position, _position + _forwardDir, _upDir);
-  return Uniform<glm::mat4>{view, "view"};
+  return Uniform<glm::mat4, float>{view, "view"};
 }
-Uniform<glm::mat4> const Camera::Projection() const
+Uniform<glm::mat4, float> const Camera::Projection() const
 {
-  return Uniform<glm::mat4>{_projection, "projection"};
+  return Uniform<glm::mat4, float>{_projection, "projection"};
 }
-Uniform<glm::vec2> const Camera::Viewport() const
+Uniform<glm::vec2, float> const Camera::Viewport() const
 {
-  return Uniform<glm::vec2>{{_worldSize.width, _worldSize.height}, "viewport"};
+  return Uniform<glm::vec2, float>{
+      glm::vec2{_worldSize.width, _worldSize.height}, "viewport"};
 }
 void Camera::ProjectionRescale(int width, int height)
 {
@@ -33,11 +33,7 @@ void Camera::ProjectionRescale(int width, int height)
   _worldSize.height = height;
   _worldSize.depth = 3 * glm::max(_worldSize.width, _worldSize.height);
   _projection = glm::infinitePerspective(
-      glm::radians(60.f), _worldSize.width / _worldSize.height, 10.f);
-  //_projection = glm::ortho(
-  //	-_worldSize.width / 2.f, _worldSize.width / 2.f,
-  //	-_worldSize.height / 2.f, _worldSize.height / 2.f,
-  //	-_worldSize.depth / 2.f, _worldSize.depth / 2.f);
+      glm::radians(60.f), _worldSize.width / _worldSize.height, 0.1f);
 }
 void Camera::Move(ImGuiKey direction)
 {
@@ -66,10 +62,6 @@ void Camera::Move(ImGuiKey direction)
     default:
       break;
   }
-  if (_moveSpeed < 0)
-  {
-    _moveSpeed = 0;
-  }
   _position += moveDir * _moveSpeed;
 }
 void Camera::Rotate(glm::vec3 rotation)
@@ -95,7 +87,18 @@ void Camera::Rotate(glm::vec3 rotation)
 
 void Camera::AddMoveSpeed(float delta_speed)
 {
-  _moveSpeed += delta_speed;
+  if (_moveSpeed < 1)
+  {
+    _moveSpeed += delta_speed * 1e-1;
+  }
+  else
+  {
+    _moveSpeed += delta_speed;
+  }
+  if (_moveSpeed < 0)
+  {
+    _moveSpeed = 0;
+  }
 }
 
 float Camera::GetMoveSpeed()

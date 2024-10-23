@@ -21,7 +21,7 @@ class Object : public Entity
   void Initialize() override;
   void Calculate() override;
   void Draw() const override;
-  details_map Details() override;
+  details::detail_controls_t Details() override;
 };
 
 template <GLenum Prim>
@@ -40,7 +40,10 @@ void Object<Prim>::Initialize()
 template <GLenum Prim>
 void Object<Prim>::Calculate()
 {
-  _physicsDispatch.GenerateForces(GetPhysicsType());
+  if (_visible)
+  {
+    _physicsDispatch.GenerateForces(GetPhysicsType());
+  }
 }
 template <GLenum Prim>
 void Object<Prim>::Draw() const
@@ -61,34 +64,14 @@ void Object<Prim>::Draw() const
 }
 
 template <GLenum Prim>
-Object<Prim>::details_map Object<Prim>::Details()
+details::detail_controls_t Object<Prim>::Details()
 {
-  details_map details = Entity::Details();
+  auto details = Entity::Details();
+  details.push_back({"Location", this->_shape->GetLocation().ExposeToUI()});
+  details.push_back({"Rotation", this->_shape->GetRotate().ExposeToUI()});
+  details.push_back({"Scale", this->_shape->GetScale().ExposeToUI()});
   details.push_back(
-      {"Location",
-       {[this]() { return std::ref(this->_shape->GetLocation()); },
-        DetailsType::VEC3}});
-  details.push_back({"Rotation",
-                     {[this]() { return std::ref(this->_shape->GetRotate()); },
-                      DetailsType::VEC3}});
-  details.push_back({"Scale",
-                     {[this]() { return std::ref(this->_shape->GetScale()); },
-                      DetailsType::VEC3}});
-  details.push_back(
-      {"Light",
-       {[this]() { return std::ref(this->_shape->EnableLight()); },
-        DetailsType::BOOL}});
-  details.push_back(
-      {"Subdivision",
-       {[this]()
-        { return std::ref(this->_shape->GetSubdivision().GetValue()); },
-        DetailsType::UINT32}});
-  details.push_back(
-      {"Radius",
-       {[this]() { return std::ref(this->_shape->GetRadius().GetValue()); },
-        DetailsType::UINT32}});
-  details.push_back({"Physics type",
-                     {[this]() { return std::ref(this->GetPhysicsType()); },
-                      DetailsType::PHYSTYPE}});
+      {"Subdivision", this->_shape->GetSubdivision().ExposeToUI()});
+  details.push_back({"Radius", this->_shape->GetRadius().ExposeToUI()});
   return details;
 }

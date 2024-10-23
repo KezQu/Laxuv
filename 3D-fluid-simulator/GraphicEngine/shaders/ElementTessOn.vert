@@ -6,12 +6,13 @@ layout(location = 1) in vec4 inColorVert;
 layout(location = 0) out vec4 outColorVert;
 layout(location = 3) out vec4 outShapeOffset;
 
-const uint MaxNeighbours =  16;
+const uint MaxNeighbours =  512;
 
 struct ParticleProperties {
-	vec4 velocity;
-	vec4 positionGroup;
-	vec4 VolumeDensityPressureMass;
+	vec4 velocityDFSPHfactor;
+	vec4 position;
+	vec4 VolumeDensityPressureRohash;
+	uvec4 cell;
 	uint neighbours[MaxNeighbours];
 };
 
@@ -21,7 +22,7 @@ layout(std430, binding = 0) buffer dataBuffer{
 
 void main(){
 	outColorVert = inColorVert / 255.;
-	outShapeOffset = particle[gl_InstanceID].positionGroup;
+	outShapeOffset = particle[gl_InstanceID].position;
 	gl_Position = vec4(inPosition, 0);
 	gl_PointSize = 10;
 }
