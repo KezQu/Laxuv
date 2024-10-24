@@ -1,7 +1,7 @@
-#include <Qube.h>
+#include <Cube.h>
 
-Qube::Qube(Vertex center, float radius, bool enableTess)
-    : Qube({{center.coordinate.x - 1.f, center.coordinate.y + 1.f,
+Cube::Cube(Vertex center, float radius, bool enableTess)
+    : Cube({{center.coordinate.x - 1.f, center.coordinate.y + 1.f,
              center.coordinate.z - 1.f},
             center.color},
            {{center.coordinate.x + 1.f, center.coordinate.y + 1.f,
@@ -29,7 +29,7 @@ Qube::Qube(Vertex center, float radius, bool enableTess)
 {
 }
 
-Qube::Qube(Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5, Vertex v6,
+Cube::Cube(Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5, Vertex v6,
            Vertex v7, Vertex v8, float radius, bool enableTess)
     : Shape(VertexArray({v1, v2, v3, v4, v5, v6, v7, v8},
                         {0, 1, 2, 1, 3, 2, 5, 4, 6, 7, 5, 6, 1, 0, 4, 5, 1, 4,
@@ -39,7 +39,7 @@ Qube::Qube(Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5, Vertex v6,
   auto& coordBufferData = _vertexArray.Data().coordinateBuffer.Data();
 }
 
-Essentials::DistributionShape Qube::GetParticleDistribution()
+Essentials::DistributionShape Cube::GetParticleDistribution()
 {
-  return Essentials::DistributionShape::QUBE;
+  return Essentials::DistributionShape::CUBE;
 }

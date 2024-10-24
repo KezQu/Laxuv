@@ -43,8 +43,8 @@ std::string Essentials::DistShapeToString(DistributionShape shape) noexcept
     case DistributionShape::DISK:
       return "Disk";
       break;
-    case DistributionShape::QUBE:
-      return "Qube";
+    case DistributionShape::CUBE:
+      return "Cube";
       break;
     case DistributionShape::SPHERE:
       return "Sphere";
@@ -57,7 +57,12 @@ std::string Essentials::DistShapeToString(DistributionShape shape) noexcept
 
 char const* Essentials::DistShapeTolist() noexcept
 {
-  return " \0Point\0Line\0Square\0Qube\0Sphere\0";
+  return " \0Point\0Line\0Square\0Cube\0Sphere\0";
+}
+
+char const* Essentials::WorldTypeTolist() noexcept
+{
+  return " \0Cube\0Sphere\0";
 }
 
 std::string Essentials::PhysTypeToString(PhysicsType physics) noexcept
@@ -78,5 +83,10 @@ std::string Essentials::PhysTypeToString(PhysicsType physics) noexcept
 
 char const* Essentials::PhysTypesTolist() noexcept
 {
-  return "None\0Static\0Dynamic\0";
+  return "Undefined\0Static\0Dynamic\0";
+}
+
+char const* Essentials::ColorPropertyTolist() noexcept
+{
+  return " \0Velocity\0Density error\0Divergence error\0Pressure\0";
 }

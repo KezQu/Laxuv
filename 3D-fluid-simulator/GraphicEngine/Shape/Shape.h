@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "Essentials.h"
 #include "ProgramDispatch.h"
+#include "Simulator.h"
 #include "Uniform.h"
 #include "VertexArray.h"
 
@@ -19,6 +20,7 @@ struct
 template <GLenum Prim>
 class Shape
 {
+  // TODO: Move Properties to standalone struct
  protected:
   VertexArray _vertexArray;
   Uniform<glm::vec3, float> _location{
@@ -35,6 +37,9 @@ class Shape
   Uniform<uint32_t> _subdivision{5U, "subdivision", ValueProperties{1U, 50U}};
   Uniform<float> _shapeRadius{1.f, "shapeRadius",
                               ValueProperties{0.1f, 600.f, 1.f, "%.1f mm"}};
+  std::pair<Uniform<uint32_t>, Uniform<float>> _shape_color{
+      {static_cast<uint32_t>(Essentials::ColorProperty::NONE), "colorType"},
+      {0.5f, "colorOpacity", ValueProperties{0.f, 1.f, 1.f, "%.2f"}}};
   bool _enableTesselation{false};
   bool _enableLight{true};
   GLenum _primitiveType{Prim};
@@ -47,6 +52,7 @@ class Shape
   Shape& operator=(Shape const& obj_copy) = delete;
   Shape& operator=(Shape&& obj_move) = default;
   virtual ~Shape() = default;
+  std::pair<Uniform<uint32_t>, Uniform<float>>& GetColor();
   Uniform<glm::vec3, float>& GetLocation();
   Uniform<glm::vec3, float>& GetScale();
   Uniform<glm::vec3, float>& GetRotate();
@@ -95,6 +101,8 @@ void Shape<Prim>::Bind() const
   if (!renderer.isLinked()) renderer.Link();
   renderer.Bind();
 
+  Simulator::GetInstance().BindUniforms(renderer.ID());
+
   Model().MapUniform(renderer.ID());
   Camera::GetCamera().View().MapUniform(renderer.ID());
   Camera::GetCamera().Projection().MapUniform(renderer.ID());
@@ -102,6 +110,8 @@ void Shape<Prim>::Bind() const
   _center.MapUniform(renderer.ID());
   _subdivision.MapUniform(renderer.ID());
 
+  _shape_color.first.MapUniform(renderer.ID());
+  _shape_color.second.MapUniform(renderer.ID());
   if (_enableLight)
   {
     auto const ambient_light =
@@ -116,7 +126,11 @@ void Shape<Prim>::Bind() const
   }
   _shapeRadius.MapUniform(renderer.ID());
 }
-
+template <GLenum Prim>
+inline std::pair<Uniform<uint32_t>, Uniform<float>>& Shape<Prim>::GetColor()
+{
+  return _shape_color;
+}
 template <GLenum Prim>
 Uniform<glm::vec3, float>& Shape<Prim>::GetLocation()
 {
@@ -140,7 +154,7 @@ Uniform<glm::mat4, float> Shape<Prim>::Model() const
 {
   auto I = glm::identity<glm::mat4>();
   auto rotation = _rotation.GetValue();
-  auto scale = _scale.GetValue();
+  auto scale = _scale.GetValue() * _shapeRadius.GetValue();
   auto location = _location.GetValue();
   auto angle = glm::max(glm::max(rotation.x, rotation.y), rotation.z);
   auto T =

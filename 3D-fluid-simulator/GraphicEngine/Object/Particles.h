@@ -46,7 +46,7 @@ void Particles<Prim>::Calculate()
 {
   if (_visible)
   {
-    _physicsDispatch.GenerateForces(GetPhysicsType());
+    _physicsDispatch.GenerateForces(_particleShape->Model(), GetPhysicsType());
   }
 }
 
@@ -81,6 +81,17 @@ details::detail_controls_t Particles<Prim>::Details()
   details.push_back({"Scale", this->_particleShape->GetScale().ExposeToUI()});
   details.push_back(
       {"Subdivision", this->_particleShape->GetSubdivision().ExposeToUI()});
+  details.push_back(
+      {"Particle color", [this]()
+       {
+         ImGui::Combo("##Particle_color",
+                      (int32_t*)&this->_physicsDispatch.GetFluidProperties()
+                          .particle_color.first.GetValue(),
+                      Essentials::ColorPropertyTolist());
+       }});
+  details.push_back(
+      {"Color opacity", this->_physicsDispatch.GetFluidProperties()
+                            .particle_color.first.ExposeToUI()});
   details.push_back({"Radius", this->_particleShape->GetRadius().ExposeToUI()});
   details.push_back(
       {"Particle spacing", this->_physicsDispatch.GetFluidProperties()

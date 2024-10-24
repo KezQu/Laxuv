@@ -4,8 +4,8 @@ const float E = 2.71828;
 const float PI = 3.14159265358979323846264338327950288;
 const float R = 8.31446261815324;
 const mat3 I = mat3(1, 0, 0,
-        0, 1, 0,
-        0, 0, 1);
+		0, 1, 0,
+		0, 0, 1);
 
 const uint MaxValueNeighbour = uint(0xffff);
 const float cellRadius = 5;
@@ -14,11 +14,27 @@ const uint HashGridSize = MaxCells * MaxCells;
 const uint CellCapacity = uint(3.1415 * (4. / 3.) * pow(cellRadius, 3));
 const uint MaxNeighbours = 512;
 
+const uint NONE = 0;
+
+const uint CUBE_WORLD = 1;
+const uint SPHERE_WORLD = 2;
+
+const uint VELOCITY = 1;
+const uint DENSITY_ERROR = 2;
+const uint DIVERGENCE_ERROR = 3;
+const uint PRESSURE = 4;
+
+uniform uint worldType;
 uniform float spaceLimiter;
+uniform float boundsViscosity;
+
 uniform float kernel_a;
 uniform float kernel_c = 3;
 uniform float influenceKernel;
 uniform float searchKernel;
+uniform float colorOpacity;
+uniform uint colorType;
+
 uniform float viscosityFactor;
 uniform float dt;
 uniform float mass;
@@ -39,7 +55,7 @@ struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
 	vec4 VolumeDensityPressureRohash;
-	uvec4 cell;
+	vec4 particleColor;
 	uint neighbours[MaxNeighbours];
 };
 
@@ -95,18 +111,18 @@ void ClearSpaceGrid(uint index_x, uint MaxParticles){
 	}
 }
 
-uint FindCell(uint index_x){
-	vec3 interim_cell = ceil((particle[index_x].position.xyz + 600) / cellRadius);
-	uint cell = EncodeCellNumber(interim_cell);
-	particle[index_x].cell = uvec4(interim_cell, cell.x);
-	return cell;
-}
-
-void AssignToCell(uint index_x){
-	uint cell = FindCell(index_x);
-	uint cell_index = atomicAdd(space_grid[cell.x][0], 1);
-	space_grid[cell.x][cell_index + 1] = index_x;
-}
+//uint FindCell(uint index_x){
+//	vec3 interim_cell = ceil((particle[index_x].position.xyz + 600) / cellRadius);
+//	uint cell = EncodeCellNumber(interim_cell);
+//	particle[index_x].cell = uvec4(interim_cell, cell.x);
+//	return cell;
+//}
+//
+//void AssignToCell(uint index_x){
+//	uint cell = FindCell(index_x);
+//	uint cell_index = atomicAdd(space_grid[cell.x][0], 1);
+//	space_grid[cell.x][cell_index + 1] = index_x;
+//}
 
 //void FindNeighbours(uint index_x, uint MaxParticles){
 //	for(uint i = 0; i < MaxNeighbours; i++){
@@ -277,4 +293,75 @@ float CalculateAvgDerivDensity(uint index_x){
 		kernel_sum += dro_j;
 	}
 	return kernel_sum / i;
+}
+
+
+void CheckWorldBounds(uint index_x){
+	vec3 vec_form_center = particle[index_x].position.xyz + dt * particle[index_x].velocityDFSPHfactor.xyz;
+
+	if(worldType == CUBE_WORLD){
+		if(vec_form_center.x <= -spaceLimiter){
+			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(1, 0, 0));
+		}else if(vec_form_center.x >= spaceLimiter){
+			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(-1, 0, 0));
+		}
+		if(vec_form_center.y <= -spaceLimiter){
+			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(0, 1, 0));
+		}else if(vec_form_center.y >= spaceLimiter){
+			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(0, -1, 0));
+		}
+		if(vec_form_center.z <= -spaceLimiter){
+			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(0, 0, 1));
+		}else if(vec_form_center.z >= spaceLimiter){
+			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(0, 0, -1));
+		}
+	}else if(worldType == SPHERE_WORLD){
+		if(length(vec_form_center) >= spaceLimiter){
+			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, normalize(vec_form_center));
+		}
+	}
+}
+
+vec4 CalculateColor(float property_value){
+	vec4 color = vec4(0, 0, 0, colorOpacity);
+	const float boundCheck = 0.25f;
+	
+	if (property_value <= -1.f){
+		color.xyz = vec3(0, 0, 1);
+	}
+	else if(property_value < 0.f){
+		color.xyz = vec3(0, 0, 1 - property_value);
+	}
+	else if(property_value < boundCheck){
+		color.xyz = vec3(0, property_value * 4 , 1);
+	}
+	else if(property_value < 2 * boundCheck){
+		color.xyz = vec3(0, 1, 1 - (property_value - boundCheck) * 4);
+	}
+	else if(property_value < 3 * boundCheck){
+		color.xyz = vec3(property_value * 4, 1, 0);
+	}
+	else if(property_value <= 4 * boundCheck){
+		color.xyz = vec3(1, 1 - (property_value - boundCheck) * 4, 0);
+	}
+	else{
+		color.xyz = vec3(1, 1, 1);
+	}
+	return color;
+}
+
+vec4 ChooseParticleColor(uint index_x){
+	const float max_speed = 100.f;
+	const float density0 = mass;
+
+	switch(colorType){
+		case VELOCITY:
+			return CalculateColor(length(particle[index_x].velocityDFSPHfactor.xyz) / max_speed);
+		case DENSITY_ERROR:
+			return CalculateColor(abs(CalculateDensity(index_x) - density0) / density0);
+		case DIVERGENCE_ERROR:
+			return CalculateColor(abs(CalculateDerivDensity(index_x)) / (2 * mass * max_speed * 0.7f));
+		case PRESSURE:
+			return CalculateColor(dt * dt * particle[index_x].VolumeDensityPressureRohash.z / (density0 * particle[index_x].velocityDFSPHfactor.w));
+	}
 }

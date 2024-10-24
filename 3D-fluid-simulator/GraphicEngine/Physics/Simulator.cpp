@@ -1,4 +1,6 @@
-#include <Simulator.h>
+#include "Simulator.h"
+
+#include "Uniform.h"
 
 void Simulator::CleanUp()
 {
@@ -18,7 +20,8 @@ Simulator::EntityContainer& Simulator::GetEntities()
 
 Essentials::SimulationState Simulator::GetSimulationState()
 {
-  return _globalSimulationState;
+  return static_cast<Essentials::SimulationState>(
+      _global_simulation_state.GetValue());
 }
 
 void Simulator::UpdateDeltaTime(float dt)
@@ -53,6 +56,13 @@ details::detail_controls_t Simulator::GetDetails()
   details::detail_controls_t details;
   details.push_back({"Space bounds", this->_space_boundries.ExposeToUI()});
   details.push_back({"Bounds viscosity", this->_bounds_viscosity.ExposeToUI()});
+  details.push_back({"World shape", [this]()
+                     {
+                       ImGui::Combo(
+                           "##World_shape",
+                           (int32_t*)&this->_global_world_type.GetValue(),
+                           Essentials::WorldTypeTolist());
+                     }});
   return details;
 }
 
@@ -61,11 +71,13 @@ void Simulator::BindUniforms(uint32_t program_id)
   _global_delta_time.MapUniform(program_id);
   _space_boundries.MapUniform(program_id);
   _bounds_viscosity.MapUniform(program_id);
+  _global_simulation_state.MapUniform(program_id);
+  _global_world_type.MapUniform(program_id);
 }
 
-void Simulator::SetSimulationState(Essentials::SimulationState newGlobalState)
+void Simulator::SetSimulationState(Essentials::SimulationState new_global_state)
 {
-  _globalSimulationState = newGlobalState;
+  _global_simulation_state = static_cast<uint32_t>(new_global_state);
 }
 
 void Simulator::Delete(EntityContainer::key_type id)

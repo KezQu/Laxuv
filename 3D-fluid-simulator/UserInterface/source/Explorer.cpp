@@ -3,13 +3,13 @@
 #include <cstdint>
 #include <string>
 
+#include "Cube.h"
 #include "Essentials.h"
 #include "Interface.h"
 #include "Line.h"
 #include "Object.h"
 #include "Particles.h"
 #include "Point.h"
-#include "Qube.h"
 #include "Simulator.h"
 #include "Sphere.h"
 #include "Square.h"
@@ -166,7 +166,12 @@ void Explorer::CreateEntityControls()
       ImGui::TableSetColumnIndex(1);
       if (ImGui::Button("Recompile", ImVec2(-1, -1)))
       {
-        simulatorInstance.GetEntities()[selected]->Initialize();
+        auto old_sim_state_saved =
+            Simulator::GetInstance().GetSimulationState();
+        Simulator::GetInstance().SetSimulationState(
+            Essentials::SimulationState::INIT);
+          simulatorInstance.GetEntities()[selected]->Initialize();
+        Simulator::GetInstance().SetSimulationState(old_sim_state_saved);
       }
     }
     ImGui::EndTable();
@@ -176,6 +181,9 @@ void Explorer::CreateEntityControls()
 
 void Explorer::SelectEntity()
 {
+  auto old_sim_state_saved = Simulator::GetInstance().GetSimulationState();
+  Simulator::GetInstance().SetSimulationState(
+      Essentials::SimulationState::INIT);
   switch (entity_select.second)
   {
     case 1:
@@ -195,8 +203,8 @@ void Explorer::SelectEntity()
       break;
     case 4:
       entity_select.first == 1
-          ? simulatorInstance.Append(Object{new Qube{}})
-          : simulatorInstance.Append(Particles{new Qube{Vertex{}, 1.f}, 1U});
+          ? simulatorInstance.Append(Object{new Cube{}})
+          : simulatorInstance.Append(Particles{new Cube{Vertex{}, 1.f}, 1U});
       break;
     case 5:
       entity_select.first == 1
@@ -206,4 +214,5 @@ void Explorer::SelectEntity()
     default:
       break;
   }
+  Simulator::GetInstance().SetSimulationState(old_sim_state_saved);
 }

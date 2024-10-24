@@ -44,7 +44,7 @@ struct HydroTest
 
   std::vector<Essentials::ParticleProperties> particle;
 
-  vec4 Qube(uint index, uint MaxParticles)
+  vec4 Cube(uint index, uint MaxParticles)
   {
     uint sideLength = static_cast<uint>(std::cbrt(MaxParticles));
     uint x = index % sideLength;
@@ -68,7 +68,7 @@ struct HydroTest
       particle[index].position = vec4(0);
       particle[index].VolumeDensityPressureRohash = vec4(0);
       particle[index].position =
-          Qube(index, MaxParticles) * particleRadius * particleSpacing;
+          Cube(index, MaxParticles) * particleRadius * particleSpacing;
       FindNeighbours(index, MaxParticles);
       mass = mass_new;
     }

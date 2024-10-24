@@ -1,11 +1,11 @@
 #version 460 core
 
 layout(location = 0) in vec4 inColorTesc[];
-layout(location = 3) in vec4 inShapeOffset[];
+layout(location = 3) in vec3 inShapeOffset[];
 
 layout(vertices = 3) out;
 layout(location = 0) out vec4 outColorTesc[];
-layout(location = 3) out vec4 outShapeOffset[];
+layout(location = 3) out vec3 outShapeOffset[];
 
 uniform uint subdivision;
 

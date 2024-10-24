@@ -12,10 +12,9 @@
 #include "glm/fwd.hpp"
 
 PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
-    : _particleMesh{"dataBuffer",
-                    static_cast<uint64_t>(dimensions.x * dimensions.y *
-                                          dimensions.z)},
-      _space_grid{"spaceGrid", 0}
+    : _particleMesh{
+          "dataBuffer",
+          static_cast<uint64_t>(dimensions.x * dimensions.y * dimensions.z)}
 {
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Element.comp");
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/InitDefaultShape.glsl");
@@ -27,24 +26,18 @@ void PhysicsDispatch::Bind() const
   if (!_physicsGenerator.isLinked()) _physicsGenerator.Link();
   _physicsGenerator.Bind();
   _particleMesh.Bind(_physicsGenerator.ID());
-  _space_grid.Bind(_physicsGenerator.ID());
 }
 
 void PhysicsDispatch::BindUniforms(
-    Essentials::PhysicsType objectPhysicsType,
-    Essentials::SimulationState current_sim_state) const
+    Essentials::PhysicsType objectPhysicsType) const
 {
-  Uniform<uint32_t> simulation_state{static_cast<uint32_t>(current_sim_state),
-                                     "SimulatorState"};
   Uniform<uint32_t> physics_type{static_cast<uint32_t>(objectPhysicsType),
                                  "physicsType"};
 
-  simulation_state.MapUniform(_physicsGenerator.ID());
   physics_type.MapUniform(_physicsGenerator.ID());
 
   _fluid_properties.viscosity_factor.MapUniform(_physicsGenerator.ID());
   _fluid_properties.mass.MapUniform(_physicsGenerator.ID());
-  //_fluid_properties.density0.MapUniform(_physicsGenerator.ID());
 
   _fluid_properties.kernel_a.MapUniform(_physicsGenerator.ID());
   _fluid_properties.influence_kernel.MapUniform(_physicsGenerator.ID());
@@ -73,8 +66,6 @@ void PhysicsDispatch::UpdateMeshDimensions()
   if (_particleMesh.Size() != new_buffer_size)
   {
     _particleMesh.SetBufferMemorySize(new_buffer_size);
-    //    _space_grid.SetBufferMemorySize(Essentials::MaxCells *
-    //                                    Essentials::MaxCells);
   }
 }
 
@@ -98,15 +89,18 @@ void PhysicsDispatch::InitDefaultShape(
   _fluid_properties.particle_radius = particleRadius;
   UpdateMeshDimensions();
   Bind();
-  BindUniforms(objectPhysicsType, Essentials::SimulationState::INIT);
+  BindUniforms(objectPhysicsType);
+  Simulator::GetInstance().BindUniforms(_physicsGenerator.ID());
   Calculate(_work_groups, true);
 }
 
-void PhysicsDispatch::GenerateForces(Essentials::PhysicsType objectPhysicsType)
+void PhysicsDispatch::GenerateForces(Uniform<glm::mat4, float> shape_model,
+                                     Essentials::PhysicsType objectPhysicsType)
 {
   Bind();
-  BindUniforms(objectPhysicsType,
-               Simulator::GetInstance().GetSimulationState());
+  BindUniforms(objectPhysicsType);
   Simulator::GetInstance().BindUniforms(_physicsGenerator.ID());
-  Calculate(_work_groups, false);
+  shape_model.MapUniform(_physicsGenerator.ID());
+
+  Calculate(_work_groups, true);
 }

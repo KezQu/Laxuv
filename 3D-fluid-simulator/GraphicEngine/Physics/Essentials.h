@@ -23,7 +23,7 @@ enum class DistributionShape : uint32_t
   CIRCLE,
   SQUARE,
   DISK,
-  QUBE,
+  CUBE,
   SPHERE
 };
 std::string DistShapeToString(DistributionShape shape) noexcept;
@@ -37,6 +37,14 @@ enum class SimulationState : uint32_t
   GEN_FRAME
 };
 
+enum class WorldType : uint32_t
+{
+  NONE,
+  CUBE_WORLD,
+  SHPERE_WORLD
+};
+char const* WorldTypeTolist() noexcept;
+
 enum class PhysicsType : uint32_t
 {
   NONE,
@@ -46,12 +54,22 @@ enum class PhysicsType : uint32_t
 std::string PhysTypeToString(PhysicsType physics) noexcept;
 char const* PhysTypesTolist() noexcept;
 
+enum class ColorProperty : uint32_t
+{
+  NONE,
+  VELOCITY,
+  DENSITY_ERROR,
+  DIVERGENCE_ERROR,
+  PRESSURE,
+};
+char const* ColorPropertyTolist() noexcept;
+
 struct ParticleProperties
 {
   glm::vec4 velocityDFSPHfactor{0};
   glm::vec4 position{0};
   glm::vec4 VolumeDensityPressureRohash{0};
-  glm::uvec4 cell{0};
+  glm::vec4 particleColor{0};
   uint32_t neighbours[MaxNeighbours];
 };
 
@@ -60,12 +78,11 @@ auto const lengthDefaultProperties =
 
 struct FluidProperties
 {
-  Uniform<float> particle_radius{0.f, "particleRadius",
-                                 lengthDefaultProperties};
+  Uniform<float> particle_radius{0.f, "shapeRadius", lengthDefaultProperties};
   Uniform<float> particle_spacing{1.f, "particleSpacing",
                                   lengthDefaultProperties};
   Uniform<uint32_t> distribution_shape{
-      static_cast<uint32_t>(DistributionShape::QUBE), "DistributionShape"};
+      static_cast<uint32_t>(DistributionShape::CUBE), "DistributionShape"};
   Uniform<float> influence_kernel{2.5f, "influenceKernel",
                                   lengthDefaultProperties};
   Uniform<float> search_kernel{2.5f, "searchKernel", lengthDefaultProperties};

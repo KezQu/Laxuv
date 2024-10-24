@@ -42,7 +42,7 @@ void Object<Prim>::Calculate()
 {
   if (_visible)
   {
-    _physicsDispatch.GenerateForces(GetPhysicsType());
+    _physicsDispatch.GenerateForces(_shape->Model(), GetPhysicsType());
   }
 }
 template <GLenum Prim>

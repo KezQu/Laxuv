@@ -1,8 +1,7 @@
 #pragma once
 
-#include <Entity.h>
-#include <Essentials.h>
-#include <Uniform.h>
+#include "Entity.h"
+#include "Uniform.h"
 
 class Simulator
 {
@@ -17,7 +16,11 @@ class Simulator
                                    ValueProperties{0.f, 1.f, 1.f, "%.2f"}};
   Uniform<float> _global_delta_time{
       6.f, "dt", ValueProperties{1.f, 1000.f, 1e-3f, "%1.f ms"}};
-  Essentials::SimulationState _globalSimulationState;
+  Uniform<uint32_t> _global_simulation_state{
+      static_cast<uint32_t>(Essentials::SimulationState::INIT),
+      "SimulatorState"};
+  Uniform<uint32_t> _global_world_type{
+      static_cast<uint32_t>(Essentials::WorldType::SHPERE_WORLD), "worldType"};
   bool _static_timestep{true};
 
  private:
@@ -33,7 +36,7 @@ class Simulator
   void ToggleTimesetType();
   details::detail_controls_t GetDetails();
   void BindUniforms(uint32_t program_id);
-  void SetSimulationState(Essentials::SimulationState newGlobalState);
+  void SetSimulationState(Essentials::SimulationState new_global_state);
   template <typename T>
   void Append(T&& entity);
   void Delete(EntityContainer::key_type id = 0);

@@ -11,7 +11,6 @@ class PhysicsDispatch
 {
  private:
   ShaderStorageBuffer<Essentials::ParticleProperties> _particleMesh;
-  ShaderStorageBuffer<Essentials::space_grid_t> _space_grid;
   Essentials::FluidProperties _fluid_properties;
   Program _physicsGenerator;
   // HydroTest testing_suite{};
@@ -19,8 +18,7 @@ class PhysicsDispatch
 
  private:
   void Bind() const;
-  void BindUniforms(Essentials::PhysicsType objectPhysicsType,
-                    Essentials::SimulationState current_sim_state) const;
+  void BindUniforms(Essentials::PhysicsType objectPhysicsType) const;
 
  public:
   PhysicsDispatch(glm::ivec3 dimensions);
@@ -36,6 +34,8 @@ class PhysicsDispatch
   void UpdateMeshDimensions();
   void InitDefaultShape(Essentials::PhysicsType objectPhysicsType,
                         uint32_t particleRadius);
-  void GenerateForces(Essentials::PhysicsType objectPhysicsType);
+  void GenerateForces(Uniform<glm::mat4, float> shape_model,
+                      Uniform<uint32_t> shape_color_type,
+                      Essentials::PhysicsType objectPhysicsType);
   void Calculate(uint32_t work_groups, bool create_snapshot);
 };
