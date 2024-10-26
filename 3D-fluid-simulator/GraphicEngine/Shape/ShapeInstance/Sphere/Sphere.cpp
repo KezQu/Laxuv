@@ -44,8 +44,3 @@ Sphere::Sphere(Vertex center, float radius, bool enableTess)
 {
   auto& coordBufferData = _vertexArray.Data().coordinateBuffer.Data();
 }
-
-Essentials::DistributionShape Sphere::GetParticleDistribution()
-{
-  return Essentials::DistributionShape::SPHERE;
-}

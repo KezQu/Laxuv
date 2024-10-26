@@ -14,11 +14,13 @@ class PhysicsDispatch
   Essentials::FluidProperties _fluid_properties;
   Program _physicsGenerator;
   // HydroTest testing_suite{};
-  uint32_t _work_groups{10U};
+  uint32_t _work_groups{1U};
 
  private:
   void Bind() const;
-  void BindUniforms(Essentials::PhysicsType objectPhysicsType) const;
+  void BindUniforms(Essentials::PhysicsType object_physics_type) const;
+  void BindExternalUniforms(
+      Essentials::ShapeProperties const& shape_properties) const;
 
  public:
   PhysicsDispatch(glm::ivec3 dimensions);
@@ -32,10 +34,9 @@ class PhysicsDispatch
   GetParticleMeshBuffer() const;
   Essentials::FluidProperties& GetFluidProperties();
   void UpdateMeshDimensions();
-  void InitDefaultShape(Essentials::PhysicsType objectPhysicsType,
-                        uint32_t particleRadius);
-  void GenerateForces(Uniform<glm::mat4, float> shape_model,
-                      Uniform<uint32_t> shape_color_type,
-                      Essentials::PhysicsType objectPhysicsType);
+  void InitDefaultShape(Essentials::PhysicsType object_physics_type,
+                        Essentials::ShapeProperties const& shape_properties);
+  void GenerateForces(Essentials::ShapeProperties const& shape_properties,
+                      Essentials::PhysicsType object_physics_type);
   void Calculate(uint32_t work_groups, bool create_snapshot);
 };

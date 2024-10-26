@@ -14,8 +14,3 @@ Square::Square(Vertex v1, Vertex v2, Vertex v3, Vertex v4, float radius)
     : Shape(VertexArray{{v1, v2, v3, v4}, {0, 1, 2, 1, 3, 2}}, radius, false)
 {
 }
-
-Essentials::DistributionShape Square::GetParticleDistribution()
-{
-  return Essentials::DistributionShape::SQUARE;
-}

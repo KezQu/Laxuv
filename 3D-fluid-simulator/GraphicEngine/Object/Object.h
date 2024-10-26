@@ -11,8 +11,7 @@ class Object : public Entity
   std::unique_ptr<Shape<Prim>> _shape;
 
  public:
-  Object(Shape<Prim>* const shape,
-         Essentials::PhysicsType physics = Essentials::PhysicsType::STATIC);
+  Object(Shape<Prim>* const shape);
   Object(Object const& obj_copy) = delete;
   Object(Object&& obj_move) = default;
   Object& operator=(Object const& obj_copy) = delete;
@@ -25,8 +24,9 @@ class Object : public Entity
 };
 
 template <GLenum Prim>
-Object<Prim>::Object(Shape<Prim>* const shape, Essentials::PhysicsType physics)
-    : Entity(physics), _shape{std::unique_ptr<Shape<Prim>>(shape)}
+Object<Prim>::Object(Shape<Prim>* const shape)
+    : Entity{Essentials::PhysicsType::STATIC, {1, 1, 1}},
+      _shape{std::unique_ptr<Shape<Prim>>(shape)}
 {
   Initialize();
 }
@@ -34,15 +34,16 @@ Object<Prim>::Object(Shape<Prim>* const shape, Essentials::PhysicsType physics)
 template <GLenum Prim>
 void Object<Prim>::Initialize()
 {
-  // _physicsDispatch.InitDefaultShape(_shape->GetParticleDistribution(),
-  //                                   GetPhysicsType(), 1);
+  _physicsDispatch.InitDefaultShape(GetPhysicsType(),
+                                    _shape->GetShapeProperties());
 }
 template <GLenum Prim>
 void Object<Prim>::Calculate()
 {
   if (_visible)
   {
-    _physicsDispatch.GenerateForces(_shape->Model(), GetPhysicsType());
+    _physicsDispatch.GenerateForces(this->_shape->GetShapeProperties(),
+                                    GetPhysicsType());
   }
 }
 template <GLenum Prim>
@@ -52,7 +53,7 @@ void Object<Prim>::Draw() const
   {
     _shape->Bind();
     uint32_t programID =
-        _shape->EnableTesselation()
+        _shape->GetTesselation()
             ? ProgramDispatch::GetInstance().GetTesselationPipeline().ID()
             : ProgramDispatch::GetInstance().GetSimplePipeline().ID();
 
@@ -67,11 +68,13 @@ template <GLenum Prim>
 details::detail_controls_t Object<Prim>::Details()
 {
   auto details = Entity::Details();
-  details.push_back({"Location", this->_shape->GetLocation().ExposeToUI()});
-  details.push_back({"Rotation", this->_shape->GetRotate().ExposeToUI()});
-  details.push_back({"Scale", this->_shape->GetScale().ExposeToUI()});
+  auto& shape_properties = this->_shape->GetShapeProperties();
+
+  details.push_back({"Location", shape_properties._location.ExposeToUI()});
+  details.push_back({"Rotation", shape_properties._rotation.ExposeToUI()});
+  details.push_back({"Scale", shape_properties._scale.ExposeToUI()});
   details.push_back(
-      {"Subdivision", this->_shape->GetSubdivision().ExposeToUI()});
-  details.push_back({"Radius", this->_shape->GetRadius().ExposeToUI()});
+      {"Subdivision", shape_properties._subdivision.ExposeToUI()});
+  details.push_back({"Radius", shape_properties._radius.ExposeToUI()});
   return details;
 }

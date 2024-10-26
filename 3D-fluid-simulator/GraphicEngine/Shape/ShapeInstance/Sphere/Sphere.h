@@ -18,5 +18,4 @@ class Sphere : public Shape<GL_TRIANGLES>
   Sphere& operator=(Sphere const& obj_copy) = delete;
   Sphere& operator=(Sphere&& obj_move) = default;
   ~Sphere() override = default;
-  Essentials::DistributionShape GetParticleDistribution() override;
 };

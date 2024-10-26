@@ -11,17 +11,6 @@ ProgramDispatch::ProgramDispatch()
           {GL_TESS_EVALUATION_SHADER, "/CalculateNDC.glsl"},
           {GL_FRAGMENT_SHADER, "/Element.frag"}}
 {
-  // if (_primitiveType == GL_LINES) {
-  //	_renderer.AddShader(GL_GEOMETRY_SHADER, "/Lines.geom");
-  // }
-  // else if (_primitiveType == GL_POINTS) {
-  //	_renderer.AddShader(GL_GEOMETRY_SHADER, "/Points.geom");
-  // }
-  // else {
-  //	_renderer.AddShader(GL_GEOMETRY_SHADER, "/Triangles.geom");
-  // }
-  //_renderer.AddShader(GL_GEOMETRY_SHADER, "/CalculateNDC.glsl");
-  //_renderer.AddShader(GL_GEOMETRY_SHADER, "/CalculateNormal.glsl");
 }
 
 ProgramDispatch& ProgramDispatch::GetInstance()

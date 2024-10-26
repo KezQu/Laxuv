@@ -12,7 +12,6 @@ class Cube : public Shape<GL_TRIANGLES>
   Cube& operator=(Cube const& obj_copy) = delete;
   Cube& operator=(Cube&& obj_move) = default;
   ~Cube() override = default;
-  Essentials::DistributionShape GetParticleDistribution() override;
 
  protected:
   Cube(Vertex v0, Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5,

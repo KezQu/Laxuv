@@ -32,6 +32,8 @@
 *.app
 out/
 .vs
+.vscode
+build/
 
 #dependency docs
 3D-fluid-simulator/Dependencies/glfw/docs/

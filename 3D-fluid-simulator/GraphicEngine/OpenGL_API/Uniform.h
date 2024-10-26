@@ -136,7 +136,6 @@ class Uniform
   {
     return _value;
   }
-  template <typename PropertyT>
   ValueProperties<PropertyT>& GetProperties()
   {
     return _properties;

@@ -11,7 +11,6 @@ class Square : public Shape<GL_TRIANGLES>
   Square& operator=(Square const& obj_copy) = delete;
   Square& operator=(Square&& obj_move) = default;
   ~Square() override = default;
-  Essentials::DistributionShape GetParticleDistribution() override;
 
  protected:
   Square(Vertex v0, Vertex v1, Vertex v2, Vertex v3, float radius);

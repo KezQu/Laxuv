@@ -14,5 +14,4 @@ class Point : public Shape<GL_POINTS>
   Point& operator=(Point const& obj_copy) = delete;
   Point& operator=(Point&& obj_move) = default;
   ~Point() override = default;
-  Essentials::DistributionShape GetParticleDistribution() override;
 };

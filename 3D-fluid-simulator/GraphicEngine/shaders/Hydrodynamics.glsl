@@ -351,17 +351,17 @@ vec4 CalculateColor(float property_value){
 }
 
 vec4 ChooseParticleColor(uint index_x){
-	const float max_speed = 100.f;
+	const float max_speed = 200.f;
 	const float density0 = mass;
-
+	const float d_density = CalculateDerivDensity(index_x);
 	switch(colorType){
 		case VELOCITY:
 			return CalculateColor(length(particle[index_x].velocityDFSPHfactor.xyz) / max_speed);
 		case DENSITY_ERROR:
 			return CalculateColor(abs(CalculateDensity(index_x) - density0) / density0);
 		case DIVERGENCE_ERROR:
-			return CalculateColor(abs(CalculateDerivDensity(index_x)) / (2 * mass * max_speed * 0.7f));
+			return CalculateColor(abs(d_density));
 		case PRESSURE:
-			return CalculateColor(dt * dt * particle[index_x].VolumeDensityPressureRohash.z / (density0 * particle[index_x].velocityDFSPHfactor.w));
+			return CalculateColor(sqrt(particle[index_x].VolumeDensityPressureRohash.z) * mass * 1e+3);
 	}
 }

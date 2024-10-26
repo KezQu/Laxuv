@@ -27,8 +27,9 @@ class Particles : public Entity
 
 template <GLenum Prim>
 Particles<Prim>::Particles(Shape<Prim>* const particleShape,
-                           uint32_t _meshRadius)
-    : Entity{Essentials::PhysicsType::DYNAMIC},
+                           uint32_t meshRadius)
+    : Entity{Essentials::PhysicsType::DYNAMIC,
+             {meshRadius, meshRadius, meshRadius}},
       _particleShape{std::unique_ptr<Shape<Prim>>(particleShape)}
 {
   Initialize();
@@ -38,7 +39,7 @@ template <GLenum Prim>
 void Particles<Prim>::Initialize()
 {
   _physicsDispatch.InitDefaultShape(GetPhysicsType(),
-                                    _particleShape->GetRadius() * 2);
+                                    _particleShape->GetShapeProperties());
 }
 
 template <GLenum Prim>
@@ -46,7 +47,8 @@ void Particles<Prim>::Calculate()
 {
   if (_visible)
   {
-    _physicsDispatch.GenerateForces(_particleShape->Model(), GetPhysicsType());
+    _physicsDispatch.GenerateForces(_particleShape->GetShapeProperties(),
+                                    GetPhysicsType());
   }
 }
 
@@ -57,7 +59,7 @@ void Particles<Prim>::Draw() const
   {
     _particleShape->Bind();
     uint32_t programID =
-        _particleShape->EnableTesselation()
+        _particleShape->GetTesselation()
             ? ProgramDispatch::GetInstance().GetTesselationPipeline().ID()
             : ProgramDispatch::GetInstance().GetSimplePipeline().ID();
 
@@ -74,51 +76,43 @@ template <GLenum Prim>
 details::detail_controls_t Particles<Prim>::Details()
 {
   auto details = Entity::Details();
+  auto& shape_properties = this->_particleShape->GetShapeProperties();
+  auto& fluid_properties = this->_physicsDispatch.GetFluidProperties();
+
+  details.push_back({"Location", shape_properties._location.ExposeToUI()});
+  details.push_back({"Rotation", shape_properties._rotation.ExposeToUI()});
+  details.push_back({"Scale", shape_properties._scale.ExposeToUI()});
   details.push_back(
-      {"Location", this->_particleShape->GetLocation().ExposeToUI()});
+      {"Subdivision", shape_properties._subdivision.ExposeToUI()});
+  details.push_back({"Particle color", [&shape_properties]()
+                     {
+                       ImGui::Combo(
+                           "##Particle_color",
+                           (int32_t*)&shape_properties._color.first.GetValue(),
+                           Essentials::ColorPropertyTolist());
+                     }});
   details.push_back(
-      {"Rotation", this->_particleShape->GetRotate().ExposeToUI()});
-  details.push_back({"Scale", this->_particleShape->GetScale().ExposeToUI()});
+      {"Color opacity", shape_properties._color.second.ExposeToUI()});
+  details.push_back({"Radius", shape_properties._radius.ExposeToUI()});
   details.push_back(
-      {"Subdivision", this->_particleShape->GetSubdivision().ExposeToUI()});
+      {"Particle spacing", fluid_properties.particle_spacing.ExposeToUI()});
   details.push_back(
-      {"Particle color", [this]()
-       {
-         ImGui::Combo("##Particle_color",
-                      (int32_t*)&this->_physicsDispatch.GetFluidProperties()
-                          .particle_color.first.GetValue(),
-                      Essentials::ColorPropertyTolist());
-       }});
+      {"Distribution", fluid_properties.distribution_shape.ExposeToUI()});
   details.push_back(
-      {"Color opacity", this->_physicsDispatch.GetFluidProperties()
-                            .particle_color.first.ExposeToUI()});
-  details.push_back({"Radius", this->_particleShape->GetRadius().ExposeToUI()});
+      {"Influence kernel", fluid_properties.influence_kernel.ExposeToUI()});
   details.push_back(
-      {"Particle spacing", this->_physicsDispatch.GetFluidProperties()
-                               .particle_spacing.ExposeToUI()});
-  details.push_back({"Distribution", this->_physicsDispatch.GetFluidProperties()
-                                         .distribution_shape.ExposeToUI()});
+      {"Search kernel", fluid_properties.search_kernel.ExposeToUI()});
   details.push_back(
-      {"Influence kernel", this->_physicsDispatch.GetFluidProperties()
-                               .influence_kernel.ExposeToUI()});
+      {"Kernel factor A", fluid_properties.kernel_a.ExposeToUI()});
+  details.push_back({"Mass", fluid_properties.mass.ExposeToUI()});
   details.push_back(
-      {"Search kernel",
-       this->_physicsDispatch.GetFluidProperties().search_kernel.ExposeToUI()});
-  details.push_back(
-      {"Kernel factor A",
-       this->_physicsDispatch.GetFluidProperties().kernel_a.ExposeToUI()});
-  details.push_back(
-      {"Mass", this->_physicsDispatch.GetFluidProperties().mass.ExposeToUI()});
-  details.push_back(
-      {"Viscosity factor", this->_physicsDispatch.GetFluidProperties()
-                               .viscosity_factor.ExposeToUI()});
-  details.push_back(
-      {"Mesh radius", [this]()
-       {
-         ImGui::DragInt(
-             "##Mesh_radius",
-             (int32_t*)&this->_physicsDispatch.GetFluidProperties().mesh_radius,
-             1.f, 0, 100, "%d", ImGuiSliderFlags_AlwaysClamp);
-       }});
+      {"Viscosity factor", fluid_properties.viscosity_factor.ExposeToUI()});
+  details.push_back({"Mesh radius", [&fluid_properties]()
+                     {
+                       ImGui::DragInt("##Mesh_radius",
+                                      (int32_t*)&fluid_properties.mesh_radius,
+                                      1.f, 0, 100, "%d",
+                                      ImGuiSliderFlags_AlwaysClamp);
+                     }});
   return details;
 }

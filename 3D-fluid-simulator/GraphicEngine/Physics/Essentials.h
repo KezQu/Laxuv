@@ -78,8 +78,7 @@ auto const lengthDefaultProperties =
 
 struct FluidProperties
 {
-  Uniform<float> particle_radius{0.f, "shapeRadius", lengthDefaultProperties};
-  Uniform<float> particle_spacing{1.f, "particleSpacing",
+  Uniform<float> particle_spacing{2.f, "particleSpacing",
                                   lengthDefaultProperties};
   Uniform<uint32_t> distribution_shape{
       static_cast<uint32_t>(DistributionShape::CUBE), "DistributionShape"};
@@ -95,6 +94,29 @@ struct FluidProperties
   uint32_t mesh_radius{1U};
 };
 
+struct ShapeProperties
+{
+  Uniform<glm::vec3, float> _location{
+      glm::vec3{0.f}, "location",
+      ValueProperties{-1200.f, 1200.f, 1.f, "%.1f mm"}};
+  Uniform<glm::vec3, float> _scale{glm::vec3{1.f}, "scale",
+                                   ValueProperties{0.f, 100.f, 1.f, "%.1f"}};
+  Uniform<glm::vec3, float> _rotation{
+      glm::vec3{0.f}, "rotation",
+      ValueProperties{-360.f, 360.f, 1.f, "%.1f deg"}};
+  Uniform<glm::vec3, float> _center{
+      glm::vec3{0.f}, "center",
+      ValueProperties{-1200.f, 1200.f, 1.f, "%.1f mm"}};
+  Uniform<uint32_t> _subdivision{5U, "subdivision", ValueProperties{1U, 50U}};
+  Uniform<float> _radius{1.f, "shapeRadius", lengthDefaultProperties};
+  std::pair<Uniform<uint32_t>, Uniform<float>> _color{
+      {static_cast<uint32_t>(Essentials::ColorProperty::NONE), "colorType"},
+      {0.5f, "colorOpacity", ValueProperties{0.f, 1.f, 1.f, "%.2f"}}};
+  bool _enableTesselation{false};
+  bool _enableLight{true};
+
+  Uniform<glm::mat4, float> Model() const;
+};
 }  // namespace Essentials
 
 std::ostream& operator<<(std::ostream& out,

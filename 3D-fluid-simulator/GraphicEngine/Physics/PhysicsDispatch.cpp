@@ -29,9 +29,9 @@ void PhysicsDispatch::Bind() const
 }
 
 void PhysicsDispatch::BindUniforms(
-    Essentials::PhysicsType objectPhysicsType) const
+    Essentials::PhysicsType object_physics_type) const
 {
-  Uniform<uint32_t> physics_type{static_cast<uint32_t>(objectPhysicsType),
+  Uniform<uint32_t> physics_type{static_cast<uint32_t>(object_physics_type),
                                  "physicsType"};
 
   physics_type.MapUniform(_physicsGenerator.ID());
@@ -43,11 +43,19 @@ void PhysicsDispatch::BindUniforms(
   _fluid_properties.influence_kernel.MapUniform(_physicsGenerator.ID());
   _fluid_properties.search_kernel.MapUniform(_physicsGenerator.ID());
 
-  _fluid_properties.particle_radius.MapUniform(_physicsGenerator.ID());
   _fluid_properties.particle_spacing.MapUniform(_physicsGenerator.ID());
   _fluid_properties.distribution_shape.MapUniform(_physicsGenerator.ID());
 }
 
+void PhysicsDispatch::BindExternalUniforms(
+    Essentials::ShapeProperties const& shape_properties) const
+{
+  Simulator::GetInstance().BindUniforms(_physicsGenerator.ID());
+  shape_properties.Model().MapUniform(_physicsGenerator.ID());
+  shape_properties._radius.MapUniform(_physicsGenerator.ID());
+  shape_properties._color.first.MapUniform(_physicsGenerator.ID());
+  shape_properties._color.second.MapUniform(_physicsGenerator.ID());
+}
 ShaderStorageBuffer<Essentials::ParticleProperties> const&
 PhysicsDispatch::GetParticleMeshBuffer() const
 {
@@ -84,23 +92,23 @@ void PhysicsDispatch::Calculate(uint32_t work_groups, bool create_snapshot)
 }
 
 void PhysicsDispatch::InitDefaultShape(
-    Essentials::PhysicsType objectPhysicsType, uint32_t particleRadius)
+    Essentials::PhysicsType object_physics_type,
+    Essentials::ShapeProperties const& shape_properties)
 {
-  _fluid_properties.particle_radius = particleRadius;
   UpdateMeshDimensions();
   Bind();
-  BindUniforms(objectPhysicsType);
-  Simulator::GetInstance().BindUniforms(_physicsGenerator.ID());
+  BindUniforms(object_physics_type);
+  BindExternalUniforms(shape_properties);
   Calculate(_work_groups, true);
 }
 
-void PhysicsDispatch::GenerateForces(Uniform<glm::mat4, float> shape_model,
-                                     Essentials::PhysicsType objectPhysicsType)
+void PhysicsDispatch::GenerateForces(
+    Essentials::ShapeProperties const& shape_properties,
+    Essentials::PhysicsType object_physics_type)
 {
   Bind();
-  BindUniforms(objectPhysicsType);
-  Simulator::GetInstance().BindUniforms(_physicsGenerator.ID());
-  shape_model.MapUniform(_physicsGenerator.ID());
+  BindUniforms(object_physics_type);
+  BindExternalUniforms(shape_properties);
 
-  Calculate(_work_groups, true);
+  Calculate(_work_groups, false);
 }

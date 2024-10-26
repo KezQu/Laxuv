@@ -1,8 +1,8 @@
 #version 460 core
 
-layout (local_size_x = 10,
-		local_size_y = 10,
-		local_size_z = 10) in;
+layout (local_size_x = 1,
+		local_size_y = 1,
+		local_size_z = 1) in;
 
 const uint NONE = 0;
 const uint STATIC = 1;
@@ -95,7 +95,7 @@ void main(){
 		particle[index].position = vec4(0);
 		particle[index].VolumeDensityPressureRohash = vec4(0);
 		if(physicsType != NONE){
-			particle[index].position = (InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) + particleSpacing) * shapeRadius;
+			particle[index].position = InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * particleSpacing * shapeRadius;
 		}
 		if(physicsType == DYNAMIC){
 //--------------------------------------Find Neighbours------------------------------------------
@@ -108,7 +108,7 @@ void main(){
 		}
 	}
 	else if((SimulatorState == GEN_FRAME || SimulatorState == SIMULATION) && physicsType == DYNAMIC){
-//	particle[index].position.xyz = (model * vec4(particle[index].position.xyz, 1.0)).xyz;
+	particle[index].position.xyz = (model * vec4(particle[index].position.xyz, 1.0)).xyz;
 //---------------------------------Calc non pressure forces--------------------------------------
 		const float m_i = mass;
 		const float density0 = mass;
@@ -139,8 +139,6 @@ void main(){
 		particle[index].position.xyz += dt * particle[index].velocityDFSPHfactor.xyz;
 		
 //--------------------------------------Find Neighbours------------------------------------------
-		barrier();
-		memoryBarrierBuffer();
 		//ClearSpaceGrid(index, MaxParticles);
 		//AssignToCell(index);
 		FindNeighbours(index, MaxParticles);
@@ -156,9 +154,7 @@ void main(){
 			particle[index].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index);
 			d_ro = CalculateDerivDensity(index);
 		}
-		barrier();
-		memoryBarrierBuffer();
-//		particle[index].position.xyz = (inverse(model) * vec4(particle[index].position.xyz, 1.0)).xyz;
+		particle[index].position.xyz = (inverse(model) * vec4(particle[index].position.xyz, 1.0)).xyz;
 	}
 	particle[index].particleColor = ChooseParticleColor(index);
 }

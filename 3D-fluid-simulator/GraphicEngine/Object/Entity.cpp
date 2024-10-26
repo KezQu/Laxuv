@@ -16,8 +16,8 @@ details::detail_controls_t Entity::Details()
   return details;
 }
 
-Entity::Entity(Essentials::PhysicsType physics)
-    : _physicsDispatch{{0, 0, 0}},
+Entity::Entity(Essentials::PhysicsType physics, glm::ivec3 const& particle)
+    : _physicsDispatch{particle},
       _id{Entity::_internalID++},
       _name{"Entity" + std::to_string(_id)},
       _physics{physics}

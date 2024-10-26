@@ -38,8 +38,3 @@ Cube::Cube(Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5, Vertex v6,
 {
   auto& coordBufferData = _vertexArray.Data().coordinateBuffer.Data();
 }
-
-Essentials::DistributionShape Cube::GetParticleDistribution()
-{
-  return Essentials::DistributionShape::CUBE;
-}

@@ -59,5 +59,5 @@ class Entity
   virtual details::detail_controls_t Details();
 
  protected:
-  Entity(Essentials::PhysicsType physics);
+  Entity(Essentials::PhysicsType physics, glm::ivec3 const& particle = {0,0,0});
 };
