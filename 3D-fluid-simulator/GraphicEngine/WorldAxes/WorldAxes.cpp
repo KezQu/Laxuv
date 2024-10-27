@@ -19,9 +19,17 @@ WorldAxes::WorldAxes()
 }
 void WorldAxes::Draw() const
 {
+  Program& renderer =
+      _axes[0].GetTesselation() == true
+          ? ProgramDispatch::GetInstance().GetTesselationPipeline()
+          : ProgramDispatch::GetInstance().GetSimplePipeline();
+
+  if (!renderer.isLinked()) renderer.Link();
+  renderer.Bind();
+
   for (auto& axis : _axes)
   {
-    axis.Bind();
+    axis.Bind(renderer.ID());
     _(glDrawElements(axis.GetDrawPrimitive(), axis.GetVA().Size(),
                      axis.GetVA().IndexBufferType(), nullptr));
   }

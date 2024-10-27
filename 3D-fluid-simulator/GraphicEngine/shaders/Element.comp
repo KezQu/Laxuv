@@ -51,6 +51,11 @@ struct ParticleProperties {
 	uint neighbours[MaxNeighbours];
 };
 
+struct TerrainProperties {
+	vec4 center;
+	vec4 bounds;
+};
+
 struct stateVector{
 	float x;
 	vec3 y;
@@ -66,8 +71,9 @@ struct Flux {
 layout(std430, binding = 0) buffer dataBuffer{
 	restrict ParticleProperties particle[];
 };
-layout(std430, binding = 1) buffer spaceGrid{
-	uint space_grid[HashGridSize][CellCapacity];
+
+layout(std430, binding = 1) buffer terrainBuffer{
+	restrict TerrainProperties terrain[];
 };
 
 vec4 InitDefaultShape(in uint idx, in uvec3 invocation, in uint maxParticles);
@@ -88,6 +94,8 @@ float CalculateAvgDerivDensity(uint index_x);
 vec4 ChooseParticleColor(uint index_x);
 void CheckWorldBounds(uint index_x);
 vec3 BounceOfAWall(vec3 direction, vec3 normal);
+void CheckCollisions(uint index_x);
+void AddToTerrain(uint index_x);
 
 void main(){
 	if(SimulatorState == INIT){
@@ -105,6 +113,9 @@ void main(){
 //------------------------------------Initialize properties--------------------------------------
 			particle[index].VolumeDensityPressureRohash.y = CalculateDensity(index);
 			particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
+		}
+		else if (physicsType == STATIC){
+			AddToTerrain(index);
 		}
 	}
 	else if((SimulatorState == GEN_FRAME || SimulatorState == SIMULATION) && physicsType == DYNAMIC){
@@ -135,9 +146,10 @@ void main(){
 
 //---------------------------------Check worlds bounds--------------------------------------
 		CheckWorldBounds(index);
-		
+		CheckCollisions(index);
+
 		particle[index].position.xyz += dt * particle[index].velocityDFSPHfactor.xyz;
-		
+
 //--------------------------------------Find Neighbours------------------------------------------
 		//ClearSpaceGrid(index, MaxParticles);
 		//AssignToCell(index);

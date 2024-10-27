@@ -2,6 +2,8 @@
 
 #include "Uniform.h"
 
+Simulator::Simulator() : _terrain{"terrainBuffer"} {}
+
 void Simulator::CleanUp()
 {
   _entitiesContainer.clear();
@@ -68,6 +70,7 @@ details::detail_controls_t Simulator::GetDetails()
 
 void Simulator::BindUniforms(uint32_t program_id)
 {
+  _obstacles_number.MapUniform(program_id);
   _global_delta_time.MapUniform(program_id);
   _space_boundries.MapUniform(program_id);
   _bounds_viscosity.MapUniform(program_id);
@@ -75,9 +78,27 @@ void Simulator::BindUniforms(uint32_t program_id)
   _global_world_type.MapUniform(program_id);
 }
 
+void Simulator::BindTerrain(uint32_t program_id)
+{
+  _terrain.Bind(program_id);
+  auto lookupBuffer = _terrain.GetBufferSubData(0U, _terrain.Size());
+}
+
 void Simulator::SetSimulationState(Essentials::SimulationState new_global_state)
 {
   _global_simulation_state = static_cast<uint32_t>(new_global_state);
+}
+
+void Simulator::AddObstacle()
+{
+  _terrain.SetBufferMemorySize(_terrain.Size() + 1);
+  _obstacles_number = _terrain.Size();
+}
+
+void Simulator::RemoveObstacle()
+{
+  _terrain.SetBufferMemorySize(_terrain.Size() - 1);
+  _obstacles_number = _terrain.Size();
 }
 
 void Simulator::Delete(EntityContainer::key_type id)
@@ -90,4 +111,5 @@ void Simulator::Delete(EntityContainer::key_type id)
   {
     _entitiesContainer.erase(std::prev(_entitiesContainer.end()));
   }
+  RemoveObstacle();
 }

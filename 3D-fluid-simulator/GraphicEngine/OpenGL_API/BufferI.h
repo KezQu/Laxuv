@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Debug.h>
-#include <GL/glew.h>
-
 #include <utility>
 #include <vector>
+
+#include "Debug.h"
+#include "GL/glew.h"
 
 template <GLenum target, typename T>
 class BufferI
@@ -43,7 +43,7 @@ inline BufferI<target, T>::BufferI()
 template <GLenum target, typename T>
 inline void BufferI<target, T>::CreateBuffer(GLenum purpose)
 {
-  glCreateBuffers(1, &_id);
+  _(glCreateBuffers(1, &_id));
   _purpose = purpose;
 }
 
@@ -87,7 +87,10 @@ inline BufferI<target, T>::~BufferI()
 template <GLenum target, typename T>
 inline void BufferI<target, T>::Bind() const
 {
-  _(glBindBuffer(target, _id));
+  if (glIsBuffer(_id))
+  {
+    _(glBindBuffer(target, _id));
+  }
 }
 
 template <GLenum target, typename T>

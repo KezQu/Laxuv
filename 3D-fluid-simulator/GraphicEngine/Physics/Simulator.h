@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Entity.h"
+#include "Essentials.h"
+#include "ShaderStorageBuffer.h"
 #include "Uniform.h"
 
 class Simulator
@@ -10,6 +12,8 @@ class Simulator
 
  private:
   EntityContainer _entitiesContainer;
+  ShaderStorageBuffer<Essentials::TerrainBufferProperties> _terrain;
+  Uniform<uint32_t> _obstacles_number{0, "MaxObstacles"};
   Uniform<float> _space_boundries{100.f, "spaceLimiter",
                                   ValueProperties{1.f, 1200.f, 1.f, "%.1f mm"}};
   Uniform<float> _bounds_viscosity{0.95f, "boundsViscosity",
@@ -24,7 +28,7 @@ class Simulator
   bool _static_timestep{true};
 
  private:
-  Simulator() = default;
+  Simulator();
 
  public:
   static Simulator& GetInstance();
@@ -36,12 +40,16 @@ class Simulator
   void ToggleTimesetType();
   details::detail_controls_t GetDetails();
   void BindUniforms(uint32_t program_id);
+  void BindTerrain(uint32_t program_id);
   void SetSimulationState(Essentials::SimulationState new_global_state);
+  void AddObstacle();
+  void RemoveObstacle();
   template <typename T>
   void Append(T&& entity);
   void Delete(EntityContainer::key_type id = 0);
   void CleanUp();
 };
+
 template <typename T>
 void Simulator::Append(T&& entity)
 {

@@ -42,7 +42,7 @@ struct HydroTest
   float mass;
   float viscosityFactor = 0.2;
 
-  std::vector<Essentials::ParticleProperties> particle;
+  std::vector<Essentials::ParticleBufferProperties> particle;
 
   vec4 Cube(uint index, uint MaxParticles)
   {
@@ -103,9 +103,9 @@ struct HydroTest
     {
       particle[index_x].neighbours[i] = MaxValueNeighbour;
     }
-    vec3 pos_x = vec3(particle[index_x].position.x,
-                      particle[index_x].position.y,
-                      particle[index_x].position.z);
+    vec3 pos_x =
+        vec3(particle[index_x].position.x, particle[index_x].position.y,
+             particle[index_x].position.z);
     if (!isnan(pos_x.x))
     {
       uint num_neighbours = 0;
@@ -138,9 +138,9 @@ struct HydroTest
         break;
       }
       const float m_j = mass;
-      const vec3 x_i = vec3(particle[index_x].position.x,
-                            particle[index_x].position.y,
-                            particle[index_x].position.z);
+      const vec3 x_i =
+          vec3(particle[index_x].position.x, particle[index_x].position.y,
+               particle[index_x].position.z);
       const vec3 x_j = vec3(particle[curr_neighbour].position.x,
                             particle[curr_neighbour].position.y,
                             particle[curr_neighbour].position.z);
@@ -164,12 +164,12 @@ struct HydroTest
         break;
       }
       const float m_j = mass;
-      const vec3 x_ij = vec3(particle[index_x].position.x,
-                             particle[index_x].position.y,
-                             particle[index_x].position.z) -
-                        vec3(particle[curr_neighbour].position.x,
-                             particle[curr_neighbour].position.y,
-                             particle[curr_neighbour].position.z);
+      const vec3 x_ij =
+          vec3(particle[index_x].position.x, particle[index_x].position.y,
+               particle[index_x].position.z) -
+          vec3(particle[curr_neighbour].position.x,
+               particle[curr_neighbour].position.y,
+               particle[curr_neighbour].position.z);
       float test = m_j * CalculateKernelWeight(x_ij);
       if (test < 0)
       {
@@ -199,12 +199,12 @@ struct HydroTest
       const vec3 v_j = vec3(particle[curr_neighbour].velocityDFSPHfactor.x,
                             particle[curr_neighbour].velocityDFSPHfactor.y,
                             particle[curr_neighbour].velocityDFSPHfactor.z);
-      const vec3 x_ij = vec3(particle[index_x].position.x,
-                             particle[index_x].position.y,
-                             particle[index_x].position.z) -
-                        vec3(particle[curr_neighbour].position.x,
-                             particle[curr_neighbour].position.y,
-                             particle[curr_neighbour].position.z);
+      const vec3 x_ij =
+          vec3(particle[index_x].position.x, particle[index_x].position.y,
+               particle[index_x].position.z) -
+          vec3(particle[curr_neighbour].position.x,
+               particle[curr_neighbour].position.y,
+               particle[curr_neighbour].position.z);
 
       kernel_sum += m_j * dot((v_i - v_j), CalculateGradKernelWeight(x_ij));
     }
@@ -228,12 +228,12 @@ struct HydroTest
       const float m_j = mass;
       const float ro_j = particle[curr_neighbour].VolumeDensityPressureRohash.y;
       const float p_j = particle[curr_neighbour].VolumeDensityPressureRohash.z;
-      const vec3 x_ij = vec3(particle[index_x].position.x,
-                             particle[index_x].position.y,
-                             particle[index_x].position.z) -
-                        vec3(particle[curr_neighbour].position.x,
-                             particle[curr_neighbour].position.y,
-                             particle[curr_neighbour].position.z);
+      const vec3 x_ij =
+          vec3(particle[index_x].position.x, particle[index_x].position.y,
+               particle[index_x].position.z) -
+          vec3(particle[curr_neighbour].position.x,
+               particle[curr_neighbour].position.y,
+               particle[curr_neighbour].position.z);
 
       kernel_sum += float(m_j * (p_i / pow(ro_i, 2) + p_j / (ro_j * ro_i))) *
                     CalculateGradKernelWeight(x_ij);
@@ -262,12 +262,12 @@ struct HydroTest
                         vec3(particle[curr_neighbour].velocityDFSPHfactor.x,
                              particle[curr_neighbour].velocityDFSPHfactor.y,
                              particle[curr_neighbour].velocityDFSPHfactor.z);
-      const vec3 x_ij = vec3(particle[index_x].position.x,
-                             particle[index_x].position.y,
-                             particle[index_x].position.z) -
-                        vec3(particle[curr_neighbour].position.x,
-                             particle[curr_neighbour].position.y,
-                             particle[curr_neighbour].position.z);
+      const vec3 x_ij =
+          vec3(particle[index_x].position.x, particle[index_x].position.y,
+               particle[index_x].position.z) -
+          vec3(particle[curr_neighbour].position.x,
+               particle[curr_neighbour].position.y,
+               particle[curr_neighbour].position.z);
       kernel_sum += (m_j * dot(v_ij, x_ij) * CalculateGradKernelWeight(x_ij)) /
                     float(ro_j * (pow(length(x_ij), 2) + 0.01));
     }
@@ -379,19 +379,13 @@ struct HydroTest
         //			particle[index].velocityDFSPHfactor.xyz *=
         // boundsViscosity * normal;
 
-        particle[index].position.x *=
-            spaceLimiter / length(vec_form_center);
-        particle[index].position.y *=
-            spaceLimiter / length(vec_form_center);
-        particle[index].position.z *=
-            spaceLimiter / length(vec_form_center);
+        particle[index].position.x *= spaceLimiter / length(vec_form_center);
+        particle[index].position.y *= spaceLimiter / length(vec_form_center);
+        particle[index].position.z *= spaceLimiter / length(vec_form_center);
       }
-      particle[index].position.x +=
-          dt * particle[index].velocityDFSPHfactor.x;
-      particle[index].position.y +=
-          dt * particle[index].velocityDFSPHfactor.y;
-      particle[index].position.z +=
-          dt * particle[index].velocityDFSPHfactor.z;
+      particle[index].position.x += dt * particle[index].velocityDFSPHfactor.x;
+      particle[index].position.y += dt * particle[index].velocityDFSPHfactor.y;
+      particle[index].position.z += dt * particle[index].velocityDFSPHfactor.z;
     }
     //---------------------------------Calc divergence free
     // solver--------------------------------------
@@ -400,8 +394,7 @@ struct HydroTest
       FindNeighbours(index, MaxParticles);
       particle[index].VolumeDensityPressureRohash.y = CalculateDensity(index);
       particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
-      particle[index].position.w =
-          abs(CalculateAvgDensity(index) - density0);
+      particle[index].position.w = abs(CalculateAvgDensity(index) - density0);
     }
 
     for (int i = 0; i < 100 && (abs(CalculateAvgDerivDensity(0)) > 1e-1); i++)

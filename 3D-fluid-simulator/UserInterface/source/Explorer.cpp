@@ -170,7 +170,7 @@ void Explorer::CreateEntityControls()
             Simulator::GetInstance().GetSimulationState();
         Simulator::GetInstance().SetSimulationState(
             Essentials::SimulationState::INIT);
-          simulatorInstance.GetEntities()[selected]->Initialize();
+        simulatorInstance.GetEntities()[selected]->Initialize();
         Simulator::GetInstance().SetSimulationState(old_sim_state_saved);
       }
     }
@@ -184,32 +184,39 @@ void Explorer::SelectEntity()
   auto old_sim_state_saved = Simulator::GetInstance().GetSimulationState();
   Simulator::GetInstance().SetSimulationState(
       Essentials::SimulationState::INIT);
+  if (entity_select.first == 1)
+  {
+    simulatorInstance.AddObstacle();
+  }
+
   switch (entity_select.second)
   {
     case 1:
       entity_select.first == 1
           ? simulatorInstance.Append(Object{new Point{}})
-          : simulatorInstance.Append(Particles{new Point{}, 1U});
+          : simulatorInstance.Append(Particles{new Point{}, glm::uvec3{5U}});
       break;
     case 2:
       entity_select.first == 1
           ? simulatorInstance.Append(Object{new Line{}})
-          : simulatorInstance.Append(Particles{new Line{}, 1U});
+          : simulatorInstance.Append(Particles{new Line{}, glm::uvec3{5U}});
       break;
     case 3:
       entity_select.first == 1
           ? simulatorInstance.Append(Object{new Square{}})
-          : simulatorInstance.Append(Particles{new Square{Vertex{}, 1.f}, 1U});
+          : simulatorInstance.Append(
+                Particles{new Square{Vertex{}, 1.f}, glm::uvec3{5U}});
       break;
     case 4:
-      entity_select.first == 1
-          ? simulatorInstance.Append(Object{new Cube{}})
-          : simulatorInstance.Append(Particles{new Cube{Vertex{}, 1.f}, 1U});
+      entity_select.first == 1 ? simulatorInstance.Append(Object{new Cube{}})
+                               : simulatorInstance.Append(Particles{
+                                     new Cube{Vertex{}, 1.f}, glm::uvec3{5U}});
       break;
     case 5:
       entity_select.first == 1
           ? simulatorInstance.Append(Object{new Sphere{}})
-          : simulatorInstance.Append(Particles{new Sphere{Vertex{}, 1.f}, 1U});
+          : simulatorInstance.Append(
+                Particles{new Sphere{Vertex{}, 1.f}, glm::uvec3{5U}});
       break;
     default:
       break;

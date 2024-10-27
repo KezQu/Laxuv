@@ -64,7 +64,12 @@ enum class ColorProperty : uint32_t
 };
 char const* ColorPropertyTolist() noexcept;
 
-struct ParticleProperties
+struct TerrainBufferProperties {
+	glm::vec4 center{0};
+	glm::vec4 bounds{0};
+};
+
+struct ParticleBufferProperties
 {
   glm::vec4 velocityDFSPHfactor{0};
   glm::vec4 position{0};
@@ -76,7 +81,7 @@ struct ParticleProperties
 auto const lengthDefaultProperties =
     ValueProperties{1.f, 600.f, 1.f, "%.1f mm"};
 
-struct FluidProperties
+struct ParticleProperties
 {
   Uniform<float> particle_spacing{2.f, "particleSpacing",
                                   lengthDefaultProperties};
@@ -91,7 +96,6 @@ struct FluidProperties
   Uniform<float> viscosity_factor{
       10.f, "viscosityFactor",
       ValueProperties{0.1f, 1000.f, 1e-3f, "%.1f Pa*s"}};
-  uint32_t mesh_radius{1U};
 };
 
 struct ShapeProperties

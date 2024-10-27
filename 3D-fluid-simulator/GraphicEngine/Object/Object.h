@@ -1,8 +1,11 @@
 #pragma once
 
-#include <Debug.h>
-#include <Entity.h>
-#include <Shape.h>
+#include <memory>
+
+#include "Debug.h"
+#include "Entity.h"
+#include "Program.h"
+#include "Shape.h"
 
 template <GLenum Prim>
 class Object : public Entity
@@ -25,7 +28,7 @@ class Object : public Entity
 
 template <GLenum Prim>
 Object<Prim>::Object(Shape<Prim>* const shape)
-    : Entity{Essentials::PhysicsType::STATIC, {1, 1, 1}},
+    : Entity{Essentials::PhysicsType::STATIC},
       _shape{std::unique_ptr<Shape<Prim>>(shape)}
 {
   Initialize();
@@ -34,16 +37,27 @@ Object<Prim>::Object(Shape<Prim>* const shape)
 template <GLenum Prim>
 void Object<Prim>::Initialize()
 {
-  _physicsDispatch.InitDefaultShape(GetPhysicsType(),
-                                    _shape->GetShapeProperties());
+  _physicsDispatch.Bind();
+  auto program_id = _physicsDispatch.GetProgram().ID();
+
+  _shape->BindUniforms(program_id);
+  Simulator::GetInstance().BindUniforms(program_id);
+  Bind(program_id);
+  _physicsDispatch.InitDefaultShape(_mesh_size);
 }
 template <GLenum Prim>
 void Object<Prim>::Calculate()
 {
   if (_visible)
   {
-    _physicsDispatch.GenerateForces(this->_shape->GetShapeProperties(),
-                                    GetPhysicsType());
+    _physicsDispatch.Bind();
+    auto program_id = _physicsDispatch.GetProgram().ID();
+
+    _shape->BindUniforms(program_id);
+    Simulator::GetInstance().BindUniforms(program_id);
+    Simulator::GetInstance().BindTerrain(program_id);
+    Bind(program_id);
+    _physicsDispatch.Calculate(_mesh_size, true);
   }
 }
 template <GLenum Prim>
@@ -51,16 +65,20 @@ void Object<Prim>::Draw() const
 {
   if (_visible)
   {
-    _shape->Bind();
-    uint32_t programID =
-        _shape->GetTesselation()
-            ? ProgramDispatch::GetInstance().GetTesselationPipeline().ID()
-            : ProgramDispatch::GetInstance().GetSimplePipeline().ID();
+    Program& renderer =
+        _shape->GetTesselation() == true
+            ? ProgramDispatch::GetInstance().GetTesselationPipeline()
+            : ProgramDispatch::GetInstance().GetSimplePipeline();
 
-    _physicsDispatch.GetParticleMeshBuffer().Bind(programID);
+    if (!renderer.isLinked()) renderer.Link();
+    renderer.Bind();
+
+    _shape->Bind(renderer.ID());
+    Simulator::GetInstance().BindUniforms(renderer.ID());
+    _physicsDispatch.GetParticleMeshBuffer().Bind(renderer.ID());
     _(glDrawElements(_shape->GetDrawPrimitive(), _shape->GetVA().Size(),
                      _shape->GetVA().IndexBufferType(), nullptr));
-    _physicsDispatch.GetParticleMeshBuffer().Unbind(programID);
+    _physicsDispatch.GetParticleMeshBuffer().Unbind(renderer.ID());
   }
 }
 

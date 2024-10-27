@@ -3,6 +3,7 @@
 const float E = 2.71828;
 const float PI = 3.14159265358979323846264338327950288;
 const float R = 8.31446261815324;
+const float kernel_c = 3;
 const mat3 I = mat3(1, 0, 0,
 		0, 1, 0,
 		0, 0, 1);
@@ -24,12 +25,16 @@ const uint DENSITY_ERROR = 2;
 const uint DIVERGENCE_ERROR = 3;
 const uint PRESSURE = 4;
 
+uniform mat4 model;
+
+uniform uint MaxObstacles = 0;
 uniform uint worldType;
 uniform float spaceLimiter;
 uniform float boundsViscosity;
 
 uniform float kernel_a;
-uniform float kernel_c = 3;
+
+uniform float shapeRadius;
 uniform float influenceKernel;
 uniform float searchKernel;
 uniform float colorOpacity;
@@ -38,6 +43,19 @@ uniform uint colorType;
 uniform float viscosityFactor;
 uniform float dt;
 uniform float mass;
+
+struct ParticleProperties {
+	vec4 velocityDFSPHfactor;
+	vec4 position;
+	vec4 VolumeDensityPressureRohash;
+	vec4 particleColor;
+	uint neighbours[MaxNeighbours];
+};
+
+struct TerrainProperties {
+	vec4 center;
+	vec4 bounds;
+};
 
 struct stateVector{
 	float x;
@@ -51,19 +69,11 @@ struct Flux {
 	vec3 z;
 };
 
-struct ParticleProperties {
-	vec4 velocityDFSPHfactor;
-	vec4 position;
-	vec4 VolumeDensityPressureRohash;
-	vec4 particleColor;
-	uint neighbours[MaxNeighbours];
-};
-
 layout(std430, binding = 0) buffer dataBuffer{
 	restrict ParticleProperties particle[];
 };
-layout(std430, binding = 1) buffer spaceGrid{
-	uint space_grid[HashGridSize][CellCapacity];
+layout(std430, binding = 1) buffer terrainBuffer{
+	restrict TerrainProperties terrain[];
 };
 
 float CalculateKernelWeight(vec3 points_dist){
@@ -104,12 +114,12 @@ vec3 BounceOfAWall(vec3 direction, vec3 normal){
 	return direction - 2 * dot(direction, normal) * normal;
 }
 
-void ClearSpaceGrid(uint index_x, uint MaxParticles){
-	uint clear_range = HashGridSize / MaxParticles;
-	for(uint i = index_x * clear_range; i < (index_x != MaxParticles ? (index_x + 1) * clear_range: HashGridSize); i++){
-			space_grid[i][0] = 0;
-	}
-}
+//void ClearSpaceGrid(uint index_x, uint MaxParticles){
+//	uint clear_range = HashGridSize / MaxParticles;
+//	for(uint i = index_x * clear_range; i < (index_x != MaxParticles ? (index_x + 1) * clear_range: HashGridSize); i++){
+//			space_grid[i][0] = 0;
+//	}
+//}
 
 //uint FindCell(uint index_x){
 //	vec3 interim_cell = ceil((particle[index_x].position.xyz + 600) / cellRadius);
@@ -298,26 +308,44 @@ float CalculateAvgDerivDensity(uint index_x){
 
 void CheckWorldBounds(uint index_x){
 	vec3 vec_form_center = particle[index_x].position.xyz + dt * particle[index_x].velocityDFSPHfactor.xyz;
-
+	vec3 bounce_normal = vec3(0);
 	if(worldType == CUBE_WORLD){
 		if(vec_form_center.x <= -spaceLimiter){
-			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(1, 0, 0));
+			bounce_normal = vec3(1, 0, 0);
 		}else if(vec_form_center.x >= spaceLimiter){
-			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(-1, 0, 0));
+			bounce_normal = vec3(-1, 0, 0);
 		}
 		if(vec_form_center.y <= -spaceLimiter){
-			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(0, 1, 0));
+			bounce_normal = vec3(0, 1, 0);
 		}else if(vec_form_center.y >= spaceLimiter){
-			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(0, -1, 0));
+			bounce_normal = vec3(0, -1, 0);
 		}
 		if(vec_form_center.z <= -spaceLimiter){
-			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(0, 0, 1));
+			bounce_normal = vec3(0, 0, 1);
 		}else if(vec_form_center.z >= spaceLimiter){
-			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, vec3(0, 0, -1));
+			bounce_normal = vec3(0, 0, -1);
 		}
 	}else if(worldType == SPHERE_WORLD){
 		if(length(vec_form_center) >= spaceLimiter){
-			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, normalize(vec_form_center));
+			bounce_normal = normalize(vec_form_center);
+		}
+	}
+	particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
+}
+
+void AddToTerrain(uint index_x){
+	terrain[MaxObstacles - 1].center = model[3] + particle[index_x].position;
+	terrain[MaxObstacles - 1].bounds = vec4(shapeRadius);
+}
+
+void CheckCollisions(uint index_x){
+	for(uint i = 0; i < MaxObstacles; i++){
+		const vec3 obstacle_center = terrain[i].center.xyz;
+		const vec3 obstacle_bounds = terrain[i].bounds.xyz;
+		const vec3 vec_from_center = particle[index_x].position.xyz - obstacle_center;
+		const vec3 bounce_normal = -normalize(vec_from_center);
+		if(length(vec_from_center) <= obstacle_bounds.x){
+			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
 		}
 	}
 }
@@ -327,7 +355,7 @@ vec4 CalculateColor(float property_value){
 	const float boundCheck = 0.25f;
 	
 	if (property_value <= -1.f){
-		color.xyz = vec3(0, 0, 1);
+		color.xyz = vec3(1);
 	}
 	else if(property_value < 0.f){
 		color.xyz = vec3(0, 0, 1 - property_value);
@@ -339,19 +367,19 @@ vec4 CalculateColor(float property_value){
 		color.xyz = vec3(0, 1, 1 - (property_value - boundCheck) * 4);
 	}
 	else if(property_value < 3 * boundCheck){
-		color.xyz = vec3(property_value * 4, 1, 0);
+		color.xyz = vec3((property_value - 2 * boundCheck) * 4, 1, 0);
 	}
 	else if(property_value <= 4 * boundCheck){
-		color.xyz = vec3(1, 1 - (property_value - boundCheck) * 4, 0);
+		color.xyz = vec3(1, 1 - (property_value - 3 * boundCheck) * 4, 0);
 	}
 	else{
-		color.xyz = vec3(1, 1, 1);
+		color.xyz = vec3(0.05);
 	}
 	return color;
 }
 
 vec4 ChooseParticleColor(uint index_x){
-	const float max_speed = 200.f;
+	const float max_speed = 50.f;
 	const float density0 = mass;
 	const float d_density = CalculateDerivDensity(index_x);
 	switch(colorType){

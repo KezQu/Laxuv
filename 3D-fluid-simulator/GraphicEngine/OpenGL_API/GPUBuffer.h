@@ -81,7 +81,7 @@ inline void GPUBuffer<target, T>::SetBufferMemorySize(
 {
   if (!glIsBuffer(this->_id))
   {
-    this->CreateBuffer(GL_STREAM_COPY);
+    this->CreateBuffer(GL_STATIC_DRAW);
   }
   _bufferSize = newBufferMemorySize;
   _(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(),

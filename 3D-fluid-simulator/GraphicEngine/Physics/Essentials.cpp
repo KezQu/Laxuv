@@ -3,7 +3,7 @@
 #include <iostream>
 
 std::ostream& operator<<(std::ostream& out,
-                         Essentials::ParticleProperties const& particle)
+                         Essentials::ParticleBufferProperties const& particle)
 {
   out << "- - - - - - - -" << std::endl;
   // out << "(" << particle.force.x << "," << particle.force.y << ","

@@ -35,7 +35,8 @@ class Shape
   virtual ~Shape() = default;
   Essentials::ShapeProperties& GetShapeProperties();
   Uniform<glm::mat4, float> Model() const;
-  void Bind() const;
+  void Bind(uint32_t program_id) const;
+  void BindUniforms(uint32_t program_id) const;
   GLenum GetDrawPrimitive() const;
   VertexArray const& GetVA() const;
   void SetTesselation(bool enableTesselation);
@@ -67,29 +68,24 @@ Shape<Prim>::Shape(VertexArray&& vertexArray, float shapeRadius,
 }
 
 template <GLenum Prim>
-void Shape<Prim>::Bind() const
+void Shape<Prim>::Bind(uint32_t program_id) const
 {
   _vertexArray.Bind();
+  BindUniforms(program_id);
+}
 
-  Program& renderer =
-      _shape_properties._enableTesselation == true
-          ? ProgramDispatch::GetInstance().GetTesselationPipeline()
-          : ProgramDispatch::GetInstance().GetSimplePipeline();
+template <GLenum Prim>
+void Shape<Prim>::BindUniforms(uint32_t program_id) const
+{
+  Camera::GetCamera().View().MapUniform(program_id);
+  Camera::GetCamera().Projection().MapUniform(program_id);
+  Camera::GetCamera().Viewport().MapUniform(program_id);
+  _shape_properties.Model().MapUniform(program_id);
+  _shape_properties._center.MapUniform(program_id);
+  _shape_properties._subdivision.MapUniform(program_id);
 
-  if (!renderer.isLinked()) renderer.Link();
-  renderer.Bind();
-
-  Simulator::GetInstance().BindUniforms(renderer.ID());
-
-  Camera::GetCamera().View().MapUniform(renderer.ID());
-  Camera::GetCamera().Projection().MapUniform(renderer.ID());
-  Camera::GetCamera().Viewport().MapUniform(renderer.ID());
-  _shape_properties.Model().MapUniform(renderer.ID());
-  _shape_properties._center.MapUniform(renderer.ID());
-  _shape_properties._subdivision.MapUniform(renderer.ID());
-
-  _shape_properties._color.first.MapUniform(renderer.ID());
-  _shape_properties._color.second.MapUniform(renderer.ID());
+  _shape_properties._color.first.MapUniform(program_id);
+  _shape_properties._color.second.MapUniform(program_id);
   if (_shape_properties._enableLight)
   {
     auto const ambient_light =
@@ -98,11 +94,11 @@ void Shape<Prim>::Bind() const
         LIGHT.DiffuseLight.color, "diffuseLightColor");
     auto const diffuse_light_dir = Uniform<glm::vec3, float>(
         LIGHT.DiffuseLight.direction, "diffuseLightDirection");
-    ambient_light.MapUniform(renderer.ID());
-    diffuse_light_color.MapUniform(renderer.ID());
-    diffuse_light_dir.MapUniform(renderer.ID());
+    ambient_light.MapUniform(program_id);
+    diffuse_light_color.MapUniform(program_id);
+    diffuse_light_dir.MapUniform(program_id);
   }
-  _shape_properties._radius.MapUniform(renderer.ID());
+  _shape_properties._radius.MapUniform(program_id);
 }
 
 template <GLenum Prim>

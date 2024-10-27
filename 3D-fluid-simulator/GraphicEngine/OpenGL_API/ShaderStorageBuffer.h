@@ -12,11 +12,7 @@ class ShaderStorageBuffer : public GPUBuffer<GL_SHADER_STORAGE_BUFFER, T>
 
  public:
   using BufferType = T;
-
-  explicit ShaderStorageBuffer(std::string buffer_name)
-      : _buffer_name{buffer_name}
-  {
-  }
+  explicit ShaderStorageBuffer(std::string buffer_name);
   explicit ShaderStorageBuffer(std::string buffer_name,
                                uint64_t initialBufferSize);
   ShaderStorageBuffer(ShaderStorageBuffer const& objCopy) = delete;
@@ -29,6 +25,12 @@ class ShaderStorageBuffer : public GPUBuffer<GL_SHADER_STORAGE_BUFFER, T>
   void Bind(uint64_t const& programID) const;
   void Unbind(uint64_t const& programID) const;
 };
+
+template <typename T>
+inline ShaderStorageBuffer<T>::ShaderStorageBuffer(std::string buffer_name)
+    : _buffer_name{buffer_name}
+{
+}
 
 template <typename T>
 inline ShaderStorageBuffer<T>::ShaderStorageBuffer(std::string buffer_name,
