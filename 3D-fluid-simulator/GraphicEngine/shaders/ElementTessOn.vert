@@ -15,7 +15,7 @@ struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
 	vec4 VolumeDensityPressureRohash;
-	vec4 particleColor;
+	vec4 color;
 	uint neighbours[MaxNeighbours];
 };
 
@@ -28,7 +28,7 @@ void main(){
 		outColorVert = inColorVert / 255.;
 	}
 	else{
-		outColorVert = particle[gl_InstanceID].particleColor;
+		outColorVert = particle[gl_InstanceID].color;
 	}
 	outShapeOffset = particle[gl_InstanceID].position.xyz;
 	gl_Position = vec4(inPosition, 0);

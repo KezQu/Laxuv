@@ -3,7 +3,6 @@
 #include "Essentials.h"
 #include "Program.h"
 #include "ShaderStorageBuffer.h"
-#include "Uniform.h"
 
 class PhysicsDispatch
 {

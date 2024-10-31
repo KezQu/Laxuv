@@ -1,6 +1,15 @@
-#include <Window.h>
+#include "Window.h"
 
 #include <filesystem>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+
+#include "Camera.h"
+#include "Debug.h"
+#include "GL/glew.h"
+#include "GLFW/glfw3.h"
+#include "imgui.h"
 
 Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     : _windowSize{windowSize}, _windowTitle{windowTitle}
@@ -15,7 +24,7 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
   {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     _window = glfwCreateWindow(_windowSize.x, _windowSize.y,
@@ -103,34 +112,34 @@ void Window::EventLoop()
            ImVec2{_windowSize.x / 4.f, _windowSize.y - 200})
         .Generate();
 
-    switch (SimulationInstance.GetSimulationState())
+    switch (SimulationInstance->GetSimulationState())
     {
       case Essentials::SimulationState::IDLE:
         break;
       case Essentials::SimulationState::INIT:
-        for (auto& [id, entity] : SimulationInstance.GetEntities())
+        for (auto& [id, entity] : SimulationInstance->GetEntities())
         {
           entity->Initialize();
         }
-        SimulationInstance.SetSimulationState(
+        SimulationInstance->SetSimulationState(
             Essentials::SimulationState::IDLE);
         break;
       case Essentials::SimulationState::SIMULATION:
-        for (auto& [id, entity] : SimulationInstance.GetEntities())
+        for (auto& [id, entity] : SimulationInstance->GetEntities())
         {
           entity->Calculate();
         }
         break;
       case Essentials::SimulationState::GEN_FRAME:
-        for (auto& [id, entity] : SimulationInstance.GetEntities())
+        for (auto& [id, entity] : SimulationInstance->GetEntities())
         {
           entity->Calculate();
         }
-        SimulationInstance.SetSimulationState(
+        SimulationInstance->SetSimulationState(
             Essentials::SimulationState::IDLE);
         break;
     }
-    for (auto& [id, entity] : SimulationInstance.GetEntities())
+    for (auto& [id, entity] : SimulationInstance->GetEntities())
     {
       entity->Draw();
     }
@@ -138,8 +147,6 @@ void Window::EventLoop()
     Axes.Draw();
     Render();
   }
-  SimulationInstance.CleanUp();
-  ProgramDispatch::GetInstance().CleanUp();
 }
 void Window::Refresh()
 {

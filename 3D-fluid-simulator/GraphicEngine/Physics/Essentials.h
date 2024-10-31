@@ -16,6 +16,25 @@ constexpr uint32_t MaxNeighbours = 512;
 
 using space_grid_t = uint32_t[CellCapacity];
 
+enum class EntityType : uint32_t
+{
+  NONE,
+  OBJECT,
+  PARTICLES
+};
+char const* EntityTypeTolist() noexcept;
+
+enum class EntityShape : uint32_t
+{
+  NONE,
+  POINT,
+  LINE,
+  SQUARE,
+  CUBE,
+  SPHERE
+};
+char const* EntityShapeTolist() noexcept;
+
 enum class DistributionShape : uint32_t
 {
   UNDEFINED,
@@ -26,7 +45,6 @@ enum class DistributionShape : uint32_t
   CUBE,
   SPHERE
 };
-std::string DistShapeToString(DistributionShape shape) noexcept;
 char const* DistShapeTolist() noexcept;
 
 enum class SimulationState : uint32_t
@@ -40,8 +58,8 @@ enum class SimulationState : uint32_t
 enum class WorldType : uint32_t
 {
   NONE,
-  CUBE_WORLD,
-  SHPERE_WORLD
+  CUBE_T,
+  SHPERE_T
 };
 char const* WorldTypeTolist() noexcept;
 
@@ -51,7 +69,6 @@ enum class PhysicsType : uint32_t
   STATIC,
   DYNAMIC
 };
-std::string PhysTypeToString(PhysicsType physics) noexcept;
 char const* PhysTypesTolist() noexcept;
 
 enum class ColorProperty : uint32_t
@@ -64,9 +81,11 @@ enum class ColorProperty : uint32_t
 };
 char const* ColorPropertyTolist() noexcept;
 
-struct TerrainBufferProperties {
-	glm::vec4 center{0};
-	glm::vec4 bounds{0};
+struct TerrainBufferProperties
+{
+  glm::vec4 center{0};
+  glm::vec4 bounds{0};
+  glm::mat4 model{0};
 };
 
 struct ParticleBufferProperties
@@ -74,7 +93,7 @@ struct ParticleBufferProperties
   glm::vec4 velocityDFSPHfactor{0};
   glm::vec4 position{0};
   glm::vec4 VolumeDensityPressureRohash{0};
-  glm::vec4 particleColor{0};
+  glm::vec4 color{0};
   uint32_t neighbours[MaxNeighbours];
 };
 

@@ -1,6 +1,10 @@
-#include <Entity.h>
-#include <Essentials.h>
-#include <imgui.h>
+#include "Entity.h"
+
+#include <cstdint>
+
+#include "Essentials.h"
+#include "glm/fwd.hpp"
+#include "imgui.h"
 
 uint64_t Entity::_internalID = 0U;
 
@@ -17,9 +21,20 @@ details::detail_controls_t Entity::Details()
   return details;
 }
 
+uint64_t Entity::GetTerrainId()
+{
+  return _terrain_id.GetValue();
+}
+
+void Entity::SetTerrainId(uint64_t const terrain_id)
+{
+  _terrain_id = terrain_id;
+}
+
 void Entity::Bind(uint32_t program_id) const
 {
   _physics_type.MapUniform(program_id);
+  _terrain_id.MapUniform(program_id);
 }
 
 Entity::Entity(Essentials::PhysicsType physics, glm::uvec3 const& mesh_size)

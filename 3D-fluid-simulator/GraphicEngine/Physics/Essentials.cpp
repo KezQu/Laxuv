@@ -27,68 +27,34 @@ std::ostream& operator<<(std::ostream& out,
   return out;
 }
 
-std::string Essentials::DistShapeToString(DistributionShape shape) noexcept
+char const* Essentials::EntityTypeTolist() noexcept
 {
-  switch (shape)
-  {
-    case DistributionShape::LINE:
-      return "Line";
-      break;
-    case DistributionShape::CIRCLE:
-      return "Circle";
-      break;
-    case DistributionShape::SQUARE:
-      return "Square";
-      break;
-    case DistributionShape::DISK:
-      return "Disk";
-      break;
-    case DistributionShape::CUBE:
-      return "Cube";
-      break;
-    case DistributionShape::SPHERE:
-      return "Sphere";
-      break;
-    default:
-      return "Undefined";
-      break;
-  }
+  return " \0OBJECT\0PARTICLES\0";
+}
+
+char const* Essentials::EntityShapeTolist() noexcept
+{
+  return " \0POINT\0LINE\0SQUARE\0CUBE\0SPHERE\0";
 }
 
 char const* Essentials::DistShapeTolist() noexcept
 {
-  return " \0Point\0Line\0Square\0Cube\0Sphere\0";
+  return "UNDEFINED\0LINE\0CIRCLE\0SQUARE\0DISK\0CUBE\0SPHERE\0";
 }
 
 char const* Essentials::WorldTypeTolist() noexcept
 {
-  return " \0Cube\0Sphere\0";
-}
-
-std::string Essentials::PhysTypeToString(PhysicsType physics) noexcept
-{
-  switch (physics)
-  {
-    case PhysicsType::STATIC:
-      return "Static";
-      break;
-    case PhysicsType::DYNAMIC:
-      return "Dynamic";
-      break;
-    default:
-      return "Undefined";
-      break;
-  }
+  return " \0CUBE\0SHPERE\0";
 }
 
 char const* Essentials::PhysTypesTolist() noexcept
 {
-  return "Undefined\0Static\0Dynamic\0";
+  return "NONE\0STATIC\0DYNAMIC\0";
 }
 
 char const* Essentials::ColorPropertyTolist() noexcept
 {
-  return " \0Velocity\0Density error\0Divergence error\0Pressure\0";
+  return "NONE\0VELOCITY\0DENSITY_ERROR\0DIVERGENCE_ERROR\0PRESSURE\0";
 }
 
 Uniform<glm::mat4, float> Essentials::ShapeProperties::Model() const

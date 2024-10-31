@@ -7,8 +7,6 @@
 #include "Essentials.h"
 #include "GL/glew.h"
 #include "ShaderStorageBuffer.h"
-#include "Simulator.h"
-#include "Uniform.h"
 #include "glm/fwd.hpp"
 
 PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)

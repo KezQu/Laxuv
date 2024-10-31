@@ -44,7 +44,7 @@ void Particles<Prim>::Initialize()
   auto program_id = _physicsDispatch.GetProgram().ID();
 
   _particleShape->BindUniforms(program_id);
-  Simulator::GetInstance().BindUniforms(program_id);
+  Simulator::GetInstance()->BindUniforms(program_id);
   Bind(program_id);
   _physicsDispatch.InitDefaultShape(_mesh_size);
 }
@@ -58,8 +58,8 @@ void Particles<Prim>::Calculate()
     auto program_id = _physicsDispatch.GetProgram().ID();
 
     _particleShape->BindUniforms(program_id);
-    Simulator::GetInstance().BindUniforms(program_id);
-    Simulator::GetInstance().BindTerrain(program_id);
+    Simulator::GetInstance()->BindUniforms(program_id);
+    Simulator::GetInstance()->BindTerrain(program_id);
     Bind(program_id);
     _physicsDispatch.Calculate(_mesh_size, true);
   }
@@ -72,14 +72,14 @@ void Particles<Prim>::Draw() const
   {
     Program& renderer =
         _particleShape->GetTesselation() == true
-            ? ProgramDispatch::GetInstance().GetTesselationPipeline()
-            : ProgramDispatch::GetInstance().GetSimplePipeline();
+            ? ProgramDispatch::GetInstance()->GetTesselationPipeline()
+            : ProgramDispatch::GetInstance()->GetSimplePipeline();
 
     if (!renderer.isLinked()) renderer.Link();
     renderer.Bind();
 
     _particleShape->Bind(renderer.ID());
-    Simulator::GetInstance().BindUniforms(renderer.ID());
+    Simulator::GetInstance()->BindUniforms(renderer.ID());
     _physicsDispatch.GetParticleMeshBuffer().Bind(renderer.ID());
     _(glDrawElementsInstanced(
         _particleShape->GetDrawPrimitive(), _particleShape->GetVA().Size(),

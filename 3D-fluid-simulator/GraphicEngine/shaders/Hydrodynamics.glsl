@@ -2,6 +2,7 @@
 
 const float E = 2.71828;
 const float PI = 3.14159265358979323846264338327950288;
+const float g = 9.80665;
 const float R = 8.31446261815324;
 const float kernel_c = 3;
 const mat3 I = mat3(1, 0, 0,
@@ -17,8 +18,8 @@ const uint MaxNeighbours = 512;
 
 const uint NONE = 0;
 
-const uint CUBE_WORLD = 1;
-const uint SPHERE_WORLD = 2;
+const uint CUBE_T = 1;
+const uint SPHERE_T = 2;
 
 const uint VELOCITY = 1;
 const uint DENSITY_ERROR = 2;
@@ -28,6 +29,7 @@ const uint PRESSURE = 4;
 uniform mat4 model;
 
 uniform uint MaxObstacles = 0;
+uniform uint terrainId = 0xfffffff;
 uniform uint worldType;
 uniform float spaceLimiter;
 uniform float boundsViscosity;
@@ -48,13 +50,14 @@ struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
 	vec4 VolumeDensityPressureRohash;
-	vec4 particleColor;
+	vec4 color;
 	uint neighbours[MaxNeighbours];
 };
 
 struct TerrainProperties {
 	vec4 center;
 	vec4 bounds;
+	mat4 model;
 };
 
 struct stateVector{
@@ -113,53 +116,6 @@ uint EncodeCellNumber(vec3 cell){
 vec3 BounceOfAWall(vec3 direction, vec3 normal){
 	return direction - 2 * dot(direction, normal) * normal;
 }
-
-//void ClearSpaceGrid(uint index_x, uint MaxParticles){
-//	uint clear_range = HashGridSize / MaxParticles;
-//	for(uint i = index_x * clear_range; i < (index_x != MaxParticles ? (index_x + 1) * clear_range: HashGridSize); i++){
-//			space_grid[i][0] = 0;
-//	}
-//}
-
-//uint FindCell(uint index_x){
-//	vec3 interim_cell = ceil((particle[index_x].position.xyz + 600) / cellRadius);
-//	uint cell = EncodeCellNumber(interim_cell);
-//	particle[index_x].cell = uvec4(interim_cell, cell.x);
-//	return cell;
-//}
-//
-//void AssignToCell(uint index_x){
-//	uint cell = FindCell(index_x);
-//	uint cell_index = atomicAdd(space_grid[cell.x][0], 1);
-//	space_grid[cell.x][cell_index + 1] = index_x;
-//}
-
-//void FindNeighbours(uint index_x, uint MaxParticles){
-//	for(uint i = 0; i < MaxNeighbours; i++){
-//			particle[index_x].neighbours[i] = MaxValueNeighbour;
-//	}
-//	const vec3 pos_x = particle[index_x].position.xyz;
-//	uint num_neighbours = 0;
-//	for(uint j = 0; j < 27; j++){
-/////////////////////////////////////////////////////////////////////////////////////	    
-//		const uint x = j % 3;
-//	    const uint y = (j / 3) % 3;
-//	    const uint z = j / (3 * 3);
-//		const uvec3 curr_cell = particle[index_x].cell.xyz + uvec3(x,y,z) - 1;
-//		const uint encoded_cell = EncodeCellNumber(curr_cell);
-/////////////////////////////////////////////////////////////////////////////////////	    
-//		for(uint i = 0; i < space_grid[encoded_cell][0] && num_neighbours < MaxNeighbours; i++){
-//			const uint neighbor_index = space_grid[encoded_cell][i + 1];
-//			if(neighbor_index != index_x){
-//				const vec3 pos_neighbour = particle[neighbor_index].position.xyz;
-//				if(length(pos_x - pos_neighbour) < searchKernel){
-//					particle[index_x].neighbours[num_neighbours] = neighbor_index;
-//					num_neighbours++;
-//				}
-//			}
-//		}
-//	}
-//}
 
 void FindNeighbours(uint index_x, uint MaxParticles){
 	for(uint i = 0; i < MaxNeighbours; i++){
@@ -307,46 +263,78 @@ float CalculateAvgDerivDensity(uint index_x){
 
 
 void CheckWorldBounds(uint index_x){
-	vec3 vec_form_center = particle[index_x].position.xyz + dt * particle[index_x].velocityDFSPHfactor.xyz;
+	vec3 vec_from_center = particle[index_x].position.xyz + dt * particle[index_x].velocityDFSPHfactor.xyz;
 	vec3 bounce_normal = vec3(0);
-	if(worldType == CUBE_WORLD){
-		if(vec_form_center.x <= -spaceLimiter){
+	if(worldType == CUBE_T){
+		if(vec_from_center.x <= -spaceLimiter){
 			bounce_normal = vec3(1, 0, 0);
-		}else if(vec_form_center.x >= spaceLimiter){
+		}else if(vec_from_center.x >= spaceLimiter){
 			bounce_normal = vec3(-1, 0, 0);
 		}
-		if(vec_form_center.y <= -spaceLimiter){
+		if(vec_from_center.y <= -spaceLimiter){
 			bounce_normal = vec3(0, 1, 0);
-		}else if(vec_form_center.y >= spaceLimiter){
+		}else if(vec_from_center.y >= spaceLimiter){
 			bounce_normal = vec3(0, -1, 0);
 		}
-		if(vec_form_center.z <= -spaceLimiter){
+		if(vec_from_center.z <= -spaceLimiter){
 			bounce_normal = vec3(0, 0, 1);
-		}else if(vec_form_center.z >= spaceLimiter){
+		}else if(vec_from_center.z >= spaceLimiter){
 			bounce_normal = vec3(0, 0, -1);
 		}
-	}else if(worldType == SPHERE_WORLD){
-		if(length(vec_form_center) >= spaceLimiter){
-			bounce_normal = normalize(vec_form_center);
+	}else if(worldType == SPHERE_T){
+		if(length(vec_from_center) >= spaceLimiter){
+			bounce_normal = normalize(vec_from_center);
 		}
 	}
 	particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
 }
 
+void UpdateTerrainOrientation(){
+	if(terrainId != 0xffffffff){
+		terrain[terrainId].bounds.xyz = vec3(shapeRadius);
+		terrain[terrainId].model = model;
+	}
+}
+
 void AddToTerrain(uint index_x){
-	terrain[MaxObstacles - 1].center = model[3] + particle[index_x].position;
-	terrain[MaxObstacles - 1].bounds = vec4(shapeRadius);
+	if(terrainId != 0xffffffff){
+		terrain[terrainId].center = particle[index_x].position;
+		UpdateTerrainOrientation();
+	}
 }
 
 void CheckCollisions(uint index_x){
 	for(uint i = 0; i < MaxObstacles; i++){
-		const vec3 obstacle_center = terrain[i].center.xyz;
-		const vec3 obstacle_bounds = terrain[i].bounds.xyz;
+		const vec3 translation = terrain[i].model[3].xyz;
+		const vec4 scale = vec4(terrain[i].model[0][0], terrain[i].model[1][1], terrain[i].model[2][2], 1);
+		
+		const vec3 obstacle_center = translation  + terrain[i].center.xyz;
+		const vec4 obstacle_bounds = scale * terrain[i].bounds;
 		const vec3 vec_from_center = particle[index_x].position.xyz - obstacle_center;
-		const vec3 bounce_normal = -normalize(vec_from_center);
-		if(length(vec_from_center) <= obstacle_bounds.x){
-			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
+		vec3 bounce_normal = vec3(0);
+		
+		if(uint(obstacle_bounds.w) == CUBE_T){
+			if(vec_from_center.x >= -obstacle_bounds.x){
+				bounce_normal = vec3(1, 0, 0);
+			}else if(vec_from_center.x <= obstacle_bounds.x){
+				bounce_normal = vec3(-1, 0, 0);
+			}
+			if(vec_from_center.y >= -obstacle_bounds.y){
+				bounce_normal = vec3(0, 1, 0);
+			}else if(vec_from_center.y <= obstacle_bounds.y){
+				bounce_normal = vec3(0, -1, 0);
+			}
+			if(vec_from_center.z >= -obstacle_bounds.z){
+				bounce_normal = vec3(0, 0, 1);
+			}else if(vec_from_center.z <= obstacle_bounds.z){
+				bounce_normal = vec3(0, 0, -1);
+			}
+		}else if(uint(obstacle_bounds.w) == SPHERE_T){
+			if(length(vec_from_center / obstacle_bounds.xyz) <= 1){
+				bounce_normal = -normalize(vec_from_center);
+			}
 		}
+		particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
 	}
 }
 
@@ -378,18 +366,66 @@ vec4 CalculateColor(float property_value){
 	return color;
 }
 
-vec4 ChooseParticleColor(uint index_x){
+void ChooseParticleColor(uint index_x){
 	const float max_speed = 50.f;
 	const float density0 = mass;
 	const float d_density = CalculateDerivDensity(index_x);
+	vec4 temp_color = vec4(0);
 	switch(colorType){
 		case VELOCITY:
-			return CalculateColor(length(particle[index_x].velocityDFSPHfactor.xyz) / max_speed);
+			temp_color = CalculateColor(length(particle[index_x].velocityDFSPHfactor.xyz) / max_speed);
 		case DENSITY_ERROR:
-			return CalculateColor(abs(CalculateDensity(index_x) - density0) / density0);
+			temp_color = CalculateColor(abs(CalculateDensity(index_x) - density0) / density0);
 		case DIVERGENCE_ERROR:
-			return CalculateColor(abs(d_density));
+			temp_color = CalculateColor(abs(d_density));
 		case PRESSURE:
-			return CalculateColor(sqrt(particle[index_x].VolumeDensityPressureRohash.z) * mass * 1e+3);
+			temp_color = CalculateColor(sqrt(particle[index_x].VolumeDensityPressureRohash.z) * mass * 1e+3);
 	}
+	particle[index_x].color = temp_color;
+}
+
+
+void CalculateExternalForces(uint index_x){
+	const float ro_i = particle[index_x].VolumeDensityPressureRohash.y;
+
+	vec3 viscosity_acceleration = CalculateViscosity(index_x) / ro_i;
+	particle[index_x].velocityDFSPHfactor.xyz += dt * (viscosity_acceleration - vec3(0, g, 0));
+}
+void SolveDensityError(uint index_x){
+	const float density0 = mass;
+	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
+	
+	float ro_hash = particle[index_x].VolumeDensityPressureRohash.y + dt * CalculateDerivDensity(index_x);
+	for(int i = 0; i < 500; i++){
+		particle[index_x].VolumeDensityPressureRohash.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
+
+		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
+		ro_hash = particle[index_x].VolumeDensityPressureRohash.y + dt * CalculateDerivDensity(index_x);
+
+		if((abs((ro_hash - density0)) / density0 < 2e-2) && i > 5){
+			break;
+		}
+	}
+	particle[index_x].VolumeDensityPressureRohash.w = abs(particle[index_x].VolumeDensityPressureRohash.y - density0) / density0;
+
+}
+void UpdatePosition(uint index_x){
+	CheckWorldBounds(index_x);
+	CheckCollisions(index_x);
+	particle[index_x].position.xyz += dt * particle[index_x].velocityDFSPHfactor.xyz;
+}
+void SolveDivergenceError(uint index_x){
+	particle[index_x].VolumeDensityPressureRohash.y = CalculateDensity(index_x);
+	particle[index_x].velocityDFSPHfactor.w = CalculateDFSPHFactor(index_x);
+	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
+
+	float d_ro = CalculateDerivDensity(index_x);
+	for(int i = 0; i < 500 && !((abs(d_ro) < 1e-2) && i > 2); i++){
+		particle[index_x].VolumeDensityPressureRohash.z = d_ro * factor_x / dt;
+			
+		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
+		d_ro = CalculateDerivDensity(index_x);
+	}
+	particle[index_x].position.xyz = (inverse(model) * vec4(particle[index_x].position.xyz, 1.0)).xyz;
+
 }

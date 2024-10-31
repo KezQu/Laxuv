@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -9,6 +10,7 @@
 #include "Essentials.h"
 #include "PhysicsDispatch.h"
 #include "Uniform.h"
+#include "glm/fwd.hpp"
 
 namespace details
 {
@@ -25,6 +27,8 @@ class Entity
   glm::uvec3 _mesh_size{1U};
   static uint64_t _internalID;
   uint64_t _id;
+  Uniform<uint64_t> _terrain_id{std::numeric_limits<uint64_t>::max(),
+                                "terrainId"};
   std::string _name;
   bool _visible{true};
 
@@ -52,6 +56,8 @@ class Entity
   virtual void Draw() const {}
   virtual void Bind(uint32_t program_id) const;
   virtual details::detail_controls_t Details();
+  uint64_t GetTerrainId();
+  void SetTerrainId(uint64_t const terrain_id);
 
  protected:
   Entity(Essentials::PhysicsType physics,

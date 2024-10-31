@@ -1,17 +1,32 @@
 #include "Simulator.h"
 
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <unordered_map>
+
+#include "Cube.h"
+#include "Entity.h"
+#include "Essentials.h"
+#include "Line.h"
+#include "Object.h"
+#include "Particles.h"
+#include "Point.h"
+#include "Sphere.h"
+#include "Square.h"
 #include "Uniform.h"
+#include "VertexArray.h"
+#include "imgui.h"
 
 Simulator::Simulator() : _terrain{"terrainBuffer"} {}
 
-void Simulator::CleanUp()
+std::unique_ptr<Simulator>& Simulator::GetInstance()
 {
-  _entitiesContainer.clear();
-}
-
-Simulator& Simulator::GetInstance()
-{
-  static Simulator instance{};
+  static std::unique_ptr<Simulator> instance{nullptr};
+  if (instance == nullptr)
+  {
+    instance = std::unique_ptr<Simulator>(new Simulator{});
+  }
   return instance;
 }
 
@@ -89,20 +104,77 @@ void Simulator::SetSimulationState(Essentials::SimulationState new_global_state)
   _global_simulation_state = static_cast<uint32_t>(new_global_state);
 }
 
-void Simulator::AddObstacle()
+uint32_t Simulator::AddObstacle(
+    Essentials::TerrainBufferProperties const& terrain_properties)
 {
-  _terrain.SetBufferMemorySize(_terrain.Size() + 1);
+  _terrain.AddToBufferMemory(terrain_properties);
   _obstacles_number = _terrain.Size();
+
+  return _terrain.Size() - 1;
 }
 
-void Simulator::RemoveObstacle()
+void Simulator::RemoveObstacle(EntityContainer::key_type id)
 {
-  _terrain.SetBufferMemorySize(_terrain.Size() - 1);
-  _obstacles_number = _terrain.Size();
+  if (id != std::numeric_limits<uint64_t>::max())
+  {
+    _terrain.RemoveFromBufferMemory(id);
+    _obstacles_number = _terrain.Size();
+  }
+}
+
+void Simulator::CreateEntity(Essentials::EntityType entity_type,
+                             Essentials::EntityShape entity_shape)
+{
+  auto old_sim_state_saved = _global_simulation_state;
+  Simulator::GetInstance()->SetSimulationState(
+      Essentials::SimulationState::INIT);
+  EntityContainer::key_type entity_id{};
+  switch (entity_shape)
+  {
+    case Essentials::EntityShape::POINT:
+      entity_id = entity_type == Essentials::EntityType::OBJECT
+                      ? Append(Object{new Point{}})
+                      : Append(Particles{new Point{}, glm::uvec3{5U}});
+      break;
+    case Essentials::EntityShape::LINE:
+      entity_id = entity_type == Essentials::EntityType::OBJECT
+                      ? Append(Object{new Line{}})
+                      : Append(Particles{new Line{}, glm::uvec3{5U}});
+      break;
+    case Essentials::EntityShape::SQUARE:
+      entity_id =
+          entity_type == Essentials::EntityType::OBJECT
+              ? Append(Object{new Square{}})
+              : Append(Particles{new Square{Vertex{}, 1.f}, glm::uvec3{5U}});
+      break;
+    case Essentials::EntityShape::CUBE:
+      entity_id =
+          entity_type == Essentials::EntityType::OBJECT
+              ? Append(Object{new Cube{}})
+              : Append(Particles{new Cube{Vertex{}, 1.f}, glm::uvec3{5U}});
+      break;
+    case Essentials::EntityShape::SPHERE:
+      entity_id =
+          entity_type == Essentials::EntityType::OBJECT
+              ? Append(Object{new Sphere{}})
+              : Append(Particles{new Sphere{Vertex{}, 1.f}, glm::uvec3{5U}});
+      break;
+    default:
+      break;
+  }
+  if (entity_type == Essentials::EntityType::OBJECT)
+  {
+    Essentials::TerrainBufferProperties initial_properties{};
+    initial_properties.bounds.w = static_cast<float>(entity_shape);
+    auto const terrain_id{AddObstacle(initial_properties)};
+    _entitiesContainer[entity_id]->SetTerrainId(terrain_id);
+  }
+  _global_simulation_state = old_sim_state_saved;
 }
 
 void Simulator::Delete(EntityContainer::key_type id)
 {
+  RemoveObstacle(_entitiesContainer[id]->GetTerrainId());
   if (id != 0)
   {
     _entitiesContainer.erase(id);
@@ -111,5 +183,4 @@ void Simulator::Delete(EntityContainer::key_type id)
   {
     _entitiesContainer.erase(std::prev(_entitiesContainer.end()));
   }
-  RemoveObstacle();
 }

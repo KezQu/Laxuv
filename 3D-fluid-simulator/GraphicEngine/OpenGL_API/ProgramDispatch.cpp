@@ -13,24 +13,23 @@ ProgramDispatch::ProgramDispatch()
 {
 }
 
-ProgramDispatch& ProgramDispatch::GetInstance()
+std::unique_ptr<ProgramDispatch>& ProgramDispatch::GetInstance()
 {
-  static ProgramDispatch instance;
-  return instance;
-}
+  static std::unique_ptr<ProgramDispatch> instance{nullptr};
 
-void ProgramDispatch::CleanUp()
-{
-  _shaderPipelineSimple.~Program();
-  _shaderPipelineWithTesselation.~Program();
+  if (instance == nullptr)
+  {
+    instance = std::unique_ptr<ProgramDispatch>{new ProgramDispatch{}};
+  }
+  return instance;
 }
 
 Program& ProgramDispatch::GetSimplePipeline()
 {
-  return GetInstance()._shaderPipelineSimple;
+  return GetInstance()->_shaderPipelineSimple;
 }
 
 Program& ProgramDispatch::GetTesselationPipeline()
 {
-  return GetInstance()._shaderPipelineWithTesselation;
+  return GetInstance()->_shaderPipelineWithTesselation;
 }

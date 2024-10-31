@@ -1,10 +1,8 @@
 #pragma once
 
-#include <BufferI.h>
+#include "BufferI.h"
 
-#include <utility>
-
-template <GLenum target, typename T = void>
+template <GLenum target, typename T>
 class GPUBuffer : public BufferI<target, T>
 {
  protected:
@@ -30,7 +28,7 @@ class GPUBuffer : public BufferI<target, T>
 };
 
 template <GLenum target, typename T>
-inline GPUBuffer<target, T>::GPUBuffer() : BufferI<target, T>{}
+inline GPUBuffer<target, T>::GPUBuffer() : BufferI<target, T>{GL_STATIC_DRAW}
 {
 }
 
@@ -41,21 +39,6 @@ inline GPUBuffer<target, T>::GPUBuffer(uint64_t initialBufferSize)
   _(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(),
                       this->_purpose));
 }
-
-// template <GLenum target, typename T>
-// inline GPUBuffer<target, T>::GPUBuffer(GPUBuffer<target, T>&& objMove)
-//     : BufferI<target, T>{std::move(objMove)},
-//       _bufferSize{std::exchange(objMove._bufferSize, {})} {}
-
-// template <GLenum target, typename T>
-// inline GPUBuffer<target, T>& GPUBuffer<target, T>::operator=(
-//     GPUBuffer<target, T>&& objMove) {
-//   this->~GPUBuffer();
-//   this->_id = std::exchange(objMove._id, UINT32_MAX);
-//   this->_purpose = std::exchange(objMove._purpose, 0U);
-//   this->_bufferSize = std::exchange(objMove._bufferSize, {});
-//   return *this;
-// }
 
 template <GLenum target, typename T>
 inline T const* const GPUBuffer<target, T>::GetBufferMemory() const
@@ -79,10 +62,6 @@ template <GLenum target, typename T>
 inline void GPUBuffer<target, T>::SetBufferMemorySize(
     uint64_t newBufferMemorySize)
 {
-  if (!glIsBuffer(this->_id))
-  {
-    this->CreateBuffer(GL_STATIC_DRAW);
-  }
   _bufferSize = newBufferMemorySize;
   _(glNamedBufferData(this->_id, Size() * sizeof(T), GetBufferMemory(),
                       this->_purpose));

@@ -21,8 +21,8 @@ void WorldAxes::Draw() const
 {
   Program& renderer =
       _axes[0].GetTesselation() == true
-          ? ProgramDispatch::GetInstance().GetTesselationPipeline()
-          : ProgramDispatch::GetInstance().GetSimplePipeline();
+          ? ProgramDispatch::GetInstance()->GetTesselationPipeline()
+          : ProgramDispatch::GetInstance()->GetSimplePipeline();
 
   if (!renderer.isLinked()) renderer.Link();
   renderer.Bind();
@@ -30,8 +30,11 @@ void WorldAxes::Draw() const
   for (auto& axis : _axes)
   {
     axis.Bind(renderer.ID());
+    Simulator::GetInstance()->BindUniforms(renderer.ID());
+    _physicsDispatch.GetParticleMeshBuffer().Bind(renderer.ID());
     _(glDrawElements(axis.GetDrawPrimitive(), axis.GetVA().Size(),
                      axis.GetVA().IndexBufferType(), nullptr));
+    _physicsDispatch.GetParticleMeshBuffer().Unbind(renderer.ID());
   }
   //_floor.Draw();
 }
