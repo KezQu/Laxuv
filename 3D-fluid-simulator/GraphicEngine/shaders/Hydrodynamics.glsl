@@ -271,7 +271,7 @@ float CalculateAvgDerivDensity(uint index_x){
 void CheckWorldBounds(uint index_x){
 	vec3 vec_from_center = particle[index_x].position.xyz + dt * particle[index_x].velocityDFSPHfactor.xyz;
 	vec3 bounce_normal = vec3(0);
-	float correction = 0;
+	vec3 correction = vec3(0);
 
 	if(worldType == W_CUBE){
 		if(vec_from_center.x <= -spaceLimiter){
@@ -289,10 +289,14 @@ void CheckWorldBounds(uint index_x){
 		}else if(vec_from_center.z >= spaceLimiter){
 			bounce_normal = vec3(0, 0, -1);
 		}
+		correction = 1 - vec_from_center / spaceLimiter;
+		correction.x = correction.x > 0 ? 0 :correction.x;
+		correction.y = correction.y > 0 ? 0 :correction.y;
+		correction.z = correction.z > 0 ? 0 :correction.z;
 	}else if(worldType == W_SPHERE){
 		if(length(vec_from_center) >= spaceLimiter){
 			bounce_normal = normalize(vec_from_center);
-			correction = 1 - length(vec_from_center) / spaceLimiter;
+			correction = vec3(1 - length(vec_from_center) / spaceLimiter);
 		}
 	}
 	particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
@@ -320,10 +324,10 @@ void CheckCollisions(uint index_x){
 
 		const vec4 obstacle_center = translation + terrain[i].center;
 		const vec3 obstacle_bounds = scale * vec3(1);
-		const vec3 vec_from_center = (inverse(terrain[i].model) * vec4(particle[index_x].position.xyz, 1)).xyz;
-//		const vec3 vec_from_center = particle[index_x].position.xyz - obstacle_center.xyz;
+		const vec3 vec_from_center = (inverse(terrain[i].model) * vec4(particle[index_x].position.xyz + dt * particle[index_x].velocityDFSPHfactor.xyz, 1)).xyz;
 		vec3 bounce_normal = vec3(0);
-		
+		vec3 correction = vec3(0);
+
 		if(uint(obstacle_center.w) == S_CUBE){
 //			float side = max(vec_from_center.x, max(vec_from_center.y, vec_from_center.x));
 //			if((vec_from_center.x < obstacle_bounds.x) && (vec_from_center.y < obstacle_bounds.y) && (vec_from_center.z < obstacle_bounds.z)){
@@ -337,15 +341,18 @@ void CheckCollisions(uint index_x){
 //					bounce_normal = vec3(0,0,1);
 //				}
 //			}
-//			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
+//			correction = 1 - vec_from_center / spaceLimiter;
+//			correction.x = correction.x > 0 ? 0 :correction.x;
+//			correction.y = correction.y > 0 ? 0 :correction.y;
+//			correction.z = correction.z > 0 ? 0 :correction.z;
 		}else if(uint(obstacle_center.w) == S_SPHERE){
-			vec3 scaled_center = vec_from_center;// / obstacle_bounds;
-			if(length(scaled_center) <= 1){
-				bounce_normal = -normalize(scaled_center);
-				particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
-				particle[index_x].position.xyz += (1 - length(scaled_center)) * scaled_center;
+			if(length(vec_from_center) <= 1){
+				bounce_normal = -normalize(vec_from_center);
+				correction = vec3(1 - length(vec_from_center));
 			}
 		}
+		particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
+		particle[index_x].position.xyz += correction * vec_from_center;
 	}
 }
 
@@ -385,12 +392,16 @@ void ChooseParticleColor(uint index_x){
 	switch(colorType){
 		case VELOCITY:
 			temp_color = CalculateColor(length(particle[index_x].velocityDFSPHfactor.xyz) / max_speed);
+			break;
 		case DENSITY_ERROR:
 			temp_color = CalculateColor(abs(CalculateDensity(index_x) - density0) / density0);
+			break;
 		case DIVERGENCE_ERROR:
 			temp_color = CalculateColor(abs(d_density));
+			break;
 		case PRESSURE:
 			temp_color = CalculateColor(sqrt(particle[index_x].VolumeDensityPressureRohash.z) * mass * 1e+3);
+			break;
 	}
 	particle[index_x].color = temp_color;
 }
