@@ -84,7 +84,7 @@ char const* ColorPropertyTolist() noexcept;
 struct TerrainBufferProperties
 {
   glm::vec4 center{0};
-  glm::vec4 bounds{0};
+  //glm::vec4 bounds{0};
   glm::mat4 model{0};
 };
 

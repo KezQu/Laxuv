@@ -165,7 +165,7 @@ void Simulator::CreateEntity(Essentials::EntityType entity_type,
   if (entity_type == Essentials::EntityType::OBJECT)
   {
     Essentials::TerrainBufferProperties initial_properties{};
-    initial_properties.bounds.w = static_cast<float>(entity_shape);
+    initial_properties.center.w = static_cast<float>(entity_shape);
     auto const terrain_id{AddObstacle(initial_properties)};
     _entitiesContainer[entity_id]->SetTerrainId(terrain_id);
   }

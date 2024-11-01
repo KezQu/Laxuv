@@ -50,9 +50,9 @@ struct ParticleProperties {
 
 struct TerrainProperties {
 	vec4 center;
-	vec4 bounds;
 	mat4 model;
 };
+//	vec4 bounds;
 
 struct stateVector{
 	float x;

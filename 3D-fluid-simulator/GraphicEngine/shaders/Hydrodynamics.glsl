@@ -18,8 +18,14 @@ const uint MaxNeighbours = 512;
 
 const uint NONE = 0;
 
-const uint CUBE_T = 1;
-const uint SPHERE_T = 2;
+const uint W_CUBE = 1;
+const uint W_SPHERE = 2;
+
+const uint S_POINT = 1;
+const uint S_LINE = 2;
+const uint S_SQUARE = 3;
+const uint S_CUBE = 4;
+const uint S_SPHERE = 5;
 
 const uint VELOCITY = 1;
 const uint DENSITY_ERROR = 2;
@@ -56,9 +62,9 @@ struct ParticleProperties {
 
 struct TerrainProperties {
 	vec4 center;
-	vec4 bounds;
 	mat4 model;
 };
+//	vec4 bounds;
 
 struct stateVector{
 	float x;
@@ -265,7 +271,9 @@ float CalculateAvgDerivDensity(uint index_x){
 void CheckWorldBounds(uint index_x){
 	vec3 vec_from_center = particle[index_x].position.xyz + dt * particle[index_x].velocityDFSPHfactor.xyz;
 	vec3 bounce_normal = vec3(0);
-	if(worldType == CUBE_T){
+	float correction = 0;
+
+	if(worldType == W_CUBE){
 		if(vec_from_center.x <= -spaceLimiter){
 			bounce_normal = vec3(1, 0, 0);
 		}else if(vec_from_center.x >= spaceLimiter){
@@ -281,60 +289,63 @@ void CheckWorldBounds(uint index_x){
 		}else if(vec_from_center.z >= spaceLimiter){
 			bounce_normal = vec3(0, 0, -1);
 		}
-	}else if(worldType == SPHERE_T){
+	}else if(worldType == W_SPHERE){
 		if(length(vec_from_center) >= spaceLimiter){
 			bounce_normal = normalize(vec_from_center);
+			correction = 1 - length(vec_from_center) / spaceLimiter;
 		}
 	}
 	particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
+	particle[index_x].position.xyz += correction * vec_from_center;
 }
 
 void UpdateTerrainOrientation(){
 	if(terrainId != 0xffffffff){
-		terrain[terrainId].bounds.xyz = vec3(shapeRadius);
+//		terrain[terrainId].bounds.xyz = vec3(shapeRadius);
 		terrain[terrainId].model = model;
 	}
 }
 
 void AddToTerrain(uint index_x){
 	if(terrainId != 0xffffffff){
-		terrain[terrainId].center = particle[index_x].position;
+		terrain[terrainId].center.xyz = particle[index_x].position.xyz;
 		UpdateTerrainOrientation();
 	}
 }
 
 void CheckCollisions(uint index_x){
 	for(uint i = 0; i < MaxObstacles; i++){
-		const vec3 translation = terrain[i].model[3].xyz;
-		const vec4 scale = vec4(terrain[i].model[0][0], terrain[i].model[1][1], terrain[i].model[2][2], 1);
-		
-		const vec3 obstacle_center = translation  + terrain[i].center.xyz;
-		const vec4 obstacle_bounds = scale * terrain[i].bounds;
-		const vec3 vec_from_center = particle[index_x].position.xyz - obstacle_center;
+		const vec4 translation = vec4(terrain[i].model[3].xyz, 0);
+		const vec3 scale = vec3(terrain[i].model[0][0], terrain[i].model[1][1], terrain[i].model[2][2]);
+
+		const vec4 obstacle_center = translation + terrain[i].center;
+		const vec3 obstacle_bounds = scale * vec3(1);
+		const vec3 vec_from_center = (inverse(terrain[i].model) * vec4(particle[index_x].position.xyz, 1)).xyz;
+//		const vec3 vec_from_center = particle[index_x].position.xyz - obstacle_center.xyz;
 		vec3 bounce_normal = vec3(0);
 		
-		if(uint(obstacle_bounds.w) == CUBE_T){
-			if(vec_from_center.x >= -obstacle_bounds.x){
-				bounce_normal = vec3(1, 0, 0);
-			}else if(vec_from_center.x <= obstacle_bounds.x){
-				bounce_normal = vec3(-1, 0, 0);
-			}
-			if(vec_from_center.y >= -obstacle_bounds.y){
-				bounce_normal = vec3(0, 1, 0);
-			}else if(vec_from_center.y <= obstacle_bounds.y){
-				bounce_normal = vec3(0, -1, 0);
-			}
-			if(vec_from_center.z >= -obstacle_bounds.z){
-				bounce_normal = vec3(0, 0, 1);
-			}else if(vec_from_center.z <= obstacle_bounds.z){
-				bounce_normal = vec3(0, 0, -1);
-			}
-		}else if(uint(obstacle_bounds.w) == SPHERE_T){
-			if(length(vec_from_center / obstacle_bounds.xyz) <= 1){
-				bounce_normal = -normalize(vec_from_center);
+		if(uint(obstacle_center.w) == S_CUBE){
+//			float side = max(vec_from_center.x, max(vec_from_center.y, vec_from_center.x));
+//			if((vec_from_center.x < obstacle_bounds.x) && (vec_from_center.y < obstacle_bounds.y) && (vec_from_center.z < obstacle_bounds.z)){
+//				if(side == vec_from_center.x){
+//					bounce_normal = vec3(1,0,0);
+//				}
+//				else if(side == vec_from_center.y){
+//					bounce_normal = vec3(0,1,0);
+//				}
+//				else{
+//					bounce_normal = vec3(0,0,1);
+//				}
+//			}
+//			particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
+		}else if(uint(obstacle_center.w) == S_SPHERE){
+			vec3 scaled_center = vec_from_center;// / obstacle_bounds;
+			if(length(scaled_center) <= 1){
+				bounce_normal = -normalize(scaled_center);
+				particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
+				particle[index_x].position.xyz += (1 - length(scaled_center)) * scaled_center;
 			}
 		}
-		particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
 	}
 }
 

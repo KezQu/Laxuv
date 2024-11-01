@@ -47,32 +47,32 @@ vec4 Sphere(in uint idx, in uvec3 invocation, in uint maxParticles){
 }
 
 const uint UNDEFINED = 0;
-const uint LINE = 1;
-const uint CIRCLE = 2;
-const uint SQUARE = 3;
-const uint DISK = 4;
-const uint CUBE = 5;
-const uint SPHERE = 6;
+const uint D_LINE = 1;
+const uint D_CIRCLE = 2;
+const uint D_SQUARE = 3;
+const uint D_DISK = 4;
+const uint D_CUBE = 5;
+const uint D_SPHERE = 6;
 
 vec4 InitDefaultShape(in uint idx, in uvec3 invocation, in uint maxParticles){
 	vec4 positionCandidate = vec4(0);
 	switch (DistributionShape){
-	case LINE:
+	case D_LINE:
 		positionCandidate = Line(idx, invocation, maxParticles);
 		break;
-	case CIRCLE:
+	case D_CIRCLE:
 		positionCandidate = Circle(idx, invocation, maxParticles);
 		break;
-	case SQUARE:
+	case D_SQUARE:
 		positionCandidate = Square(idx, invocation, maxParticles);
 		break;
-	case DISK:
+	case D_DISK:
 		positionCandidate = Disk(idx, invocation, maxParticles);
 		break;
-	case CUBE:
+	case D_CUBE:
 		positionCandidate = Cube(idx, invocation, maxParticles);
 		break;
-	case SPHERE:
+	case D_SPHERE:
 		positionCandidate = Sphere(idx, invocation, maxParticles);
 		break;
 	default:

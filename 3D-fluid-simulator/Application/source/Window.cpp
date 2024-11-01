@@ -226,7 +226,7 @@ void Window::ProcessKeyInputs()
           mouseDeltaPos{0.0};
       glfwGetCursorPos(glfwGetCurrentContext(), &mousePosCurr.x,
                        &mousePosCurr.y);
-      mouseDeltaPos = mousePosCurr - mousePosPrev;
+      mouseDeltaPos = (mousePosCurr - mousePosPrev) * 2.;
       Camera::GetCamera().Rotate({mouseDeltaPos.x, mouseDeltaPos.y, 0.f});
       mousePosPrev = mousePosCurr;
     }

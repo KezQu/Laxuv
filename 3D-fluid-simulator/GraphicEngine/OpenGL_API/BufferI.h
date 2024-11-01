@@ -37,7 +37,10 @@ class BufferI
 template <GLenum target, typename T>
 inline void BufferI<target, T>::CreateBuffer(GLenum purpose)
 {
-  _(glCreateBuffers(1, &_id));
+  if (glIsBuffer(_id) == GL_FALSE)
+  {
+    _(glCreateBuffers(1, &_id));
+  }
   _purpose = purpose;
 }
 
