@@ -81,6 +81,7 @@ void Shape<Prim>::BindUniforms(uint32_t program_id) const
   Camera::GetCamera().Projection().MapUniform(program_id);
   Camera::GetCamera().Viewport().MapUniform(program_id);
   _shape_properties.Model().MapUniform(program_id);
+  _shape_properties._scale.MapUniform(program_id);
   _shape_properties._center.MapUniform(program_id);
   _shape_properties._subdivision.MapUniform(program_id);
 

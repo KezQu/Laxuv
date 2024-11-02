@@ -30,6 +30,7 @@ const uint index = gl_GlobalInvocationID.x +
 			(gl_GlobalInvocationID.z * MeshSize.y * MeshSize.x);
 
 uniform mat4 model;
+uniform vec3 scale;
 
 uniform uint physicsType = NONE;
 uniform uint SimulatorState = IDLE;
@@ -50,9 +51,9 @@ struct ParticleProperties {
 
 struct TerrainProperties {
 	vec4 center;
+	vec4 bounds;
 	mat4 model;
 };
-//	vec4 bounds;
 
 struct stateVector{
 	float x;
@@ -97,8 +98,7 @@ void UpdatePosition(uint index_x);
 void ChooseParticleColor(uint index_x);
 void CheckWorldBounds(uint index_x);
 
-void UpdateTerrainOrientation();
-void AddToTerrain(uint index_x);
+void UpdateTerrainOrientation(uint index_x);
 void CheckCollisions(uint index_x);
 
 void main(){
@@ -116,15 +116,15 @@ void main(){
 			particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
 		}
 		else if (physicsType == STATIC){
-			AddToTerrain(index);
+			UpdateTerrainOrientation(index);
 		}
 	}
 	else if(SimulatorState == GEN_FRAME || SimulatorState == SIMULATION){
 		if(physicsType == STATIC){
-			UpdateTerrainOrientation();
+			UpdateTerrainOrientation(index);
 		}
 		else if(physicsType == DYNAMIC){
-			particle[index].position.xyz = (model * vec4(particle[index].position.xyz, 1.0)).xyz;
+//			particle[index].position.xyz = (model * vec4(particle[index].position.xyz * scale, 1.0)).xyz;
 			CalculateExternalForces(index);
 
 			SolveDensityError(index);
@@ -134,7 +134,7 @@ void main(){
 			FindNeighbours(index, MaxParticles);
 
 			SolveDivergenceError(index);
-			particle[index].position.xyz = (model * vec4(particle[index].position.xyz, 1.0)).xyz;
+//			particle[index].position.xyz = (inverse(model) * vec4(particle[index].position.xyz / scale, 1.0)).xyz;
 		}
 		ChooseParticleColor(index);
 	}

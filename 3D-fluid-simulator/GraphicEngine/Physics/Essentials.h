@@ -84,7 +84,7 @@ char const* ColorPropertyTolist() noexcept;
 struct TerrainBufferProperties
 {
   glm::vec4 center{0};
-  //glm::vec4 bounds{0};
+  glm::vec4 bounds{0};
   glm::mat4 model{0};
 };
 
@@ -98,7 +98,7 @@ struct ParticleBufferProperties
 };
 
 auto const lengthDefaultProperties =
-    ValueProperties{1.f, 600.f, 1.f, "%.1f mm"};
+    ValueProperties{0.1f, 600.f, 1.f, "%.1f mm"};
 
 struct ParticleProperties
 {

@@ -4,11 +4,19 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "Camera.h"
 #include "Debug.h"
+#include "Essentials.h"
+#include "Explorer.h"
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
+#include "Logger.h"
+#include "ProgramDispatch.h"
+#include "Simulator.h"
+#include "Toolbar.h"
+#include "WorldAxes.h"
 #include "imgui.h"
 
 Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
@@ -37,7 +45,7 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     }
 
     glfwMakeContextCurrent(_window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
 
     GLenum errorCode = glewInit();
     if (errorCode != GLEW_OK)
@@ -89,6 +97,8 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
 
 Window::~Window()
 {
+  Simulator::CleanUp();
+  ProgramDispatch::CleanUp();
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
@@ -104,7 +114,6 @@ void Window::EventLoop()
   while (glfwWindowShouldClose(_window) == GLFW_FALSE)
   {
     Refresh();
-    // ImGui::ShowDemoWindow();
     Toolbar(ImVec2{_windowSize.x, 20}, ImVec2{0, 0}).Generate();
     Explorer(ImVec2{_windowSize.x / 4.f, _windowSize.y - 20}, ImVec2{0, 20})
         .Generate();

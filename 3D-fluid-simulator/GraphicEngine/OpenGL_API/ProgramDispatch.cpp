@@ -24,6 +24,11 @@ std::unique_ptr<ProgramDispatch>& ProgramDispatch::GetInstance()
   return instance;
 }
 
+void ProgramDispatch::CleanUp()
+{
+  GetInstance().reset(nullptr);
+}
+
 Program& ProgramDispatch::GetSimplePipeline()
 {
   return GetInstance()->_shaderPipelineSimple;

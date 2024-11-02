@@ -6,8 +6,13 @@ const float g = 9.80665;
 const float R = 8.31446261815324;
 const float kernel_c = 3;
 const mat3 I = mat3(1, 0, 0,
-		0, 1, 0,
-		0, 0, 1);
+					0, 1, 0,
+					0, 0, 1);
+const mat4 I4 = mat4(1, 0, 0, 0,
+					 0, 1, 0, 0,
+					 0, 0, 1, 0,
+					 0, 0, 0, 1);
+
 
 const uint MaxValueNeighbour = uint(0xffff);
 const float cellRadius = 5;
@@ -33,6 +38,7 @@ const uint DIVERGENCE_ERROR = 3;
 const uint PRESSURE = 4;
 
 uniform mat4 model;
+uniform vec3 scale;
 
 uniform uint MaxObstacles = 0;
 uniform uint terrainId = 0xfffffff;
@@ -62,9 +68,9 @@ struct ParticleProperties {
 
 struct TerrainProperties {
 	vec4 center;
+	vec4 bounds;
 	mat4 model;
 };
-//	vec4 bounds;
 
 struct stateVector{
 	float x;
@@ -90,10 +96,8 @@ float CalculateKernelWeight(vec3 points_dist){
 	if(abs_dist > influenceKernel){
 		return 0.f;
 	}
-	//TEST KERNEL 1
 	return 2 * pow(influenceKernel - abs_dist, kernel_c) / pow(influenceKernel, kernel_a);
-	//TEST KERNEL 2
-//	return (5 / 3.f) * (influenceKernel + abs_dist) * pow(influenceKernel - abs_dist, kernel_c) / pow(influenceKernel, kernel_a);
+//	return (35. / 32.) * pow(influenceKernel*influenceKernel - abs_dist*abs_dist, kernel_c) / pow(influenceKernel, 2 * kernel_a - 1);
 }
 
 vec3 CalculateGradKernelWeight(vec3 points_dist){
@@ -102,10 +106,8 @@ vec3 CalculateGradKernelWeight(vec3 points_dist){
 	if(abs_dist > influenceKernel){
 		return vec3(0);
 	}
-	//TEST KERNEL 1
 	return -2 * kernel_c * pow(influenceKernel - abs_dist, kernel_c - 1) / pow(influenceKernel, kernel_a) * versor_ij;
-	//TEST KERNEL 2
-//	return  -(5 / 3.f) * ((kernel_c - 1) * influenceKernel + (kernel_c + 1) * abs_dist) * pow(influenceKernel - abs_dist, kernel_c - 1) / pow(influenceKernel, kernel_a) * versor_ij;
+//	return -(35. / 32.) * 2 * kernel_c * pow(influenceKernel*influenceKernel - abs_dist*abs_dist, kernel_c - 1) / pow(influenceKernel, 2 * kernel_a - 1) * versor_ij;
 }
 
 void ClampVelocity(uint index_x){
@@ -119,8 +121,12 @@ uint EncodeCellNumber(vec3 cell){
 	return uint(mod(73856093 * cell.x + 19349663 * cell.y + 83492791 * cell.z, HashGridSize));
 }
 
-vec3 BounceOfAWall(vec3 direction, vec3 normal){
-	return direction - 2 * dot(direction, normal) * normal;
+vec3 BounceOfAWall(vec3 direction, vec3 surface_dir){
+	vec3 normal = vec3(0);
+	if(length(surface_dir) > 0){
+		normal = normalize(surface_dir);
+	}
+	return direction - boundsViscosity * 2 * dot(direction, normal) * normal;
 }
 
 void FindNeighbours(uint index_x, uint MaxParticles){
@@ -267,27 +273,26 @@ float CalculateAvgDerivDensity(uint index_x){
 	return kernel_sum / i;
 }
 
-
 void CheckWorldBounds(uint index_x){
 	vec3 vec_from_center = particle[index_x].position.xyz + dt * particle[index_x].velocityDFSPHfactor.xyz;
-	vec3 bounce_normal = vec3(0);
+	vec3 surface_dir = vec3(0);
 	vec3 correction = vec3(0);
 
 	if(worldType == W_CUBE){
 		if(vec_from_center.x <= -spaceLimiter){
-			bounce_normal = vec3(1, 0, 0);
+			surface_dir = vec3(1, 0, 0);
 		}else if(vec_from_center.x >= spaceLimiter){
-			bounce_normal = vec3(-1, 0, 0);
+			surface_dir = vec3(-1, 0, 0);
 		}
 		if(vec_from_center.y <= -spaceLimiter){
-			bounce_normal = vec3(0, 1, 0);
+			surface_dir = vec3(0, 1, 0);
 		}else if(vec_from_center.y >= spaceLimiter){
-			bounce_normal = vec3(0, -1, 0);
+			surface_dir = vec3(0, -1, 0);
 		}
 		if(vec_from_center.z <= -spaceLimiter){
-			bounce_normal = vec3(0, 0, 1);
+			surface_dir = vec3(0, 0, 1);
 		}else if(vec_from_center.z >= spaceLimiter){
-			bounce_normal = vec3(0, 0, -1);
+			surface_dir = vec3(0, 0, -1);
 		}
 		correction = 1 - vec_from_center / spaceLimiter;
 		correction.x = correction.x > 0 ? 0 :correction.x;
@@ -295,64 +300,75 @@ void CheckWorldBounds(uint index_x){
 		correction.z = correction.z > 0 ? 0 :correction.z;
 	}else if(worldType == W_SPHERE){
 		if(length(vec_from_center) >= spaceLimiter){
-			bounce_normal = normalize(vec_from_center);
+			surface_dir = vec_from_center;
 			correction = vec3(1 - length(vec_from_center) / spaceLimiter);
 		}
 	}
-	particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
+	particle[index_x].velocityDFSPHfactor.xyz = BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, surface_dir);
 	particle[index_x].position.xyz += correction * vec_from_center;
 }
 
-void UpdateTerrainOrientation(){
-	if(terrainId != 0xffffffff){
-//		terrain[terrainId].bounds.xyz = vec3(shapeRadius);
-		terrain[terrainId].model = model;
-	}
-}
-
-void AddToTerrain(uint index_x){
+void UpdateTerrainOrientation(uint index_x){
 	if(terrainId != 0xffffffff){
 		terrain[terrainId].center.xyz = particle[index_x].position.xyz;
-		UpdateTerrainOrientation();
+		terrain[terrainId].bounds = vec4(scale, shapeRadius);
+		terrain[terrainId].model = model;
 	}
 }
 
 void CheckCollisions(uint index_x){
 	for(uint i = 0; i < MaxObstacles; i++){
-		const vec4 translation = vec4(terrain[i].model[3].xyz, 0);
-		const vec3 scale = vec3(terrain[i].model[0][0], terrain[i].model[1][1], terrain[i].model[2][2]);
+		const vec3 scale = terrain[i].bounds.xyz * terrain[i].bounds.w;// + shapeRadius;
+		const mat4 scale_mat = mat4(scale.x,0,0,0,
+									0,scale.y,0,0,
+									0,0,scale.z,0,
+									0,0,0,		1);
+		const mat4 translate_mat = mat4(1,0,0,terrain[i].model[3].x,
+										0,1,0,terrain[i].model[3].y,
+										0,0,1,terrain[i].model[3].z,
+										0,0,0,					  1);
+		const mat4 t_model = terrain[i].model * scale_mat;
+		const mat4 t_model_1 = inverse(t_model);
+		const vec3 pos_local = particle[index_x].position.xyz;
+		const vec3 vel_local = particle[index_x].velocityDFSPHfactor.xyz;
+		const vec3 pos_vdt_local = pos_local + dt * vel_local;
+		vec4 pos = t_model_1 * vec4(pos_local, 1);
+		vec4 vel = t_model_1 * vec4(vel_local, 1);
+		const vec4 pos_vdt = pos + dt * vel;
 
-		const vec4 obstacle_center = translation + terrain[i].center;
-		const vec3 obstacle_bounds = scale * vec3(1);
-		const vec3 vec_from_center = (inverse(terrain[i].model) * vec4(particle[index_x].position.xyz + dt * particle[index_x].velocityDFSPHfactor.xyz, 1)).xyz;
-		vec3 bounce_normal = vec3(0);
-		vec3 correction = vec3(0);
+		vec3 surface_dir = vec3(0);
+		vec3 correction = vec3(1);
 
-		if(uint(obstacle_center.w) == S_CUBE){
-//			float side = max(vec_from_center.x, max(vec_from_center.y, vec_from_center.x));
-//			if((vec_from_center.x < obstacle_bounds.x) && (vec_from_center.y < obstacle_bounds.y) && (vec_from_center.z < obstacle_bounds.z)){
-//				if(side == vec_from_center.x){
-//					bounce_normal = vec3(1,0,0);
-//				}
-//				else if(side == vec_from_center.y){
-//					bounce_normal = vec3(0,1,0);
-//				}
-//				else{
-//					bounce_normal = vec3(0,0,1);
-//				}
-//			}
-//			correction = 1 - vec_from_center / spaceLimiter;
-//			correction.x = correction.x > 0 ? 0 :correction.x;
-//			correction.y = correction.y > 0 ? 0 :correction.y;
-//			correction.z = correction.z > 0 ? 0 :correction.z;
-		}else if(uint(obstacle_center.w) == S_SPHERE){
-			if(length(vec_from_center) <= 1){
-				bounce_normal = -normalize(vec_from_center);
-				correction = vec3(1 - length(vec_from_center));
+		if(uint(terrain[i].center.w) == S_CUBE){
+			if((abs(pos_vdt.x) > 1 && abs(pos.x) < 1) && (abs(pos.y) < 1 && abs(pos.z) < 1)){
+				if(pos.x < 0){
+					surface_dir += vec3(1,0,0);
+				}else{
+					surface_dir += vec3(-1,0,0);
+				}
+			}if((abs(pos_vdt.y) > 1 && abs(pos.y) < 1) && (abs(pos.x) < 1 && abs(pos.z) < 1)){
+				if(pos.y < 0){
+					surface_dir += vec3(0,1,0);
+				}else{
+					surface_dir += vec3(0,-1,0);
+				}
+			}if((abs(pos_vdt.z) > 1 && abs(pos.z) < 1) && (abs(pos.x) < 1 && abs(pos.y) < 1)){
+				if(pos.z < 0){
+					surface_dir += vec3(0,0,1);
+				}else{
+					surface_dir += vec3(0,0,-1);
+				}
+			}
+			if(length(surface_dir) > 0){
+				surface_dir = (t_model * vec4(surface_dir, 1)).xyz;
+			}
+		}else if(uint(terrain[i].center.w) == S_SPHERE){
+			if(length(pos.xyz) <= 1){
+				surface_dir = (transpose(transpose(terrain[i].model) * inverse(translate_mat)) * inverse(scale_mat) * pos).xyz;
+//				correction = vec3(1 - length(pos_vdt_local));
 			}
 		}
-		particle[index_x].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, bounce_normal);
-		particle[index_x].position.xyz += correction * vec_from_center;
+		particle[index_x].velocityDFSPHfactor.xyz = BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, surface_dir);
 	}
 }
 
@@ -385,7 +401,7 @@ vec4 CalculateColor(float property_value){
 }
 
 void ChooseParticleColor(uint index_x){
-	const float max_speed = 50.f;
+	const float max_speed = 100.f;
 	const float density0 = mass;
 	const float d_density = CalculateDerivDensity(index_x);
 	vec4 temp_color = vec4(0);
@@ -397,15 +413,14 @@ void ChooseParticleColor(uint index_x){
 			temp_color = CalculateColor(abs(CalculateDensity(index_x) - density0) / density0);
 			break;
 		case DIVERGENCE_ERROR:
-			temp_color = CalculateColor(abs(d_density));
+			temp_color = CalculateColor(abs(d_density) * 1e+2);
 			break;
 		case PRESSURE:
-			temp_color = CalculateColor(sqrt(particle[index_x].VolumeDensityPressureRohash.z) * mass * 1e+3);
+			temp_color = CalculateColor(2 * log(abs(particle[index_x].VolumeDensityPressureRohash.z) + 1) / (mass * 1e+3));
 			break;
 	}
 	particle[index_x].color = temp_color;
 }
-
 
 void CalculateExternalForces(uint index_x){
 	const float ro_i = particle[index_x].VolumeDensityPressureRohash.y;
@@ -434,6 +449,7 @@ void SolveDensityError(uint index_x){
 void UpdatePosition(uint index_x){
 	CheckWorldBounds(index_x);
 	CheckCollisions(index_x);
+	particle[index_x].velocityDFSPHfactor.xyz *= 0.995;
 	particle[index_x].position.xyz += dt * particle[index_x].velocityDFSPHfactor.xyz;
 }
 void SolveDivergenceError(uint index_x){
@@ -448,6 +464,4 @@ void SolveDivergenceError(uint index_x){
 		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
 		d_ro = CalculateDerivDensity(index_x);
 	}
-	particle[index_x].position.xyz = (inverse(model) * vec4(particle[index_x].position.xyz, 1.0)).xyz;
-
 }

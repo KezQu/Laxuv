@@ -61,7 +61,7 @@ void Particles<Prim>::Calculate()
     Simulator::GetInstance()->BindUniforms(program_id);
     Simulator::GetInstance()->BindTerrain(program_id);
     Bind(program_id);
-    _physicsDispatch.Calculate(_mesh_size, true);
+    _physicsDispatch.Calculate(_mesh_size, false);
   }
 }
 
@@ -85,7 +85,6 @@ void Particles<Prim>::Draw() const
         _particleShape->GetDrawPrimitive(), _particleShape->GetVA().Size(),
         _particleShape->GetVA().IndexBufferType(), nullptr,
         _physicsDispatch.GetParticleMeshBuffer().Size()));
-    _physicsDispatch.GetParticleMeshBuffer().Unbind(renderer.ID());
   }
 }
 

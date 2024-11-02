@@ -59,16 +59,13 @@ char const* Essentials::ColorPropertyTolist() noexcept
 
 Uniform<glm::mat4, float> Essentials::ShapeProperties::Model() const
 {
-  auto I = glm::identity<glm::mat4>();
-  auto rotation = _rotation.GetValue();
-  auto scale = _scale.GetValue() * _radius.GetValue();
-  auto location = _location.GetValue();
-  auto angle = glm::max(glm::max(rotation.x, rotation.y), rotation.z);
-  auto T =
-      glm::dot(location, location) != 0.f ? glm::translate(I, location) : I;
-  auto R = glm::dot(rotation, rotation) != 0.f
-               ? glm::rotate(I, glm::radians(angle), glm::normalize(rotation))
-               : I;
-  auto S = glm::dot(scale, scale) != 0.f ? glm::scale(I, scale) : I;
-  return Uniform<glm::mat4, float>{T * R * S, "model"};
+  auto const I = glm::identity<glm::mat4>();
+  auto const rotation = _rotation.GetValue();
+  auto const location = _location.GetValue();
+  auto T = glm::translate(I, location);
+  auto Rx = glm::rotate(I, glm::radians(rotation.x), glm::vec3{1, 0, 0});
+  auto Rxy = glm::rotate(Rx, glm::radians(rotation.y), glm::vec3{0, 1, 0});
+  auto Rxyz = glm::rotate(Rxy, glm::radians(rotation.z), glm::vec3{0, 0, 1});
+
+  return Uniform<glm::mat4, float>{T * Rxyz, "model"};
 }

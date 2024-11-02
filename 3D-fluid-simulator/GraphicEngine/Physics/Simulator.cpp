@@ -30,6 +30,11 @@ std::unique_ptr<Simulator>& Simulator::GetInstance()
   return instance;
 }
 
+void Simulator::CleanUp()
+{
+  GetInstance().reset(nullptr);
+}
+
 Simulator::EntityContainer& Simulator::GetEntities()
 {
   return _entitiesContainer;
@@ -96,7 +101,6 @@ void Simulator::BindUniforms(uint32_t program_id)
 void Simulator::BindTerrain(uint32_t program_id)
 {
   _terrain.Bind(program_id);
-  auto lookupBuffer = _terrain.GetBufferSubData(0U, _terrain.Size());
 }
 
 void Simulator::SetSimulationState(Essentials::SimulationState new_global_state)

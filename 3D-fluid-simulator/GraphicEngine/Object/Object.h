@@ -57,7 +57,7 @@ void Object<Prim>::Calculate()
     Simulator::GetInstance()->BindUniforms(program_id);
     Simulator::GetInstance()->BindTerrain(program_id);
     Bind(program_id);
-    _physicsDispatch.Calculate(_mesh_size, true);
+    _physicsDispatch.Calculate(_mesh_size, false);
   }
 }
 template <GLenum Prim>
@@ -78,7 +78,6 @@ void Object<Prim>::Draw() const
     _physicsDispatch.GetParticleMeshBuffer().Bind(renderer.ID());
     _(glDrawElements(_shape->GetDrawPrimitive(), _shape->GetVA().Size(),
                      _shape->GetVA().IndexBufferType(), nullptr));
-    _physicsDispatch.GetParticleMeshBuffer().Unbind(renderer.ID());
   }
 }
 

@@ -21,7 +21,7 @@ class Simulator
   Uniform<uint32_t> _obstacles_number{0, "MaxObstacles"};
   Uniform<float> _space_boundries{100.f, "spaceLimiter",
                                   ValueProperties{1.f, 1200.f, 1.f, "%.1f mm"}};
-  Uniform<float> _bounds_viscosity{0.95f, "boundsViscosity",
+  Uniform<float> _bounds_viscosity{0.7f, "boundsViscosity",
                                    ValueProperties{0.f, 1.f, 1.f, "%.2f"}};
   Uniform<float> _global_delta_time{
       6.f, "dt", ValueProperties{1.f, 1000.f, 1e-3f, "%1.f ms"}};
@@ -42,6 +42,7 @@ class Simulator
 
  public:
   static std::unique_ptr<Simulator>& GetInstance();
+  static void CleanUp();
   EntityContainer& GetEntities();
   Essentials::SimulationState GetSimulationState();
   void UpdateDeltaTime(float dt);
