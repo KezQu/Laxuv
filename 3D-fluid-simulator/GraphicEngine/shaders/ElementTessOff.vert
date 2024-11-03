@@ -7,12 +7,14 @@ layout(location = 0) out vec4 outColorVert;
 layout(location = 1) out vec3 normal;
 
 const uint MaxNeighbours =  512;
+const uint NONE = 0;
+
+uniform uint colorType;
 
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	vec4 VolumeDensityPressureRohash;
-	uvec4 cell;
+	vec4 VolumeDensityPressureDro_Dt;
 	uint neighbours[MaxNeighbours];
 };
 
@@ -20,11 +22,18 @@ layout(std430, binding = 0) buffer dataBuffer{
 	ParticleProperties particle[];
 };
 
-vec4 CalculateNDC(in vec3 position, in vec4 offset);
+vec4 CalculateNDC(in vec3 position, in vec3 offset);
+vec3 CalculateNormal(in vec3 position);
+vec4 ChooseColor(ParticleProperties properties);
 
 void main(){
-	outColorVert = inColorVert / 255.;
-	normal = -inPosition;
-	gl_Position = CalculateNDC(inPosition, particle[gl_InstanceID].position);
+	if(colorType == NONE){
+		outColorVert = inColorVert / 255.;
+	}
+	else{
+		outColorVert = ChooseColor(particle[gl_InstanceID]);
+	}
+	normal = CalculateNormal(inPosition);
+	gl_Position = CalculateNDC(inPosition, particle[gl_InstanceID].position.xyz);
 	gl_PointSize = 10;
 }

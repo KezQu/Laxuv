@@ -16,7 +16,6 @@ class Interface
   ImVec2 _size;
   ImVec2 _position;
   ImGuiWindowFlags _flags;
-  static Simulator& simulatorInstance;
 
  public:
   Interface(ImVec2 const& size, ImVec2 const& position, ImGuiWindowFlags flags);

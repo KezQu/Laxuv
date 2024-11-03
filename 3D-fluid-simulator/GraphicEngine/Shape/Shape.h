@@ -3,40 +3,16 @@
 #include "Camera.h"
 #include "Essentials.h"
 #include "ProgramDispatch.h"
+#include "Simulator.h"
 #include "Uniform.h"
 #include "VertexArray.h"
-
-struct
-{
-  glm::vec3 AmbientLightColor{.2f};
-  struct
-  {
-    glm::vec3 color{1.f};
-    glm::vec3 direction{-0.3f, -0.2f, -1.f};
-  } DiffuseLight;
-} LIGHT;
 
 template <GLenum Prim>
 class Shape
 {
  protected:
   VertexArray _vertexArray;
-  Uniform<glm::vec3, float> _location{
-      glm::vec3{0.f}, "location",
-      ValueProperties{-1200.f, 1200.f, 1.f, "%.1f mm"}};
-  Uniform<glm::vec3, float> _scale{glm::vec3{1.f}, "scale",
-                                   ValueProperties{0.f, 100.f, 1.f, "%.1f"}};
-  Uniform<glm::vec3, float> _rotation{
-      glm::vec3{0.f}, "rotation",
-      ValueProperties{-360.f, 360.f, 1.f, "%.1f deg"}};
-  Uniform<glm::vec3, float> _center{
-      glm::vec3{0.f}, "center",
-      ValueProperties{-1200.f, 1200.f, 1.f, "%.1f mm"}};
-  Uniform<uint32_t> _subdivision{5U, "subdivision", ValueProperties{1U, 50U}};
-  Uniform<float> _shapeRadius{1.f, "shapeRadius",
-                              ValueProperties{0.1f, 600.f, 1.f, "%.1f mm"}};
-  bool _enableTesselation{false};
-  bool _enableLight{true};
+  Essentials::ShapeProperties _shape_properties;
   GLenum _primitiveType{Prim};
 
  public:
@@ -47,28 +23,25 @@ class Shape
   Shape& operator=(Shape const& obj_copy) = delete;
   Shape& operator=(Shape&& obj_move) = default;
   virtual ~Shape() = default;
-  Uniform<glm::vec3, float>& GetLocation();
-  Uniform<glm::vec3, float>& GetScale();
-  Uniform<glm::vec3, float>& GetRotate();
+  Essentials::ShapeProperties& GetShapeProperties();
   Uniform<glm::mat4, float> Model() const;
-  void Bind() const;
+  void Bind(uint32_t program_id) const;
+  void BindUniforms(uint32_t program_id) const;
   GLenum GetDrawPrimitive() const;
   VertexArray const& GetVA() const;
-  Uniform<glm::vec3, float> const& GetCenter() const;
-  bool& EnableTesselation();
+  void SetTesselation(bool enableTesselation);
+  bool GetTesselation() const;
   void EnableLight(bool light);
-  Uniform<uint32_t>& GetSubdivision();
-  Uniform<float>& GetRadius();
-  virtual Essentials::DistributionShape GetParticleDistribution() = 0;
 };
 
 template <GLenum Prim>
 Shape<Prim>::Shape(VertexArray&& vertexArray, float shapeRadius,
                    bool enableTess)
-    : _vertexArray{std::move(vertexArray)}, _enableTesselation{enableTess}
+    : _vertexArray{std::move(vertexArray)}
 {
-  _shapeRadius = shapeRadius;
-  if (_enableTesselation == true)
+  _shape_properties._enableTesselation = enableTess;
+  _shape_properties._radius = shapeRadius;
+  if (_shape_properties._enableTesselation == true)
   {
     _primitiveType = GL_PATCHES;
   }
@@ -76,80 +49,41 @@ Shape<Prim>::Shape(VertexArray&& vertexArray, float shapeRadius,
 
   for (int i = 0; i < coordBuffer.Size(); i += 3)
   {
-    _center += glm::vec3(coordBuffer.Data()[i + 0], coordBuffer.Data()[i + 1],
-                         coordBuffer.Data()[i + 2]);
+    _shape_properties._center +=
+        glm::vec3(coordBuffer.Data()[i + 0], coordBuffer.Data()[i + 1],
+                  coordBuffer.Data()[i + 2]);
   }
-  _center /= static_cast<float>(coordBuffer.Size() / coordBuffer.AttribSize());
+  _shape_properties._center /=
+      static_cast<float>(coordBuffer.Size() / coordBuffer.AttribSize());
 }
 
 template <GLenum Prim>
-void Shape<Prim>::Bind() const
+void Shape<Prim>::Bind(uint32_t program_id) const
 {
   _vertexArray.Bind();
-
-  Program& renderer =
-      _enableTesselation == true
-          ? ProgramDispatch::GetInstance().GetTesselationPipeline()
-          : ProgramDispatch::GetInstance().GetSimplePipeline();
-
-  if (!renderer.isLinked()) renderer.Link();
-  renderer.Bind();
-
-  Model().MapUniform(renderer.ID());
-  Camera::GetCamera().View().MapUniform(renderer.ID());
-  Camera::GetCamera().Projection().MapUniform(renderer.ID());
-  Camera::GetCamera().Viewport().MapUniform(renderer.ID());
-  _center.MapUniform(renderer.ID());
-  _subdivision.MapUniform(renderer.ID());
-
-  if (_enableLight)
-  {
-    auto const ambient_light =
-        Uniform<glm::vec3, float>(LIGHT.AmbientLightColor, "ambientLightColor");
-    auto const diffuse_light_color = Uniform<glm::vec3, float>(
-        LIGHT.DiffuseLight.color, "diffuseLightColor");
-    auto const diffuse_light_dir = Uniform<glm::vec3, float>(
-        LIGHT.DiffuseLight.direction, "diffuseLightDirection");
-    ambient_light.MapUniform(renderer.ID());
-    diffuse_light_color.MapUniform(renderer.ID());
-    diffuse_light_dir.MapUniform(renderer.ID());
-  }
-  _shapeRadius.MapUniform(renderer.ID());
+  BindUniforms(program_id);
 }
 
 template <GLenum Prim>
-Uniform<glm::vec3, float>& Shape<Prim>::GetLocation()
+void Shape<Prim>::BindUniforms(uint32_t program_id) const
 {
-  return _location;
+  Camera::GetCamera().View().MapUniform(program_id);
+  Camera::GetCamera().Projection().MapUniform(program_id);
+  Camera::GetCamera().Viewport().MapUniform(program_id);
+  _shape_properties.Model().MapUniform(program_id);
+  _shape_properties._scale.MapUniform(program_id);
+  _shape_properties._center.MapUniform(program_id);
+  _shape_properties._subdivision.MapUniform(program_id);
+
+  _shape_properties._color.first.MapUniform(program_id);
+  _shape_properties._color.second.MapUniform(program_id);
+  _shape_properties._radius.MapUniform(program_id);
 }
 
 template <GLenum Prim>
-Uniform<glm::vec3, float>& Shape<Prim>::GetScale()
+Essentials::ShapeProperties& Shape<Prim>::GetShapeProperties()
 {
-  return _scale;
-}
-
-template <GLenum Prim>
-Uniform<glm::vec3, float>& Shape<Prim>::GetRotate()
-{
-  return _rotation;
-}
-
-template <GLenum Prim>
-Uniform<glm::mat4, float> Shape<Prim>::Model() const
-{
-  auto I = glm::identity<glm::mat4>();
-  auto rotation = _rotation.GetValue();
-  auto scale = _scale.GetValue();
-  auto location = _location.GetValue();
-  auto angle = glm::max(glm::max(rotation.x, rotation.y), rotation.z);
-  auto T =
-      glm::dot(location, location) != 0.f ? glm::translate(I, location) : I;
-  auto R = glm::dot(rotation, rotation) != 0.f
-               ? glm::rotate(I, glm::radians(angle), glm::normalize(rotation))
-               : I;
-  auto S = glm::dot(scale, scale) != 0.f ? glm::scale(I, scale) : I;
-  return Uniform<glm::mat4, float>{T * R * S, "model"};
+  return _shape_properties;
 }
 
 template <GLenum Prim>
@@ -165,29 +99,19 @@ VertexArray const& Shape<Prim>::GetVA() const
 }
 
 template <GLenum Prim>
-Uniform<glm::vec3, float> const& Shape<Prim>::GetCenter() const
+void Shape<Prim>::SetTesselation(bool enableTesselation)
 {
-  return _center;
+  _shape_properties._enableTesselation = enableTesselation;
 }
 
 template <GLenum Prim>
-bool& Shape<Prim>::EnableTesselation()
+bool Shape<Prim>::GetTesselation() const
 {
-  return _enableTesselation;
+  return _shape_properties._enableTesselation;
 }
+
 template <GLenum Prim>
 void Shape<Prim>::EnableLight(bool light)
 {
-  _enableLight = light;
-}
-
-template <GLenum Prim>
-Uniform<uint32_t>& Shape<Prim>::GetSubdivision()
-{
-  return _subdivision;
-}
-template <GLenum Prim>
-Uniform<float>& Shape<Prim>::GetRadius()
-{
-  return _shapeRadius;
+  _shape_properties._enableLight = light;
 }

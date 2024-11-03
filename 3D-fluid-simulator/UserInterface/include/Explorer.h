@@ -12,7 +12,8 @@
 class Explorer : public Interface
 {
  public:
-  using entity_selector_t = std::pair<int32_t, int32_t>;
+  using entity_selector_t =
+      std::pair<Essentials::EntityType, Essentials::EntityShape>;
 
   Explorer(ImVec2 const& size, ImVec2 const& position);
   void Generate() override;
@@ -25,5 +26,4 @@ class Explorer : public Interface
   void CreateWorldControls();
   void CreateEntityControls();
   void CreateEntitySelector();
-  void SelectEntity();
 };

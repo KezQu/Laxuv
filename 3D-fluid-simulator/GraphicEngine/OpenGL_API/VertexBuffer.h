@@ -1,9 +1,9 @@
 #pragma once
 
-#include <CPUBuffer.h>
-
 #include <type_traits>
 #include <utility>
+
+#include "CPUBuffer.h"
 
 template <typename T, GLuint S>
 class VertexBuffer : public CPUBuffer<GL_ARRAY_BUFFER, T>

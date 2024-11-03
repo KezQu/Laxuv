@@ -1,6 +1,23 @@
-#include <Window.h>
+#include "Window.h"
 
 #include <filesystem>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include "Camera.h"
+#include "Debug.h"
+#include "Essentials.h"
+#include "Explorer.h"
+#include "GL/glew.h"
+#include "GLFW/glfw3.h"
+#include "Logger.h"
+#include "ProgramDispatch.h"
+#include "Simulator.h"
+#include "Toolbar.h"
+#include "WorldAxes.h"
+#include "imgui.h"
 
 Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     : _windowSize{windowSize}, _windowTitle{windowTitle}
@@ -15,7 +32,7 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
   {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     _window = glfwCreateWindow(_windowSize.x, _windowSize.y,
@@ -28,7 +45,7 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     }
 
     glfwMakeContextCurrent(_window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
 
     GLenum errorCode = glewInit();
     if (errorCode != GLEW_OK)
@@ -80,6 +97,8 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
 
 Window::~Window()
 {
+  Simulator::CleanUp();
+  ProgramDispatch::CleanUp();
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
@@ -95,7 +114,6 @@ void Window::EventLoop()
   while (glfwWindowShouldClose(_window) == GLFW_FALSE)
   {
     Refresh();
-    // ImGui::ShowDemoWindow();
     Toolbar(ImVec2{_windowSize.x, 20}, ImVec2{0, 0}).Generate();
     Explorer(ImVec2{_windowSize.x / 4.f, _windowSize.y - 20}, ImVec2{0, 20})
         .Generate();
@@ -103,34 +121,34 @@ void Window::EventLoop()
            ImVec2{_windowSize.x / 4.f, _windowSize.y - 200})
         .Generate();
 
-    switch (SimulationInstance.GetSimulationState())
+    switch (SimulationInstance->GetSimulationState())
     {
       case Essentials::SimulationState::IDLE:
         break;
       case Essentials::SimulationState::INIT:
-        for (auto& [id, entity] : SimulationInstance.GetEntities())
+        for (auto& [id, entity] : SimulationInstance->GetEntities())
         {
           entity->Initialize();
         }
-        SimulationInstance.SetSimulationState(
+        SimulationInstance->SetSimulationState(
             Essentials::SimulationState::IDLE);
         break;
       case Essentials::SimulationState::SIMULATION:
-        for (auto& [id, entity] : SimulationInstance.GetEntities())
+        for (auto& [id, entity] : SimulationInstance->GetEntities())
         {
           entity->Calculate();
         }
         break;
       case Essentials::SimulationState::GEN_FRAME:
-        for (auto& [id, entity] : SimulationInstance.GetEntities())
+        for (auto& [id, entity] : SimulationInstance->GetEntities())
         {
           entity->Calculate();
         }
-        SimulationInstance.SetSimulationState(
+        SimulationInstance->SetSimulationState(
             Essentials::SimulationState::IDLE);
         break;
     }
-    for (auto& [id, entity] : SimulationInstance.GetEntities())
+    for (auto& [id, entity] : SimulationInstance->GetEntities())
     {
       entity->Draw();
     }
@@ -138,12 +156,10 @@ void Window::EventLoop()
     Axes.Draw();
     Render();
   }
-  SimulationInstance.CleanUp();
-  ProgramDispatch::GetInstance().CleanUp();
 }
 void Window::Refresh()
 {
-  glClearColor(0.f, 0.f, 0.f, 1.f);
+  glClearColor(0x23 / 255., 0x65 / 255., 0xA0 / 255., 1.f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   FramebufferResizeCheck();
   ImGui_ImplOpenGL3_NewFrame();
@@ -219,7 +235,7 @@ void Window::ProcessKeyInputs()
           mouseDeltaPos{0.0};
       glfwGetCursorPos(glfwGetCurrentContext(), &mousePosCurr.x,
                        &mousePosCurr.y);
-      mouseDeltaPos = mousePosCurr - mousePosPrev;
+      mouseDeltaPos = (mousePosCurr - mousePosPrev) * 2.;
       Camera::GetCamera().Rotate({mouseDeltaPos.x, mouseDeltaPos.y, 0.f});
       mousePosPrev = mousePosCurr;
     }

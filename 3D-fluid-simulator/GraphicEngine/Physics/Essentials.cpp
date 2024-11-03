@@ -1,82 +1,47 @@
 #include "Essentials.h"
 
-#include <iostream>
+#include "Uniform.h"
+#include "glm/fwd.hpp"
 
-std::ostream& operator<<(std::ostream& out,
-                         Essentials::ParticleProperties const& particle)
+char const* Essentials::EntityTypeTolist() noexcept
 {
-  out << "- - - - - - - -" << std::endl;
-  // out << "(" << particle.force.x << "," << particle.force.y << ","
-  //     << particle.force.z << "," << particle.force.w << ")" << std::endl;
-  out << "(" << particle.velocityDFSPHfactor.x << ","
-      << particle.velocityDFSPHfactor.y << "," << particle.velocityDFSPHfactor.z
-      << "," << particle.velocityDFSPHfactor.w << ")" << std::endl;
-  out << "(" << particle.position.x << "," << particle.position.y << ","
-      << particle.position.z << "," << particle.position.w << ")" << std::endl;
-  out << "(" << particle.VolumeDensityPressureRohash.x << ","
-      << particle.VolumeDensityPressureRohash.y << ","
-      << particle.VolumeDensityPressureRohash.z << ","
-      << particle.VolumeDensityPressureRohash.w << ")" << std::endl;
-  out << "[";
-  for (auto& neighbour_id : particle.neighbours)
-  {
-    out << neighbour_id << ", ";
-  }
-  out << "]" << std::endl;
-  out << "- - - - - - - -" << std::endl;
-  return out;
+  return " \0OBJECT\0PARTICLES\0";
 }
 
-std::string Essentials::DistShapeToString(DistributionShape shape) noexcept
+char const* Essentials::EntityShapeTolist() noexcept
 {
-  switch (shape)
-  {
-    case DistributionShape::LINE:
-      return "Line";
-      break;
-    case DistributionShape::CIRCLE:
-      return "Circle";
-      break;
-    case DistributionShape::SQUARE:
-      return "Square";
-      break;
-    case DistributionShape::DISK:
-      return "Disk";
-      break;
-    case DistributionShape::QUBE:
-      return "Qube";
-      break;
-    case DistributionShape::SPHERE:
-      return "Sphere";
-      break;
-    default:
-      return "Undefined";
-      break;
-  }
+  return " \0POINT\0LINE\0SQUARE\0CUBE\0SPHERE\0";
 }
 
 char const* Essentials::DistShapeTolist() noexcept
 {
-  return " \0Point\0Line\0Square\0Qube\0Sphere\0";
+  return "UNDEFINED\0LINE\0CIRCLE\0SQUARE\0DISK\0CUBE\0SPHERE\0";
 }
 
-std::string Essentials::PhysTypeToString(PhysicsType physics) noexcept
+char const* Essentials::WorldTypeTolist() noexcept
 {
-  switch (physics)
-  {
-    case PhysicsType::STATIC:
-      return "Static";
-      break;
-    case PhysicsType::DYNAMIC:
-      return "Dynamic";
-      break;
-    default:
-      return "Undefined";
-      break;
-  }
+  return " \0CUBE\0SHPERE\0";
 }
 
 char const* Essentials::PhysTypesTolist() noexcept
 {
-  return "None\0Static\0Dynamic\0";
+  return "NONE\0STATIC\0DYNAMIC\0";
+}
+
+char const* Essentials::ColorPropertyTolist() noexcept
+{
+  return "NONE\0CUSTOM\0VELOCITY\0DENSITY_ERROR\0DIVERGENCE_ERROR\0PRESSURE\0";
+}
+
+Uniform<glm::mat4, float> Essentials::ShapeProperties::Model() const
+{
+  auto const I = glm::identity<glm::mat4>();
+  auto const rotation = _rotation.GetValue();
+  auto const location = _location.GetValue();
+  auto T = glm::translate(I, location);
+  auto Rx = glm::rotate(I, glm::radians(rotation.x), glm::vec3{1, 0, 0});
+  auto Rxy = glm::rotate(Rx, glm::radians(rotation.y), glm::vec3{0, 1, 0});
+  auto Rxyz = glm::rotate(Rxy, glm::radians(rotation.z), glm::vec3{0, 0, 1});
+
+  return Uniform<glm::mat4, float>{T * Rxyz, "model"};
 }

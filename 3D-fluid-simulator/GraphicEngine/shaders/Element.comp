@@ -1,8 +1,8 @@
 #version 460 core
 
-layout (local_size_x = 10,
-		local_size_y = 10,
-		local_size_z = 10) in;
+layout (local_size_x = 1,
+		local_size_y = 1,
+		local_size_z = 1) in;
 
 const uint NONE = 0;
 const uint STATIC = 1;
@@ -20,9 +20,6 @@ const uint HashGridSize = MaxCells * MaxCells;
 const uint CellCapacity = uint(3.1415 * (4. / 3.) * pow(cellRadius, 3));
 const uint MaxNeighbours = 512;
 
-const float R = 8.31446261815324;
-const float g = 9.80665;
-
 const uvec3 MeshSize = gl_NumWorkGroups * gl_WorkGroupSize;
 
 const uint MaxParticles = MeshSize.x * 
@@ -32,11 +29,15 @@ const uint index = gl_GlobalInvocationID.x +
 			(gl_GlobalInvocationID.y * MeshSize.x) + 
 			(gl_GlobalInvocationID.z * MeshSize.y * MeshSize.x);
 
+uniform mat4 model;
+uniform vec3 scale;
+
 uniform uint physicsType = NONE;
 uniform uint SimulatorState = IDLE;
-uniform float spaceLimiter;
-uniform float boundsViscosity;
-uniform float particleRadius;
+
+uniform vec3 initVelocity;
+
+uniform float shapeRadius;
 uniform float particleSpacing;
 uniform float influenceKernel;
 uniform float dt;
@@ -45,9 +46,14 @@ uniform float mass;
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	vec4 VolumeDensityPressureRohash;
-	uvec4 cell;
+	vec4 VolumeDensityPressureDro_Dt;
 	uint neighbours[MaxNeighbours];
+};
+
+struct TerrainProperties {
+	vec4 center;
+	vec4 bounds;
+	mat4 model;
 };
 
 struct stateVector{
@@ -65,12 +71,12 @@ struct Flux {
 layout(std430, binding = 0) buffer dataBuffer{
 	restrict ParticleProperties particle[];
 };
-layout(std430, binding = 1) buffer spaceGrid{
-	uint space_grid[HashGridSize][CellCapacity];
+
+layout(std430, binding = 1) buffer terrainBuffer{
+	restrict TerrainProperties terrain[];
 };
 
 vec4 InitDefaultShape(in uint idx, in uvec3 invocation, in uint maxParticles);
-vec3 BounceOfAWall(vec3 direction, vec3 normal);
 
 void ClearSpaceGrid(uint index_x, uint MaxParticles);
 void AssignToCell(uint index_x);
@@ -85,89 +91,50 @@ float CalculateAvgDensityHash(uint index_x);
 float CalculateDerivDensity(uint index_x);
 float CalculateAvgDerivDensity(uint index_x);
 
+void CalculateExternalForces(uint index_x);
+void SolveDensityError(uint index_x);
+void SolveDivergenceError(uint index_x);
+void UpdatePosition(uint index_x);
+
+void CheckWorldBounds(uint index_x);
+
+void UpdateTerrainOrientation(uint index_x);
+void CheckCollisions(uint index_x);
+
 void main(){
 	if(SimulatorState == INIT){
-		particle[index].velocityDFSPHfactor = vec4(0);
-//		particle[index].velocityDFSPHfactor = -10 * vec4(index % 7, (index * 3) % 13, -mod(100.f / index, 6), 0);
+		particle[index].velocityDFSPHfactor = vec4(initVelocity, 0);
 		particle[index].position = vec4(0);
-		particle[index].VolumeDensityPressureRohash = vec4(0);
+		particle[index].VolumeDensityPressureDro_Dt = vec4(0);
 		if(physicsType != NONE){
-			particle[index].position = InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * particleRadius * particleSpacing;
+			particle[index].position = InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * particleSpacing * shapeRadius;
 		}
 		if(physicsType == DYNAMIC){
-//--------------------------------------Find Neighbours------------------------------------------
-			//ClearSpaceGrid(index, MaxParticles);
-			//AssignToCell(index);
 			FindNeighbours(index, MaxParticles);
-//------------------------------------Initialize properties--------------------------------------
-			particle[index].VolumeDensityPressureRohash.y = CalculateDensity(index);
+
+			particle[index].VolumeDensityPressureDro_Dt.y = CalculateDensity(index);
 			particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
 		}
+		else if (physicsType == STATIC){
+			UpdateTerrainOrientation(index);
+		}
 	}
-	else if((SimulatorState == GEN_FRAME || SimulatorState == SIMULATION) && physicsType == DYNAMIC){
-//---------------------------------Calc non pressure forces--------------------------------------
-		const float m_i = mass;
-		const float density0 = mass;
-
-		const float ro_i = particle[index].VolumeDensityPressureRohash.y;
-
-		vec3 viscosity_acceleration = CalculateViscosity(index) / ro_i;
-		particle[index].velocityDFSPHfactor.xyz += dt * (viscosity_acceleration - vec3(0, g, 0));
-//---------------------------------Calc Density free solver--------------------------------------
-		float factor_x = particle[index].velocityDFSPHfactor.w;
-		// 
-		float ro_hash = particle[index].VolumeDensityPressureRohash.y + dt * CalculateDerivDensity(index);
-		for(int i = 0; i < 500; i++){
-			particle[index].VolumeDensityPressureRohash.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
-
-			particle[index].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index);
-			ro_hash = particle[index].VolumeDensityPressureRohash.y + dt * CalculateDerivDensity(index);
-
-			if((abs((ro_hash  - density0)) / density0 < 2e-2) && i > 5){
-				break;
-			}
+	else if(SimulatorState == GEN_FRAME || SimulatorState == SIMULATION){
+		if(physicsType == STATIC){
+			UpdateTerrainOrientation(index);
 		}
-		particle[index].VolumeDensityPressureRohash.w = abs(particle[index].VolumeDensityPressureRohash.y - density0) / density0;
+		else if(physicsType == DYNAMIC){
+			particle[index].position.xyz = (model * vec4(particle[index].position.xyz * scale, 1.0)).xyz;
+			CalculateExternalForces(index);
 
-//---------------------------------Check worlds bounds--------------------------------------
-		vec3 vec_form_center = particle[index].position.xyz + dt * particle[index].velocityDFSPHfactor.xyz;
-		if(vec_form_center.x <= -spaceLimiter){
-			particle[index].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index].velocityDFSPHfactor.xyz, vec3(1, 0, 0));
-		}else if(vec_form_center.x >= spaceLimiter){
-			particle[index].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index].velocityDFSPHfactor.xyz, vec3(-1, 0, 0));
-		}
-		if(vec_form_center.y <= -spaceLimiter){
-			particle[index].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index].velocityDFSPHfactor.xyz, vec3(0, 1, 0));
-		}else if(vec_form_center.y >= spaceLimiter){
-			particle[index].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index].velocityDFSPHfactor.xyz, vec3(0, -1, 0));
-		}
-		if(vec_form_center.z <= -spaceLimiter){
-			particle[index].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index].velocityDFSPHfactor.xyz, vec3(0, 0, 1));
-		}else if(vec_form_center.z >= spaceLimiter){
-			particle[index].velocityDFSPHfactor.xyz = boundsViscosity * BounceOfAWall(particle[index].velocityDFSPHfactor.xyz, vec3(0, 0, -1));
-		}
-		
-		particle[index].position.xyz += dt * particle[index].velocityDFSPHfactor.xyz;
-		
-//--------------------------------------Find Neighbours------------------------------------------
-		barrier();
-		memoryBarrierBuffer();
-		//ClearSpaceGrid(index, MaxParticles);
-		//AssignToCell(index);
-		FindNeighbours(index, MaxParticles);
-//---------------------------------Calc divergence free solver--------------------------------------
-		particle[index].VolumeDensityPressureRohash.y = CalculateDensity(index);
-		particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
-		factor_x = particle[index].velocityDFSPHfactor.w;
+			SolveDensityError(index);
 
-		float d_ro = CalculateDerivDensity(index);
-		for(int i = 0; i < 500 && !((abs(d_ro) < 1e-2) && i > 2); i++){
-			particle[index].VolumeDensityPressureRohash.z = d_ro * factor_x / dt;
-			
-			particle[index].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index);
-			d_ro = CalculateDerivDensity(index);
+			UpdatePosition(index);
+
+			FindNeighbours(index, MaxParticles);
+
+			SolveDivergenceError(index);
+			particle[index].position.xyz = (inverse(model) * vec4(particle[index].position.xyz, 1.0)).xyz / scale;
 		}
-		barrier();
-		memoryBarrierBuffer();
 	}
 }

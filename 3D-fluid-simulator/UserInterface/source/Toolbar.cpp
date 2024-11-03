@@ -22,27 +22,29 @@ void Toolbar::Generate()
   ImGui::SetNextWindowPos(_position);
   ImGui::SetNextWindowSize(_size);
 
+  auto& simulatorInstance = Simulator::GetInstance();
+
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
   if (ImGui::Begin("##Toolbar", nullptr, _flags))
   {
-    if (ImGui::Button(simulatorInstance.GetSimulationState() ==
+    if (ImGui::Button(simulatorInstance->GetSimulationState() ==
                               Essentials::SimulationState::IDLE
                           ? "Start"
                           : "Pause"))
     {
-      simulatorInstance.SetSimulationState(
-          simulatorInstance.GetSimulationState() ==
+      simulatorInstance->SetSimulationState(
+          simulatorInstance->GetSimulationState() ==
                   Essentials::SimulationState::SIMULATION
               ? Essentials::SimulationState::IDLE
               : Essentials::SimulationState::SIMULATION);
     }
-    if (simulatorInstance.GetSimulationState() !=
+    if (simulatorInstance->GetSimulationState() !=
         Essentials::SimulationState::SIMULATION)
     {
       ImGui::SameLine();
       if (ImGui::Button("One frame"))
       {
-        simulatorInstance.SetSimulationState(
+        simulatorInstance->SetSimulationState(
             Essentials::SimulationState::GEN_FRAME);
       }
     }
@@ -51,7 +53,8 @@ void Toolbar::Generate()
       ImGui::SameLine();
       if (ImGui::Button("Stop"))
       {
-        simulatorInstance.SetSimulationState(Essentials::SimulationState::INIT);
+        simulatorInstance->SetSimulationState(
+            Essentials::SimulationState::INIT);
       }
     }
     ImGui::SameLine();
@@ -59,13 +62,13 @@ void Toolbar::Generate()
     ImGui::DragFloat("##timestep_value", &static_timestep, 0.1f, 0.f, 1000.f,
                      "%.1f ms", ImGuiSliderFlags_AlwaysClamp);
     ImGui::SameLine();
-    if (ImGui::Button(simulatorInstance.IsStaticDtUsed()
+    if (ImGui::Button(simulatorInstance->IsStaticDtUsed()
                           ? "Use program latency"
                           : "Use static timestep"))
     {
-      simulatorInstance.ToggleTimesetType();
+      simulatorInstance->ToggleTimesetType();
     }
-    simulatorInstance.UpdateDeltaTime(static_timestep);
+    simulatorInstance->UpdateDeltaTime(static_timestep);
 
     ImGui::PopItemWidth();
 

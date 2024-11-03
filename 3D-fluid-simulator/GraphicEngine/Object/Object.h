@@ -1,8 +1,17 @@
 #pragma once
 
-#include <Debug.h>
-#include <Entity.h>
-#include <Shape.h>
+#include <cstdint>
+#include <memory>
+
+#include "Debug.h"
+#include "Entity.h"
+#include "Essentials.h"
+#include "GL/glew.h"
+#include "Program.h"
+#include "ProgramDispatch.h"
+#include "Shape.h"
+#include "Simulator.h"
+#include "imgui.h"
 
 template <GLenum Prim>
 class Object : public Entity
@@ -11,8 +20,7 @@ class Object : public Entity
   std::unique_ptr<Shape<Prim>> _shape;
 
  public:
-  Object(Shape<Prim>* const shape,
-         Essentials::PhysicsType physics = Essentials::PhysicsType::STATIC);
+  Object(Shape<Prim>* const shape);
   Object(Object const& obj_copy) = delete;
   Object(Object&& obj_move) = default;
   Object& operator=(Object const& obj_copy) = delete;
@@ -25,8 +33,9 @@ class Object : public Entity
 };
 
 template <GLenum Prim>
-Object<Prim>::Object(Shape<Prim>* const shape, Essentials::PhysicsType physics)
-    : Entity(physics), _shape{std::unique_ptr<Shape<Prim>>(shape)}
+Object<Prim>::Object(Shape<Prim>* const shape)
+    : Entity{Essentials::PhysicsType::STATIC},
+      _shape{std::unique_ptr<Shape<Prim>>(shape)}
 {
   Initialize();
 }
@@ -34,15 +43,27 @@ Object<Prim>::Object(Shape<Prim>* const shape, Essentials::PhysicsType physics)
 template <GLenum Prim>
 void Object<Prim>::Initialize()
 {
-  // _physicsDispatch.InitDefaultShape(_shape->GetParticleDistribution(),
-  //                                   GetPhysicsType(), 1);
+  _physicsDispatch.Bind();
+  auto program_id = _physicsDispatch.GetProgram().ID();
+
+  _shape->BindUniforms(program_id);
+  Simulator::GetInstance()->BindUniforms(program_id);
+  Bind(program_id);
+  _physicsDispatch.InitDefaultShape(_mesh_size);
 }
 template <GLenum Prim>
 void Object<Prim>::Calculate()
 {
   if (_visible)
   {
-    _physicsDispatch.GenerateForces(GetPhysicsType());
+    _physicsDispatch.Bind();
+    auto program_id = _physicsDispatch.GetProgram().ID();
+
+    _shape->BindUniforms(program_id);
+    Simulator::GetInstance()->BindUniforms(program_id);
+    Simulator::GetInstance()->BindTerrain(program_id);
+    Bind(program_id);
+    _physicsDispatch.Calculate(_mesh_size, false);
   }
 }
 template <GLenum Prim>
@@ -50,16 +71,19 @@ void Object<Prim>::Draw() const
 {
   if (_visible)
   {
-    _shape->Bind();
-    uint32_t programID =
-        _shape->EnableTesselation()
-            ? ProgramDispatch::GetInstance().GetTesselationPipeline().ID()
-            : ProgramDispatch::GetInstance().GetSimplePipeline().ID();
+    Program& renderer =
+        _shape->GetTesselation() == true
+            ? ProgramDispatch::GetInstance()->GetTesselationPipeline()
+            : ProgramDispatch::GetInstance()->GetSimplePipeline();
 
-    _physicsDispatch.GetParticleMeshBuffer().Bind(programID);
+    if (!renderer.isLinked()) renderer.Link();
+    renderer.Bind();
+
+    _shape->Bind(renderer.ID());
+    Simulator::GetInstance()->BindUniforms(renderer.ID());
+    _physicsDispatch.GetParticleMeshBuffer().Bind(renderer.ID());
     _(glDrawElements(_shape->GetDrawPrimitive(), _shape->GetVA().Size(),
                      _shape->GetVA().IndexBufferType(), nullptr));
-    _physicsDispatch.GetParticleMeshBuffer().Unbind(programID);
   }
 }
 
@@ -67,11 +91,21 @@ template <GLenum Prim>
 details::detail_controls_t Object<Prim>::Details()
 {
   auto details = Entity::Details();
-  details.push_back({"Location", this->_shape->GetLocation().ExposeToUI()});
-  details.push_back({"Rotation", this->_shape->GetRotate().ExposeToUI()});
-  details.push_back({"Scale", this->_shape->GetScale().ExposeToUI()});
+  auto& shape_properties = this->_shape->GetShapeProperties();
+
+  details.push_back({"Location", shape_properties._location.ExposeToUI()});
+  details.push_back({"Rotation", shape_properties._rotation.ExposeToUI()});
+  details.push_back({"Scale", shape_properties._scale.ExposeToUI()});
   details.push_back(
-      {"Subdivision", this->_shape->GetSubdivision().ExposeToUI()});
-  details.push_back({"Radius", this->_shape->GetRadius().ExposeToUI()});
+      {"Subdivision", shape_properties._subdivision.ExposeToUI()});
+  details.push_back({"Color type", [&shape_properties]()
+                     {
+                       ImGui::Combo(
+                           "##Color_type",
+                           (int32_t*)&shape_properties._color.first.GetValue(),
+                           Essentials::ColorPropertyTolist());
+                     }});
+  details.push_back({"Color", shape_properties._color.second.ExposeToUI()});
+  details.push_back({"Radius", shape_properties._radius.ExposeToUI()});
   return details;
 }

@@ -1,6 +1,12 @@
 #include "Program.h"
 
+#include <initializer_list>
+#include <iostream>
+#include <string>
 #include <utility>
+
+#include "Debug.h"
+#include "GL/glew.h"
 
 Program::Program()
 {
@@ -17,25 +23,11 @@ Program::Program(
   }
 }
 
-// Program::Program(Program const& objCopy)
-//	:_shaderList{ objCopy._shaderList }
-//{
-//	_id = _(glCreateProgram());
-// }
-
 Program::Program(Program&& objMove)
     : _shaderList{std::exchange(objMove._shaderList, {})},
       _id{std::exchange(objMove._id, {})}
 {
 }
-
-// Program& Program::operator=(Program const& objCopy)
-//{
-//	this->~Program();
-//	_id = _(glCreateProgram());
-//	_shaderList = objCopy._shaderList;
-//	return *this;
-// }
 
 Program& Program::operator=(Program&& objMove)
 {

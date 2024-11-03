@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Debug.h>
-#include <GL/glew.h>
-
 #include <utility>
 #include <vector>
+
+#include "Debug.h"
+#include "GL/glew.h"
 
 template <GLenum target, typename T>
 class BufferI
@@ -18,7 +18,6 @@ class BufferI
 
  protected:
   void CreateBuffer(GLenum purpose);
-  explicit BufferI();
   explicit BufferI(GLenum purpose);
   BufferI(BufferI const& objCopy) = delete;
   explicit BufferI(BufferI&& objMove);
@@ -36,19 +35,17 @@ class BufferI
 };
 
 template <GLenum target, typename T>
-inline BufferI<target, T>::BufferI()
-{
-}
-
-template <GLenum target, typename T>
 inline void BufferI<target, T>::CreateBuffer(GLenum purpose)
 {
-  glCreateBuffers(1, &_id);
+  if (glIsBuffer(_id) == GL_FALSE)
+  {
+    _(glCreateBuffers(1, &_id));
+  }
   _purpose = purpose;
 }
 
 template <GLenum target, typename T>
-inline BufferI<target, T>::BufferI(GLenum purpose)
+inline BufferI<target, T>::BufferI(GLenum purpose) : _purpose{purpose}
 {
   CreateBuffer(purpose);
 }
@@ -58,6 +55,7 @@ inline BufferI<target, T>::BufferI(BufferI<target, T>&& objMove)
     : _id{std::exchange(objMove._id, UINT32_MAX)},
       _purpose{std::exchange(objMove._purpose, 0U)}
 {
+  CreateBuffer(this->_purpose);
 }
 
 template <GLenum target, typename T>
@@ -78,7 +76,7 @@ inline BufferI<target, T>::~BufferI()
 {
   if (glIsBuffer(_id))
   {
-    glDeleteBuffers(1, &_id);
+    _(glDeleteBuffers(1, &_id));
   }
   _id = UINT32_MAX;
   _purpose = 0;
@@ -87,13 +85,16 @@ inline BufferI<target, T>::~BufferI()
 template <GLenum target, typename T>
 inline void BufferI<target, T>::Bind() const
 {
-  _(glBindBuffer(target, _id));
+  if (glIsBuffer(_id))
+  {
+    _(glBindBuffer(target, _id));
+  }
 }
 
 template <GLenum target, typename T>
 inline void BufferI<target, T>::Unbind() const
 {
-  glBindBuffer(target, 0);
+  _(glBindBuffer(target, 0));
 }
 template <GLenum target, typename T>
 inline uint64_t const BufferI<target, T>::ID() const

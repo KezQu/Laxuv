@@ -11,7 +11,7 @@
 #include "Particles.h"
 #include "PhysicsDispatch.h"
 #include "Point.h"
-#include "Qube.h"
+#include "Cube.h"
 #include "Sphere.h"
 #include "Square.h"
 #include "Toolbar.h"

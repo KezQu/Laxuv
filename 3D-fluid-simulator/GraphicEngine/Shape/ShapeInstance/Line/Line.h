@@ -11,5 +11,4 @@ public:
 	Line& operator=(Line const& obj_copy) = delete;
 	Line& operator=(Line&& obj_move) = default;
 	~Line() override = default;
-	Essentials::DistributionShape GetParticleDistribution() override;
 };

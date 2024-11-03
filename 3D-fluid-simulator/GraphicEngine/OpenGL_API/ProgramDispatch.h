@@ -14,8 +14,8 @@ class ProgramDispatch
   ProgramDispatch();
 
  public:
-  static ProgramDispatch& GetInstance();
-  void CleanUp();
+  static std::unique_ptr<ProgramDispatch>& GetInstance();
+  static void CleanUp();
   Program& GetSimplePipeline();
   Program& GetTesselationPipeline();
 };

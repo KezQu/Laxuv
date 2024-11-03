@@ -5,20 +5,22 @@ layout(location = 1) in vec3 normal;
 
 out vec4 BaseColor;
 
-uniform vec3 ambientLightColor = vec3(1.0);
-uniform vec3 diffuseLightDirection = vec3(1.0);
-uniform vec3 diffuseLightColor = vec3(0.0);
+const uint NONE = 0;
+
+uniform vec3 ambientColor = vec3(1.0);
+uniform vec3 diffuseDirection = vec3(1.0);
+uniform vec3 diffuseColor = vec3(0.0);
+uniform uint colorType;
 
 void main(){
-	if(gl_FrontFacing){
-		float diffuseLightStrength = 0;
-		if(length(diffuseLightDirection) != 0){
-			diffuseLightStrength = max(dot(normalize(diffuseLightDirection), normal), 0.0);
+	if(colorType != NONE){
+		float diffuseStrength = 0;
+		if(length(diffuseDirection) != 0){
+			diffuseStrength = max(dot(normalize(diffuseDirection), normal), 0.0);
 		}
-		BaseColor = (diffuseLightStrength * vec4(diffuseLightColor, 1.0) + vec4(ambientLightColor, 1.0)) * inColorFrag;
-	}
-	else{
-		BaseColor = vec4(0,0,0,1);
+		BaseColor = (diffuseStrength * vec4(diffuseColor, 1.0) + vec4(ambientColor, 1.0)) * inColorFrag;
+	}else{
+			BaseColor = inColorFrag;
 	}
 }
  

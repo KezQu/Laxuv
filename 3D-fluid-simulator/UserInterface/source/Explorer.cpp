@@ -5,19 +5,12 @@
 
 #include "Essentials.h"
 #include "Interface.h"
-#include "Line.h"
-#include "Object.h"
-#include "Particles.h"
-#include "Point.h"
-#include "Qube.h"
 #include "Simulator.h"
-#include "Sphere.h"
-#include "Square.h"
-#include "VertexArray.h"
 #include "imgui.h"
 
 uint64_t Explorer::selected = 0;
-Explorer::entity_selector_t Explorer::entity_select = {0, 0};
+Explorer::entity_selector_t Explorer::entity_select = {
+    Essentials::EntityType::NONE, Essentials::EntityShape::NONE};
 
 Explorer::Explorer(ImVec2 const& size, ImVec2 const& position)
     : Interface(size, position,
@@ -57,16 +50,19 @@ void Explorer::CreateEntitySelector()
   {
     ImGui::SameLine();
     ImGui::SetNextItemWidth(_size.x / 3.);
-    ImGui::Combo("##EntityType", &entity_select.first, " \0Object\0Particle\0");
+    ImGui::Combo("##EntityType", (int32_t*)&entity_select.first,
+                 Essentials::EntityTypeTolist());
     ImGui::SameLine();
     ImGui::SetNextItemWidth(_size.x / 3.);
-    ImGui::Combo("##EntityShape", &entity_select.second,
-                 Essentials::DistShapeTolist());
+    ImGui::Combo("##EntityShape", (int32_t*)&entity_select.second,
+                 Essentials::EntityShapeTolist());
     ImGui::SameLine();
     if (ImGui::Button("Add Entity##AddEntity", {_size.x / 3.f, 0.f}) &&
-        entity_select.first != 0 && entity_select.second != 0)
+        entity_select.first != Essentials::EntityType::NONE &&
+        entity_select.second != Essentials::EntityShape::NONE)
     {
-      SelectEntity();
+      Simulator::GetInstance()->CreateEntity(entity_select.first,
+                                             entity_select.second);
     }
   }
   ImGui::EndChild();
@@ -82,7 +78,7 @@ void Explorer::CreateEntityExplorer()
       ImGui::TableSetupColumn("##Visibilty", ImGuiTableColumnFlags_WidthFixed,
                               20.);
       ImGui::TableSetupColumn("##Name", ImGuiTableColumnFlags_WidthStretch);
-      for (auto& [k, v] : simulatorInstance.GetEntities())
+      for (auto& [k, v] : Simulator::GetInstance()->GetEntities())
       {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
@@ -110,10 +106,10 @@ void Explorer::CreateWorldControls()
                           ImVec2(_size.x, _size.y / 4 - 10)))
     {
       ImGui::TableSetupColumn("##WorldInfoName",
-                              ImGuiTableColumnFlags_WidthFixed, _size.x / 2.);
+                              ImGuiTableColumnFlags_WidthFixed, _size.x / 3.);
       ImGui::TableSetupColumn("##WorldInfoValue",
                               ImGuiTableColumnFlags_WidthStretch);
-      for (auto& info : simulatorInstance.GetDetails())
+      for (auto& info : Simulator::GetInstance()->GetDetails())
       {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
@@ -140,11 +136,13 @@ void Explorer::CreateEntityControls()
         selected != 0)
     {
       ImGui::TableSetupColumn("##InfoName", ImGuiTableColumnFlags_WidthFixed,
-                              _size.x / 2.);
+                              _size.x / 3.);
       ImGui::TableSetupColumn("##InfoValues",
                               ImGuiTableColumnFlags_WidthStretch);
 
-      for (auto& info : simulatorInstance.GetEntities().at(selected)->Details())
+      auto& simulatorInstance = Simulator::GetInstance();
+      for (auto& info :
+           simulatorInstance->GetEntities().at(selected)->Details())
       {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
@@ -158,52 +156,23 @@ void Explorer::CreateEntityControls()
       }
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
-      if (ImGui::Button("Delete", ImVec2(-1, -1)))
+      if (ImGui::Button("Delete", ImVec2(-1, 50)))
       {
-        simulatorInstance.Delete(selected);
+        simulatorInstance->Delete(selected);
         selected = 0;
       }
       ImGui::TableSetColumnIndex(1);
-      if (ImGui::Button("Recompile", ImVec2(-1, -1)))
+      if (ImGui::Button("Recompile", ImVec2(-1, 50)))
       {
-        simulatorInstance.GetEntities()[selected]->Initialize();
+        auto old_sim_state_saved =
+            Simulator::GetInstance()->GetSimulationState();
+        Simulator::GetInstance()->SetSimulationState(
+            Essentials::SimulationState::INIT);
+        simulatorInstance->GetEntities()[selected]->Initialize();
+        Simulator::GetInstance()->SetSimulationState(old_sim_state_saved);
       }
     }
     ImGui::EndTable();
   }
   ImGui::EndChild();
-}
-
-void Explorer::SelectEntity()
-{
-  switch (entity_select.second)
-  {
-    case 1:
-      entity_select.first == 1
-          ? simulatorInstance.Append(Object{new Point{}})
-          : simulatorInstance.Append(Particles{new Point{}, 1U});
-      break;
-    case 2:
-      entity_select.first == 1
-          ? simulatorInstance.Append(Object{new Line{}})
-          : simulatorInstance.Append(Particles{new Line{}, 1U});
-      break;
-    case 3:
-      entity_select.first == 1
-          ? simulatorInstance.Append(Object{new Square{}})
-          : simulatorInstance.Append(Particles{new Square{Vertex{}, 1.f}, 1U});
-      break;
-    case 4:
-      entity_select.first == 1
-          ? simulatorInstance.Append(Object{new Qube{}})
-          : simulatorInstance.Append(Particles{new Qube{Vertex{}, 1.f}, 1U});
-      break;
-    case 5:
-      entity_select.first == 1
-          ? simulatorInstance.Append(Object{new Sphere{}})
-          : simulatorInstance.Append(Particles{new Sphere{Vertex{}, 1.f}, 1U});
-      break;
-    default:
-      break;
-  }
 }
