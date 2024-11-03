@@ -32,11 +32,6 @@ const uint S_SQUARE = 3;
 const uint S_CUBE = 4;
 const uint S_SPHERE = 5;
 
-const uint VELOCITY = 1;
-const uint DENSITY_ERROR = 2;
-const uint DIVERGENCE_ERROR = 3;
-const uint PRESSURE = 4;
-
 uniform mat4 model;
 uniform vec3 scale;
 
@@ -51,8 +46,6 @@ uniform float kernel_a;
 uniform float shapeRadius;
 uniform float influenceKernel;
 uniform float searchKernel;
-uniform float colorOpacity;
-uniform uint colorType;
 
 uniform float viscosityFactor;
 uniform float dt;
@@ -61,8 +54,7 @@ uniform float mass;
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	vec4 VolumeDensityPressureRohash;
-	vec4 color;
+	vec4 VolumeDensityPressureDro_Dt;
 	uint neighbours[MaxNeighbours];
 };
 
@@ -164,7 +156,7 @@ float CalculateDFSPHFactor(uint index_x){
 		sum += m_j * gradW_ij;
 		sum_of_squared += pow(length(m_j * gradW_ij), 2);
 	}
-	return pow(particle[index_x].VolumeDensityPressureRohash.y, 2) / (pow(length(sum), 2) + sum_of_squared + 1e-6);
+	return pow(particle[index_x].VolumeDensityPressureDro_Dt.y, 2) / (pow(length(sum), 2) + sum_of_squared + 1e-6);
 }
 
 float CalculateDensity(uint index_x){
@@ -202,8 +194,8 @@ float CalculateDerivDensity(uint index_x){
 }
 
 vec3 CalculateGradPressure(uint index_x){
-	const float ro_i = particle[index_x].VolumeDensityPressureRohash.y;
-	const float p_i = particle[index_x].VolumeDensityPressureRohash.z;
+	const float ro_i = particle[index_x].VolumeDensityPressureDro_Dt.y;
+	const float p_i = particle[index_x].VolumeDensityPressureDro_Dt.z;
 	
 	vec3 kernel_sum = vec3(0);
 	uint curr_neighbour = 0;
@@ -213,8 +205,8 @@ vec3 CalculateGradPressure(uint index_x){
 			break;
 		}
 		const float m_j = mass;
-		const float ro_j = particle[curr_neighbour].VolumeDensityPressureRohash.y;
-		const float p_j = particle[curr_neighbour].VolumeDensityPressureRohash.z;
+		const float ro_j = particle[curr_neighbour].VolumeDensityPressureDro_Dt.y;
+		const float p_j = particle[curr_neighbour].VolumeDensityPressureDro_Dt.z;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 
 		kernel_sum += m_j * (p_i / pow(ro_i, 2) + p_j / (ro_j * ro_i)) * CalculateGradKernelWeight(x_ij);
@@ -233,44 +225,12 @@ vec3 CalculateViscosity(uint index_x){
 			break;
 		}
 		const float m_j = mass;
-		const float ro_j = particle[curr_neighbour].VolumeDensityPressureRohash.y;
+		const float ro_j = particle[curr_neighbour].VolumeDensityPressureDro_Dt.y;
 		const vec3 v_ij = particle[index_x].velocityDFSPHfactor.xyz - particle[curr_neighbour].velocityDFSPHfactor.xyz;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 		kernel_sum += (m_j * dot(v_ij, x_ij) * CalculateGradKernelWeight(x_ij)) / (ro_j * (pow(length(x_ij), 2) + 0.01));
 	}
 	return kernel_sum * viscosityFactor * 2 * (d + 2);
-}
-
-float CalculateAvgDensityHash(uint index_x){
-	
-	float kernel_sum = 0.f;
-	uint curr_neighbour = 0;
-	int i = 0;
-	for(; i < MaxNeighbours; i++){
-		curr_neighbour = particle[index_x].neighbours[i];
-		if(curr_neighbour == MaxValueNeighbour){
-			break;
-		}
-		const float ro_j = particle[curr_neighbour].VolumeDensityPressureRohash.w;
-		kernel_sum += ro_j;
-	}
-	return kernel_sum / i;
-}
-
-float CalculateAvgDerivDensity(uint index_x){
-	
-	float kernel_sum = 0.f;
-	uint curr_neighbour = 0;
-	int i = 0;
-	for(; i < MaxNeighbours; i++){
-		curr_neighbour = particle[index_x].neighbours[i];
-		if(curr_neighbour == MaxValueNeighbour){
-			break;
-		}
-		const float dro_j = CalculateDerivDensity(curr_neighbour);
-		kernel_sum += dro_j;
-	}
-	return kernel_sum / i;
 }
 
 void CheckWorldBounds(uint index_x){
@@ -318,7 +278,7 @@ void UpdateTerrainOrientation(uint index_x){
 
 void CheckCollisions(uint index_x){
 	for(uint i = 0; i < MaxObstacles; i++){
-		const vec3 scale = terrain[i].bounds.xyz * terrain[i].bounds.w;// + shapeRadius;
+		const vec3 scale = terrain[i].bounds.xyz * terrain[i].bounds.w + shapeRadius;
 		const mat4 scale_mat = mat4(scale.x,0,0,0,
 									0,scale.y,0,0,
 									0,0,scale.z,0,
@@ -327,103 +287,52 @@ void CheckCollisions(uint index_x){
 										0,1,0,terrain[i].model[3].y,
 										0,0,1,terrain[i].model[3].z,
 										0,0,0,					  1);
-		const mat4 t_model = terrain[i].model * scale_mat;
-		const mat4 t_model_1 = inverse(t_model);
+
+		const mat4 t_model_1 = inverse(terrain[i].model * scale_mat);
 		const vec3 pos_local = particle[index_x].position.xyz;
 		const vec3 vel_local = particle[index_x].velocityDFSPHfactor.xyz;
-		const vec3 pos_vdt_local = pos_local + dt * vel_local;
-		vec4 pos = t_model_1 * vec4(pos_local, 1);
-		vec4 vel = t_model_1 * vec4(vel_local, 1);
-		const vec4 pos_vdt = pos + dt * vel;
+		const vec4 pos = t_model_1 * vec4(pos_local, 1);
+		const vec4 pos_vdt = t_model_1 * vec4(pos_local + dt * vel_local, 1);
 
 		vec3 surface_dir = vec3(0);
-		vec3 correction = vec3(1);
+		vec3 correction = vec3(0);
+		vec3 abs_pos = abs(pos.xyz);
 
 		if(uint(terrain[i].center.w) == S_CUBE){
-			if((abs(pos_vdt.x) > 1 && abs(pos.x) < 1) && (abs(pos.y) < 1 && abs(pos.z) < 1)){
-				if(pos.x < 0){
-					surface_dir += vec3(1,0,0);
-				}else{
-					surface_dir += vec3(-1,0,0);
+			float max_side = max(abs_pos.x, max(abs_pos.y, abs_pos.z));
+			if(abs_pos.x < 1 && abs_pos.y < 1 && abs_pos.z < 1){
+				if(max_side == abs_pos.x){
+					surface_dir += pos.x < 0.f ? vec3(1,0,0) : vec3(-1,0,0);
+				}if(max_side == abs_pos.y){
+					surface_dir += pos.y < 0.f ? vec3(0,1,0) : vec3(0,-1,0);
+				}if(max_side == abs_pos.z){
+					surface_dir += pos.z < 0.f ? vec3(0,0,1) : vec3(0,0,-1);
 				}
-			}if((abs(pos_vdt.y) > 1 && abs(pos.y) < 1) && (abs(pos.x) < 1 && abs(pos.z) < 1)){
-				if(pos.y < 0){
-					surface_dir += vec3(0,1,0);
-				}else{
-					surface_dir += vec3(0,-1,0);
-				}
-			}if((abs(pos_vdt.z) > 1 && abs(pos.z) < 1) && (abs(pos.x) < 1 && abs(pos.y) < 1)){
-				if(pos.z < 0){
-					surface_dir += vec3(0,0,1);
-				}else{
-					surface_dir += vec3(0,0,-1);
-				}
-			}
-			if(length(surface_dir) > 0){
-				surface_dir = (t_model * vec4(surface_dir, 1)).xyz;
+				correction = vec3(-1);
 			}
 		}else if(uint(terrain[i].center.w) == S_SPHERE){
 			if(length(pos.xyz) <= 1){
-				surface_dir = (transpose(transpose(terrain[i].model) * inverse(translate_mat)) * inverse(scale_mat) * pos).xyz;
-//				correction = vec3(1 - length(pos_vdt_local));
+				surface_dir = pos.xyz;
+				correction = vec3(1);
 			}
 		}
+		if(length(surface_dir) > 0){
+			surface_dir = (transpose(transpose(terrain[i].model) * inverse(translate_mat)) * inverse(scale_mat) * vec4(surface_dir, 1)).xyz;
+		}
+//		if(uint(terrain[i].center.w) == S_CUBE){
+//			if(abs(pos_vdt).x < 1 && abs(pos_vdt).y < 1 && abs(pos_vdt).z < 1){
+//			}
+//		}else if(uint(terrain[i].center.w) == S_SPHERE){
+//			if(length(pos_vdt.xyz) <= 1){
+//			}
+//		}
+		particle[index_x].position.xyz += correction * surface_dir * 5e-1;
 		particle[index_x].velocityDFSPHfactor.xyz = BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, surface_dir);
 	}
 }
 
-vec4 CalculateColor(float property_value){
-	vec4 color = vec4(0, 0, 0, colorOpacity);
-	const float boundCheck = 0.25f;
-	
-	if (property_value <= -1.f){
-		color.xyz = vec3(1);
-	}
-	else if(property_value < 0.f){
-		color.xyz = vec3(0, 0, 1 - property_value);
-	}
-	else if(property_value < boundCheck){
-		color.xyz = vec3(0, property_value * 4 , 1);
-	}
-	else if(property_value < 2 * boundCheck){
-		color.xyz = vec3(0, 1, 1 - (property_value - boundCheck) * 4);
-	}
-	else if(property_value < 3 * boundCheck){
-		color.xyz = vec3((property_value - 2 * boundCheck) * 4, 1, 0);
-	}
-	else if(property_value <= 4 * boundCheck){
-		color.xyz = vec3(1, 1 - (property_value - 3 * boundCheck) * 4, 0);
-	}
-	else{
-		color.xyz = vec3(0.05);
-	}
-	return color;
-}
-
-void ChooseParticleColor(uint index_x){
-	const float max_speed = 100.f;
-	const float density0 = mass;
-	const float d_density = CalculateDerivDensity(index_x);
-	vec4 temp_color = vec4(0);
-	switch(colorType){
-		case VELOCITY:
-			temp_color = CalculateColor(length(particle[index_x].velocityDFSPHfactor.xyz) / max_speed);
-			break;
-		case DENSITY_ERROR:
-			temp_color = CalculateColor(abs(CalculateDensity(index_x) - density0) / density0);
-			break;
-		case DIVERGENCE_ERROR:
-			temp_color = CalculateColor(abs(d_density) * 1e+2);
-			break;
-		case PRESSURE:
-			temp_color = CalculateColor(2 * log(abs(particle[index_x].VolumeDensityPressureRohash.z) + 1) / (mass * 1e+3));
-			break;
-	}
-	particle[index_x].color = temp_color;
-}
-
 void CalculateExternalForces(uint index_x){
-	const float ro_i = particle[index_x].VolumeDensityPressureRohash.y;
+	const float ro_i = particle[index_x].VolumeDensityPressureDro_Dt.y;
 
 	vec3 viscosity_acceleration = CalculateViscosity(index_x) / ro_i;
 	particle[index_x].velocityDFSPHfactor.xyz += dt * (viscosity_acceleration - vec3(0, g, 0));
@@ -432,18 +341,18 @@ void SolveDensityError(uint index_x){
 	const float density0 = mass;
 	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
 	
-	float ro_hash = particle[index_x].VolumeDensityPressureRohash.y + dt * CalculateDerivDensity(index_x);
+	float ro_hash = particle[index_x].VolumeDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
 	for(int i = 0; i < 500; i++){
-		particle[index_x].VolumeDensityPressureRohash.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
+		particle[index_x].VolumeDensityPressureDro_Dt.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
 
 		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
-		ro_hash = particle[index_x].VolumeDensityPressureRohash.y + dt * CalculateDerivDensity(index_x);
+		ro_hash = particle[index_x].VolumeDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
 
 		if((abs((ro_hash - density0)) / density0 < 2e-2) && i > 5){
 			break;
 		}
 	}
-	particle[index_x].VolumeDensityPressureRohash.w = abs(particle[index_x].VolumeDensityPressureRohash.y - density0) / density0;
+	particle[index_x].VolumeDensityPressureDro_Dt.w = abs(particle[index_x].VolumeDensityPressureDro_Dt.y - density0) / density0;
 
 }
 void UpdatePosition(uint index_x){
@@ -453,15 +362,16 @@ void UpdatePosition(uint index_x){
 	particle[index_x].position.xyz += dt * particle[index_x].velocityDFSPHfactor.xyz;
 }
 void SolveDivergenceError(uint index_x){
-	particle[index_x].VolumeDensityPressureRohash.y = CalculateDensity(index_x);
+	particle[index_x].VolumeDensityPressureDro_Dt.y = CalculateDensity(index_x);
 	particle[index_x].velocityDFSPHfactor.w = CalculateDFSPHFactor(index_x);
 	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
 
 	float d_ro = CalculateDerivDensity(index_x);
 	for(int i = 0; i < 500 && !((abs(d_ro) < 1e-2) && i > 2); i++){
-		particle[index_x].VolumeDensityPressureRohash.z = d_ro * factor_x / dt;
+		particle[index_x].VolumeDensityPressureDro_Dt.z = d_ro * factor_x / dt;
 			
 		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
 		d_ro = CalculateDerivDensity(index_x);
 	}
+	particle[index_x].VolumeDensityPressureDro_Dt.w = d_ro;
 }

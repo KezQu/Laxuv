@@ -35,6 +35,8 @@ uniform vec3 scale;
 uniform uint physicsType = NONE;
 uniform uint SimulatorState = IDLE;
 
+uniform vec3 initVelocity;
+
 uniform float shapeRadius;
 uniform float particleSpacing;
 uniform float influenceKernel;
@@ -44,8 +46,7 @@ uniform float mass;
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	vec4 VolumeDensityPressureRohash;
-	vec4 color;
+	vec4 VolumeDensityPressureDro_Dt;
 	uint neighbours[MaxNeighbours];
 };
 
@@ -95,7 +96,6 @@ void SolveDensityError(uint index_x);
 void SolveDivergenceError(uint index_x);
 void UpdatePosition(uint index_x);
 
-void ChooseParticleColor(uint index_x);
 void CheckWorldBounds(uint index_x);
 
 void UpdateTerrainOrientation(uint index_x);
@@ -103,16 +103,16 @@ void CheckCollisions(uint index_x);
 
 void main(){
 	if(SimulatorState == INIT){
-		particle[index].velocityDFSPHfactor = vec4(0);
+		particle[index].velocityDFSPHfactor = vec4(initVelocity, 0);
 		particle[index].position = vec4(0);
-		particle[index].VolumeDensityPressureRohash = vec4(0);
+		particle[index].VolumeDensityPressureDro_Dt = vec4(0);
 		if(physicsType != NONE){
 			particle[index].position = InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * particleSpacing * shapeRadius;
 		}
 		if(physicsType == DYNAMIC){
 			FindNeighbours(index, MaxParticles);
 
-			particle[index].VolumeDensityPressureRohash.y = CalculateDensity(index);
+			particle[index].VolumeDensityPressureDro_Dt.y = CalculateDensity(index);
 			particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
 		}
 		else if (physicsType == STATIC){
@@ -124,7 +124,7 @@ void main(){
 			UpdateTerrainOrientation(index);
 		}
 		else if(physicsType == DYNAMIC){
-//			particle[index].position.xyz = (model * vec4(particle[index].position.xyz * scale, 1.0)).xyz;
+			particle[index].position.xyz = (model * vec4(particle[index].position.xyz * scale, 1.0)).xyz;
 			CalculateExternalForces(index);
 
 			SolveDensityError(index);
@@ -134,8 +134,7 @@ void main(){
 			FindNeighbours(index, MaxParticles);
 
 			SolveDivergenceError(index);
-//			particle[index].position.xyz = (inverse(model) * vec4(particle[index].position.xyz / scale, 1.0)).xyz;
+			particle[index].position.xyz = (inverse(model) * vec4(particle[index].position.xyz, 1.0)).xyz / scale;
 		}
-		ChooseParticleColor(index);
 	}
 }

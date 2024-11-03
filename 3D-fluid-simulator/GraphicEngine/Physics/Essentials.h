@@ -1,9 +1,10 @@
 #pragma once
 
-#include <Uniform.h>
-
 #include <cstdint>
-#include <glm/vec4.hpp>
+#include <utility>
+
+#include "Uniform.h"
+#include "glm/fwd.hpp"
 
 namespace Essentials
 {
@@ -74,6 +75,7 @@ char const* PhysTypesTolist() noexcept;
 enum class ColorProperty : uint32_t
 {
   NONE,
+  CUSTOM,
   VELOCITY,
   DENSITY_ERROR,
   DIVERGENCE_ERROR,
@@ -92,7 +94,7 @@ struct ParticleBufferProperties
 {
   glm::vec4 velocityDFSPHfactor{0};
   glm::vec4 position{0};
-  glm::vec4 VolumeDensityPressureRohash{0};
+  glm::vec4 VolumeDensityPressureDro_Dt{0};
   glm::vec4 color{0};
   uint32_t neighbours[MaxNeighbours];
 };
@@ -100,8 +102,27 @@ struct ParticleBufferProperties
 auto const lengthDefaultProperties =
     ValueProperties{0.1f, 600.f, 1.f, "%.1f mm"};
 
+auto const colorDefaultProperties = ValueProperties{0.f, 1.f, 1.f, "%.2f"};
+
+struct Light
+{
+  Uniform<glm::vec3, float> ambient_color{glm::vec3{.2f}, "ambientColor",
+                                          colorDefaultProperties};
+  struct
+  {
+    Uniform<glm::vec3, float> color{glm::vec3{1.f}, "diffuseColor",
+                                    colorDefaultProperties};
+    Uniform<glm::vec3, float> direction{
+        glm::vec3{-0.3f, -0.2f, -1.f}, "diffuseDirection",
+        ValueProperties{-1.f, 1.f, 1.f, "%.2f"}};
+  } diffuse;
+};
+
 struct ParticleProperties
 {
+  Uniform<glm::vec3, float> init_velocity{
+      glm::vec3{0.f}, "initVelocity",
+      ValueProperties{-50.f, 50.f, 1.f, "%.1f m/s"}};
   Uniform<float> particle_spacing{2.f, "particleSpacing",
                                   lengthDefaultProperties};
   Uniform<uint32_t> distribution_shape{
@@ -132,15 +153,12 @@ struct ShapeProperties
       ValueProperties{-1200.f, 1200.f, 1.f, "%.1f mm"}};
   Uniform<uint32_t> _subdivision{5U, "subdivision", ValueProperties{1U, 50U}};
   Uniform<float> _radius{1.f, "shapeRadius", lengthDefaultProperties};
-  std::pair<Uniform<uint32_t>, Uniform<float>> _color{
+  std::pair<Uniform<uint32_t>, Uniform<glm::vec4, float>> _color{
       {static_cast<uint32_t>(Essentials::ColorProperty::NONE), "colorType"},
-      {0.5f, "colorOpacity", ValueProperties{0.f, 1.f, 1.f, "%.2f"}}};
+      {glm::vec4{0.5f, 0.5f, 0.5f, 1.f}, "color", colorDefaultProperties}};
   bool _enableTesselation{false};
   bool _enableLight{true};
 
   Uniform<glm::mat4, float> Model() const;
 };
 }  // namespace Essentials
-
-std::ostream& operator<<(std::ostream& out,
-                         Essentials::ParticleProperties const& particle);

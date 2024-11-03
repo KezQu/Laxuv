@@ -66,7 +66,7 @@ struct HydroTest
     {
       particle[index].velocityDFSPHfactor = vec4(0);
       particle[index].position = vec4(0);
-      particle[index].VolumeDensityPressureRohash = vec4(0);
+      particle[index].VolumeDensityPressureDro_Dt = vec4(0);
       particle[index].position =
           Cube(index, MaxParticles) * particleRadius * particleSpacing;
       FindNeighbours(index, MaxParticles);
@@ -74,8 +74,8 @@ struct HydroTest
     }
     for (uint index = 0; index < MaxParticles; index++)
     {
-      particle[index].VolumeDensityPressureRohash.y = CalculateDensity(index);
-      particle[index].VolumeDensityPressureRohash.x =
+      particle[index].VolumeDensityPressureDro_Dt.y = CalculateDensity(index);
+      particle[index].VolumeDensityPressureDro_Dt.x =
           (1. / CalculateDensity(index)) * mass;
       particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
     }
@@ -148,7 +148,7 @@ struct HydroTest
       sum += m_j * gradW_ij;
       sum_of_squared += pow(length(m_j * gradW_ij), 2);
     }
-    return pow(particle[index_x].VolumeDensityPressureRohash.y, 2) /
+    return pow(particle[index_x].VolumeDensityPressureDro_Dt.y, 2) /
            (pow(length(sum), 2) + sum_of_squared + 1e-6);
   }
 
@@ -213,8 +213,8 @@ struct HydroTest
 
   vec3 CalculateGradPressure(uint index_x)
   {
-    const float ro_i = particle[index_x].VolumeDensityPressureRohash.y;
-    const float p_i = particle[index_x].VolumeDensityPressureRohash.z;
+    const float ro_i = particle[index_x].VolumeDensityPressureDro_Dt.y;
+    const float p_i = particle[index_x].VolumeDensityPressureDro_Dt.z;
 
     vec3 kernel_sum = vec3(0);
     uint curr_neighbour = 0;
@@ -226,8 +226,8 @@ struct HydroTest
         break;
       }
       const float m_j = mass;
-      const float ro_j = particle[curr_neighbour].VolumeDensityPressureRohash.y;
-      const float p_j = particle[curr_neighbour].VolumeDensityPressureRohash.z;
+      const float ro_j = particle[curr_neighbour].VolumeDensityPressureDro_Dt.y;
+      const float p_j = particle[curr_neighbour].VolumeDensityPressureDro_Dt.z;
       const vec3 x_ij =
           vec3(particle[index_x].position.x, particle[index_x].position.y,
                particle[index_x].position.z) -
@@ -255,7 +255,7 @@ struct HydroTest
         break;
       }
       const float m_j = mass;
-      const float ro_j = particle[curr_neighbour].VolumeDensityPressureRohash.y;
+      const float ro_j = particle[curr_neighbour].VolumeDensityPressureDro_Dt.y;
       const vec3 v_ij = vec3(particle[index_x].velocityDFSPHfactor.x,
                              particle[index_x].velocityDFSPHfactor.y,
                              particle[index_x].velocityDFSPHfactor.z) -
@@ -286,7 +286,7 @@ struct HydroTest
       {
         break;
       }
-      const float ro_j = particle[curr_neighbour].VolumeDensityPressureRohash.y;
+      const float ro_j = particle[curr_neighbour].VolumeDensityPressureDro_Dt.y;
       kernel_sum += ro_j;
     }
     return kernel_sum / i;
@@ -319,7 +319,7 @@ struct HydroTest
     for (uint index = 0; index < MaxParticles; index++)
     {
       const float m_i = mass;
-      const float ro_i = particle[index].VolumeDensityPressureRohash.y;
+      const float ro_i = particle[index].VolumeDensityPressureDro_Dt.y;
 
       vec3 viscosity_acceleration = CalculateViscosity(index) / ro_i;
       particle[index].velocityDFSPHfactor.x +=
@@ -337,9 +337,9 @@ struct HydroTest
     {
       for (uint index = 0; index < MaxParticles; index++)
       {
-        float ro_hash = particle[index].VolumeDensityPressureRohash.y +
+        float ro_hash = particle[index].VolumeDensityPressureDro_Dt.y +
                         dt * CalculateDerivDensity(index);
-        particle[index].VolumeDensityPressureRohash.z =
+        particle[index].VolumeDensityPressureDro_Dt.z =
             (ro_hash - density0) * particle[index].velocityDFSPHfactor.w /
             pow(dt, 2);
       }
@@ -392,7 +392,7 @@ struct HydroTest
     for (uint index = 0; index < MaxParticles; index++)
     {
       FindNeighbours(index, MaxParticles);
-      particle[index].VolumeDensityPressureRohash.y = CalculateDensity(index);
+      particle[index].VolumeDensityPressureDro_Dt.y = CalculateDensity(index);
       particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
       particle[index].position.w = abs(CalculateAvgDensity(index) - density0);
     }
@@ -401,7 +401,7 @@ struct HydroTest
     {
       for (uint index = 0; index < MaxParticles; index++)
       {
-        particle[index].VolumeDensityPressureRohash.z =
+        particle[index].VolumeDensityPressureDro_Dt.z =
             CalculateDerivDensity(index) *
             particle[index].velocityDFSPHfactor.w / dt;
       }

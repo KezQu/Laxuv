@@ -106,7 +106,7 @@ void Explorer::CreateWorldControls()
                           ImVec2(_size.x, _size.y / 4 - 10)))
     {
       ImGui::TableSetupColumn("##WorldInfoName",
-                              ImGuiTableColumnFlags_WidthFixed, _size.x / 2.);
+                              ImGuiTableColumnFlags_WidthFixed, _size.x / 3.);
       ImGui::TableSetupColumn("##WorldInfoValue",
                               ImGuiTableColumnFlags_WidthStretch);
       for (auto& info : Simulator::GetInstance()->GetDetails())
@@ -136,7 +136,7 @@ void Explorer::CreateEntityControls()
         selected != 0)
     {
       ImGui::TableSetupColumn("##InfoName", ImGuiTableColumnFlags_WidthFixed,
-                              _size.x / 2.);
+                              _size.x / 3.);
       ImGui::TableSetupColumn("##InfoValues",
                               ImGuiTableColumnFlags_WidthStretch);
 

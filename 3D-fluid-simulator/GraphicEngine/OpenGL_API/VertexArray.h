@@ -1,10 +1,13 @@
 #pragma once
 
-#include <IndexBuffer.h>
-#include <VertexBuffer.h>
-
 #include <cstdint>
-#include <glm/matrix.hpp>
+#include <initializer_list>
+
+#include "GL/glew.h"
+#include "IndexBuffer.h"
+#include "VertexBuffer.h"
+#include "glm/ext/vector_float3.hpp"
+#include "glm/ext/vector_uint4.hpp"
 
 struct VertexBufferData
 {
@@ -15,7 +18,7 @@ struct VertexBufferData
 struct Vertex
 {
   glm::vec3 coordinate;
-  glm::uvec4 color{127, 127, 127, 255};
+  glm::uvec4 color{0x80, 0x80, 0x80, 0xFF};
 };
 class VertexArray
 {

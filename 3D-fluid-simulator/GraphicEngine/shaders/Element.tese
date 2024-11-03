@@ -10,6 +10,7 @@ layout(location = 1) out vec3 normal;
 
 uniform vec3 center;
 vec4 CalculateNDC(in vec3 position, in vec3 offset);
+vec3 CalculateNormal(in vec3 position);
 
 void main(){
 	vec3 tessVertexCoord = vec3(0.0);
@@ -20,6 +21,6 @@ void main(){
 	float R = distance(gl_in[0].gl_Position.xyz, center);
 	float tessVertexCenterLength = distance(tessVertexCoord, center);
 	tessVertexCoord = tessVertexCoord + (R - tessVertexCenterLength) * normalize(tessVertexCoord - center);
-	normal = -tessVertexCoord;
+	normal = CalculateNormal(tessVertexCoord);
 	gl_Position = CalculateNDC(tessVertexCoord, inShapeOffset[0]);
 }

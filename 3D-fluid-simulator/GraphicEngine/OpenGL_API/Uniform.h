@@ -14,14 +14,25 @@
 #include <type_traits>
 
 template <typename T>
+concept has_z = requires(T value) { value.z; };
+
+template <typename T>
+concept has_w = requires(T value) { value.w; };
+
+template <typename T>
+concept is_vec4 = requires(T value) {
+  value.x;
+  value.y;
+  value.z;
+  value.w;
+};
+
+template <typename T>
 concept is_vec3 = requires(T value) {
   value.x;
   value.y;
   value.z;
-};
-
-template <typename T>
-concept has_z = requires(T value) { value.z; };
+} && !has_w<T>;
 
 template <typename T>
 concept is_vec2 = requires(T value) {
@@ -211,6 +222,18 @@ class Uniform
                         ImGuiSliderFlags_AlwaysClamp);
     };
   }
+
+  ui_control ExposeToUI()
+    requires is_vec4<T> && std::floating_point<typename T::value_type>
+  {
+    return [this]()
+    {
+      ImGui::DragFloat4(("##" + _uniform_name).c_str(), glm::value_ptr(_value),
+                        0.1f, _properties._min, _properties._max,
+                        _properties._precision.c_str(),
+                        ImGuiSliderFlags_AlwaysClamp);
+    };
+  }
   ///////////////////////////////////////////////////////////////////////////////
  private:
   void SetUniformIfExists(uint32_t program_id) const
@@ -284,6 +307,14 @@ class Uniform
     auto location = CheckIfExists(program_id, _uniform_name);
     T scaled_value = static_cast<T>(_value * _properties._scale);
     if (location != -1) glUniform3dv(location, 1, glm::value_ptr(scaled_value));
+  }
+
+  void SetUniformIfExists(uint32_t program_id) const
+    requires is_vec4<T> && std::same_as<float, typename T::value_type>
+  {
+    auto location = CheckIfExists(program_id, _uniform_name);
+    T scaled_value = static_cast<T>(_value * _properties._scale);
+    if (location != -1) glUniform4fv(location, 1, glm::value_ptr(scaled_value));
   }
 
   void SetUniformIfExists(uint32_t program_id) const

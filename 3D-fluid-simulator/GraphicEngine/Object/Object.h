@@ -1,11 +1,17 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 
 #include "Debug.h"
 #include "Entity.h"
+#include "Essentials.h"
+#include "GL/glew.h"
 #include "Program.h"
+#include "ProgramDispatch.h"
 #include "Shape.h"
+#include "Simulator.h"
+#include "imgui.h"
 
 template <GLenum Prim>
 class Object : public Entity
@@ -92,6 +98,14 @@ details::detail_controls_t Object<Prim>::Details()
   details.push_back({"Scale", shape_properties._scale.ExposeToUI()});
   details.push_back(
       {"Subdivision", shape_properties._subdivision.ExposeToUI()});
+  details.push_back({"Color type", [&shape_properties]()
+                     {
+                       ImGui::Combo(
+                           "##Color_type",
+                           (int32_t*)&shape_properties._color.first.GetValue(),
+                           Essentials::ColorPropertyTolist());
+                     }});
+  details.push_back({"Color", shape_properties._color.second.ExposeToUI()});
   details.push_back({"Radius", shape_properties._radius.ExposeToUI()});
   return details;
 }

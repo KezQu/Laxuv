@@ -14,8 +14,7 @@ uniform uint colorType;
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	vec4 VolumeDensityPressureRohash;
-	vec4 color;
+	vec4 VolumeDensityPressureDro_Dt;
 	uint neighbours[MaxNeighbours];
 };
 
@@ -23,12 +22,14 @@ layout(std430, binding = 0) buffer dataBuffer{
 	ParticleProperties particle[];
 };
 
+vec4 ChooseColor(ParticleProperties properties);
+
 void main(){
 	if(colorType == NONE){
 		outColorVert = inColorVert / 255.;
 	}
 	else{
-		outColorVert = particle[gl_InstanceID].color;
+		outColorVert = ChooseColor(particle[gl_InstanceID]);
 	}
 	outShapeOffset = particle[gl_InstanceID].position.xyz;
 	gl_Position = vec4(inPosition, 0);

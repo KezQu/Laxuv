@@ -78,6 +78,7 @@ void Particles<Prim>::Draw() const
     if (!renderer.isLinked()) renderer.Link();
     renderer.Bind();
 
+    Bind(renderer.ID());
     _particleShape->Bind(renderer.ID());
     Simulator::GetInstance()->BindUniforms(renderer.ID());
     _physicsDispatch.GetParticleMeshBuffer().Bind(renderer.ID());
@@ -100,6 +101,7 @@ void Particles<Prim>::Bind(uint32_t program_id) const
   _particle_properties.influence_kernel.MapUniform(program_id);
   _particle_properties.search_kernel.MapUniform(program_id);
 
+  _particle_properties.init_velocity.MapUniform(program_id);
   _particle_properties.particle_spacing.MapUniform(program_id);
   _particle_properties.distribution_shape.MapUniform(program_id);
 }
@@ -115,16 +117,17 @@ details::detail_controls_t Particles<Prim>::Details()
   details.push_back({"Scale", shape_properties._scale.ExposeToUI()});
   details.push_back(
       {"Subdivision", shape_properties._subdivision.ExposeToUI()});
-  details.push_back({"Particle color", [&shape_properties]()
+  details.push_back({"Color type", [&shape_properties]()
                      {
                        ImGui::Combo(
-                           "##Particle_color",
+                           "##Color_type",
                            (int32_t*)&shape_properties._color.first.GetValue(),
                            Essentials::ColorPropertyTolist());
                      }});
-  details.push_back(
-      {"Color opacity", shape_properties._color.second.ExposeToUI()});
+  details.push_back({"Color", shape_properties._color.second.ExposeToUI()});
   details.push_back({"Radius", shape_properties._radius.ExposeToUI()});
+  details.push_back(
+      {"Initial velocity", _particle_properties.init_velocity.ExposeToUI()});
   details.push_back(
       {"Particle spacing", _particle_properties.particle_spacing.ExposeToUI()});
   details.push_back(

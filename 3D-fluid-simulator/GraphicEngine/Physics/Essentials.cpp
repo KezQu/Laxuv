@@ -1,31 +1,7 @@
 #include "Essentials.h"
 
-#include <iostream>
-
-std::ostream& operator<<(std::ostream& out,
-                         Essentials::ParticleBufferProperties const& particle)
-{
-  out << "- - - - - - - -" << std::endl;
-  // out << "(" << particle.force.x << "," << particle.force.y << ","
-  //     << particle.force.z << "," << particle.force.w << ")" << std::endl;
-  out << "(" << particle.velocityDFSPHfactor.x << ","
-      << particle.velocityDFSPHfactor.y << "," << particle.velocityDFSPHfactor.z
-      << "," << particle.velocityDFSPHfactor.w << ")" << std::endl;
-  out << "(" << particle.position.x << "," << particle.position.y << ","
-      << particle.position.z << "," << particle.position.w << ")" << std::endl;
-  out << "(" << particle.VolumeDensityPressureRohash.x << ","
-      << particle.VolumeDensityPressureRohash.y << ","
-      << particle.VolumeDensityPressureRohash.z << ","
-      << particle.VolumeDensityPressureRohash.w << ")" << std::endl;
-  out << "[";
-  for (auto& neighbour_id : particle.neighbours)
-  {
-    out << neighbour_id << ", ";
-  }
-  out << "]" << std::endl;
-  out << "- - - - - - - -" << std::endl;
-  return out;
-}
+#include "Uniform.h"
+#include "glm/fwd.hpp"
 
 char const* Essentials::EntityTypeTolist() noexcept
 {
@@ -54,7 +30,7 @@ char const* Essentials::PhysTypesTolist() noexcept
 
 char const* Essentials::ColorPropertyTolist() noexcept
 {
-  return "NONE\0VELOCITY\0DENSITY_ERROR\0DIVERGENCE_ERROR\0PRESSURE\0";
+  return "NONE\0CUSTOM\0VELOCITY\0DENSITY_ERROR\0DIVERGENCE_ERROR\0PRESSURE\0";
 }
 
 Uniform<glm::mat4, float> Essentials::ShapeProperties::Model() const

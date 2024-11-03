@@ -18,10 +18,11 @@ class Simulator
  private:
   EntityContainer _entitiesContainer;
   ShaderStorageBuffer<Essentials::TerrainBufferProperties, CPUBuffer> _terrain;
+  Essentials::Light _simulaton_light;
   Uniform<uint32_t> _obstacles_number{0, "MaxObstacles"};
   Uniform<float> _space_boundries{100.f, "spaceLimiter",
                                   ValueProperties{1.f, 1200.f, 1.f, "%.1f mm"}};
-  Uniform<float> _bounds_viscosity{0.7f, "boundsViscosity",
+  Uniform<float> _bounds_viscosity{0.95f, "boundsViscosity",
                                    ValueProperties{0.f, 1.f, 1.f, "%.2f"}};
   Uniform<float> _global_delta_time{
       6.f, "dt", ValueProperties{1.f, 1000.f, 1e-3f, "%1.f ms"}};

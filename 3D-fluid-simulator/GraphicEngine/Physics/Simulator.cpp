@@ -85,17 +85,29 @@ details::detail_controls_t Simulator::GetDetails()
                            (int32_t*)&this->_global_world_type.GetValue(),
                            Essentials::WorldTypeTolist());
                      }});
+  details.push_back({"Ambient light color",
+                     this->_simulaton_light.ambient_color.ExposeToUI()});
+  details.push_back({"Diffuse light color",
+                     this->_simulaton_light.diffuse.color.ExposeToUI()});
+  details.push_back({"Diffuse light direction",
+                     this->_simulaton_light.diffuse.direction.ExposeToUI()});
   return details;
 }
 
 void Simulator::BindUniforms(uint32_t program_id)
 {
-  _obstacles_number.MapUniform(program_id);
   _global_delta_time.MapUniform(program_id);
-  _space_boundries.MapUniform(program_id);
-  _bounds_viscosity.MapUniform(program_id);
   _global_simulation_state.MapUniform(program_id);
   _global_world_type.MapUniform(program_id);
+
+  _obstacles_number.MapUniform(program_id);
+
+  _space_boundries.MapUniform(program_id);
+  _bounds_viscosity.MapUniform(program_id);
+
+  _simulaton_light.ambient_color.MapUniform(program_id);
+  _simulaton_light.diffuse.color.MapUniform(program_id);
+  _simulaton_light.diffuse.direction.MapUniform(program_id);
 }
 
 void Simulator::BindTerrain(uint32_t program_id)

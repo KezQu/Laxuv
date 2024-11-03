@@ -7,16 +7,6 @@
 #include "Uniform.h"
 #include "VertexArray.h"
 
-struct
-{
-  glm::vec3 AmbientLightColor{.2f};
-  struct
-  {
-    glm::vec3 color{1.f};
-    glm::vec3 direction{-0.3f, -0.2f, -1.f};
-  } DiffuseLight;
-} LIGHT;
-
 template <GLenum Prim>
 class Shape
 {
@@ -87,18 +77,6 @@ void Shape<Prim>::BindUniforms(uint32_t program_id) const
 
   _shape_properties._color.first.MapUniform(program_id);
   _shape_properties._color.second.MapUniform(program_id);
-  if (_shape_properties._enableLight)
-  {
-    auto const ambient_light =
-        Uniform<glm::vec3, float>(LIGHT.AmbientLightColor, "ambientLightColor");
-    auto const diffuse_light_color = Uniform<glm::vec3, float>(
-        LIGHT.DiffuseLight.color, "diffuseLightColor");
-    auto const diffuse_light_dir = Uniform<glm::vec3, float>(
-        LIGHT.DiffuseLight.direction, "diffuseLightDirection");
-    ambient_light.MapUniform(program_id);
-    diffuse_light_color.MapUniform(program_id);
-    diffuse_light_dir.MapUniform(program_id);
-  }
   _shape_properties._radius.MapUniform(program_id);
 }
 
