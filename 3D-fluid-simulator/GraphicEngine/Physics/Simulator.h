@@ -47,6 +47,7 @@ class Simulator
   EntityContainer& GetEntities();
   Essentials::SimulationState GetSimulationState();
   void UpdateDeltaTime(float dt);
+  void CreateGraphs();
   Uniform<float>& GetDeltaTime();
   bool IsStaticDtUsed();
   void ToggleTimesetType();

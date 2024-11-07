@@ -18,6 +18,7 @@
 #include "Toolbar.h"
 #include "WorldAxes.h"
 #include "imgui.h"
+// #include "implot.h"
 
 Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     : _windowSize{windowSize}, _windowTitle{windowTitle}
@@ -72,8 +73,8 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     _(glDebugMessageCallback(Window::OpenGLErrorCallback, nullptr));
     glfwSetFramebufferSizeCallback(_window,
                                    Window::GLFWFrameBufferResizeCallback);
-
     ImGui::CreateContext();
+    // ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |=
         ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
@@ -101,6 +102,7 @@ Window::~Window()
   ProgramDispatch::CleanUp();
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
+  // ImPlot::DestroyContext();
   ImGui::DestroyContext();
   glfwDestroyWindow(_window);
   glfwTerminate();
@@ -114,6 +116,7 @@ void Window::EventLoop()
   while (glfwWindowShouldClose(_window) == GLFW_FALSE)
   {
     Refresh();
+    // ImPlot::ShowDemoWindow();
     Toolbar(ImVec2{_windowSize.x, 20}, ImVec2{0, 0}).Generate();
     Explorer(ImVec2{_windowSize.x / 4.f, _windowSize.y - 20}, ImVec2{0, 20})
         .Generate();

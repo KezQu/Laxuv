@@ -1,12 +1,9 @@
 #pragma once
 
-#include <GL/glew.h>
-
 #include <chrono>
-#include <deque>
 #include <iostream>
-#include <regex>
-#include <sstream>
+
+#include "GL/glew.h"
 
 template <typename T>
 concept is_streamable = requires(std::ostringstream stream, T value) {

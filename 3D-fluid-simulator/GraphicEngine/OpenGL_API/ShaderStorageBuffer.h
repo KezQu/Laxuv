@@ -21,7 +21,7 @@ class ShaderStorageBuffer : public BufferT<GL_SHADER_STORAGE_BUFFER, T>
   ShaderStorageBuffer& operator=(ShaderStorageBuffer&& objMove) = default;
   ~ShaderStorageBuffer() override = default;
 
-  std::vector<T> GetBufferSubData(uint64_t offset, uint64_t payloadSize);
+  std::vector<T> GetBufferSubData(uint64_t offset, uint64_t payloadSize) const;
   void Bind(uint64_t const& programID) const;
   void Unbind(uint64_t const& programID) const;
 };
@@ -43,7 +43,7 @@ inline ShaderStorageBuffer<T, BufferT>::ShaderStorageBuffer(
 
 template <typename T, template <GLenum, typename> typename BufferT>
 inline std::vector<T> ShaderStorageBuffer<T, BufferT>::GetBufferSubData(
-    uint64_t objectsOffset, uint64_t numberOfObjectsToRead)
+    uint64_t objectsOffset, uint64_t numberOfObjectsToRead) const
 {
   std::vector<T> bufferSubData(numberOfObjectsToRead);
   if (glIsBuffer(this->ID()) == GL_TRUE)

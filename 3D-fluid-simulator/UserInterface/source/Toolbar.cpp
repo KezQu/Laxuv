@@ -27,50 +27,73 @@ void Toolbar::Generate()
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
   if (ImGui::Begin("##Toolbar", nullptr, _flags))
   {
-    if (ImGui::Button(simulatorInstance->GetSimulationState() ==
-                              Essentials::SimulationState::IDLE
-                          ? "Start"
-                          : "Pause"))
-    {
-      simulatorInstance->SetSimulationState(
-          simulatorInstance->GetSimulationState() ==
-                  Essentials::SimulationState::SIMULATION
-              ? Essentials::SimulationState::IDLE
-              : Essentials::SimulationState::SIMULATION);
-    }
     if (simulatorInstance->GetSimulationState() !=
-        Essentials::SimulationState::SIMULATION)
+        Essentials::SimulationState::GRAPHS)
     {
-      ImGui::SameLine();
-      if (ImGui::Button("One frame"))
+      if (ImGui::Button(simulatorInstance->GetSimulationState() !=
+                                Essentials::SimulationState::SIMULATION
+                            ? "Start"
+                            : "Pause"))
       {
         simulatorInstance->SetSimulationState(
-            Essentials::SimulationState::GEN_FRAME);
+            simulatorInstance->GetSimulationState() ==
+                    Essentials::SimulationState::SIMULATION
+                ? Essentials::SimulationState::IDLE
+                : Essentials::SimulationState::SIMULATION);
+      }
+      if (simulatorInstance->GetSimulationState() !=
+          Essentials::SimulationState::SIMULATION)
+      {
+        ImGui::SameLine();
+        if (ImGui::Button("One frame"))
+        {
+          simulatorInstance->SetSimulationState(
+              Essentials::SimulationState::GEN_FRAME);
+        }
+      }
+      else
+      {
+        ImGui::SameLine();
+        if (ImGui::Button("Stop"))
+        {
+          simulatorInstance->SetSimulationState(
+              Essentials::SimulationState::INIT);
+        }
+      }
+      ImGui::SameLine();
+      ImGui::PushItemWidth(100.f);
+      ImGui::DragFloat("##timestep_value", &static_timestep, 0.1f, 0.f, 1000.f,
+                       "%.1f ms", ImGuiSliderFlags_AlwaysClamp);
+      ImGui::SameLine();
+      if (ImGui::Button(simulatorInstance->IsStaticDtUsed()
+                            ? "Use program latency"
+                            : "Use static timestep"))
+      {
+        simulatorInstance->ToggleTimesetType();
+      }
+      ImGui::PopItemWidth();
+      simulatorInstance->UpdateDeltaTime(static_timestep);
+
+      ImGui::SameLine();
+      if (ImGui::Button("Graphs mode"))
+      {
+        simulatorInstance->SetSimulationState(
+            Essentials::SimulationState::GRAPHS);
       }
     }
     else
     {
+      if (ImGui::Button("Generate graphs"))
+      {
+        simulatorInstance->CreateGraphs();
+      }
       ImGui::SameLine();
-      if (ImGui::Button("Stop"))
+      if (ImGui::Button("Simulation mode"))
       {
         simulatorInstance->SetSimulationState(
-            Essentials::SimulationState::INIT);
+            Essentials::SimulationState::IDLE);
       }
     }
-    ImGui::SameLine();
-    ImGui::PushItemWidth(100.f);
-    ImGui::DragFloat("##timestep_value", &static_timestep, 0.1f, 0.f, 1000.f,
-                     "%.1f ms", ImGuiSliderFlags_AlwaysClamp);
-    ImGui::SameLine();
-    if (ImGui::Button(simulatorInstance->IsStaticDtUsed()
-                          ? "Use program latency"
-                          : "Use static timestep"))
-    {
-      simulatorInstance->ToggleTimesetType();
-    }
-    simulatorInstance->UpdateDeltaTime(static_timestep);
-
-    ImGui::PopItemWidth();
 
     ImGui::SameLine(_size.x - 200);
     ImGui::Text("%mouse speed: %.1f", Camera::GetCamera().GetMoveSpeed());

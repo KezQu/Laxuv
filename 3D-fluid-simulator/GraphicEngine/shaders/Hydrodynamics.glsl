@@ -55,6 +55,7 @@ struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
 	vec4 VolumeDensityPressureDro_Dt;
+  	vec4 color;
 	uint neighbours[MaxNeighbours];
 };
 
@@ -326,7 +327,7 @@ void CheckCollisions(uint index_x){
 //			if(length(pos_vdt.xyz) <= 1){
 //			}
 //		}
-		particle[index_x].position.xyz += correction * surface_dir * 5e-1;
+		particle[index_x].position.xyz += correction * surface_dir;
 		particle[index_x].velocityDFSPHfactor.xyz = BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, surface_dir);
 	}
 }

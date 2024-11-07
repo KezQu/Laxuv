@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <utility>
+#include <vector>
 
 #include "Uniform.h"
 #include "glm/fwd.hpp"
@@ -53,7 +54,8 @@ enum class SimulationState : uint32_t
   IDLE,
   INIT,
   SIMULATION,
-  GEN_FRAME
+  GEN_FRAME,
+  GRAPHS
 };
 
 enum class WorldType : uint32_t

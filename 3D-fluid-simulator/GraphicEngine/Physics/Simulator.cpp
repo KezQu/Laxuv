@@ -1,9 +1,13 @@
 #include "Simulator.h"
 
 #include <cstdint>
+#include <cstring>
+#include <fstream>
 #include <limits>
 #include <memory>
+#include <ostream>
 #include <unordered_map>
+#include <vector>
 
 #include "Cube.h"
 #include "Entity.h"
@@ -16,6 +20,7 @@
 #include "Square.h"
 #include "Uniform.h"
 #include "VertexArray.h"
+#include "glm/gtc/type_ptr.hpp"
 #include "imgui.h"
 
 Simulator::Simulator() : _terrain{"terrainBuffer"} {}
@@ -56,6 +61,52 @@ void Simulator::UpdateDeltaTime(float dt)
   {
     _global_delta_time = 1000.f / ImGui::GetIO().Framerate;
   }
+}
+
+template <uint64_t N>
+struct HeatmapData
+{
+  using heatType = uint8_t[N][N][4];
+  heatType map_data;
+  uint64_t resolution = N;
+};
+
+void Simulator::CreateGraphs()
+{
+  static HeatmapData<2400> heatmap;
+  auto const res = heatmap.resolution;
+  std::vector<Essentials::ParticleBufferProperties> data;
+  for (auto& [id, entity] : _entitiesContainer)
+  {
+    auto const& physics_buffer = entity->GetPhysicsBuffer();
+    auto const buffer_data =
+        physics_buffer.GetBufferSubData(0U, physics_buffer.Size());
+    data.insert(data.end(), buffer_data.begin(), buffer_data.end());
+  }
+
+  std::memset(heatmap.map_data, 0, sizeof(heatmap.map_data));
+  for (int i = 0; i < data.size(); i++)
+  {
+    for (int j = 0; j < 4; j++)
+    {
+      heatmap.map_data[(int)data[i].position.x][(int)data[i].position.y][j] =
+          static_cast<uint8_t>(data[i].color[j] * 0xFF);
+    }
+  }
+  std::filesystem::path abs_path(__FILE__);
+  std::string system_path(abs_path.parent_path().string());
+
+  std::ofstream file{system_path + "/tmp.dat", std::ios_base::binary};
+  std::cout << sizeof(heatmap.map_data) << std::endl;
+  std::cout << "python3 " + system_path + "/plot.py --filename " + system_path +
+                   "/tmp.dat"
+            << std::endl;
+  file.write(reinterpret_cast<char*>(heatmap.map_data),
+             sizeof(heatmap.map_data));
+
+  std::system(("python3 " + system_path + "/plot.py --filename " + system_path +
+               "/tmp.dat")
+                  .c_str());
 }
 
 Uniform<float>& Simulator::GetDeltaTime()
