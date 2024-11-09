@@ -23,14 +23,12 @@ layout(std430, binding = 0) buffer dataBuffer{
 	ParticleProperties particle[];
 };
 
-vec4 ChooseColor(ParticleProperties properties);
-
 void main(){
 	if(colorType == NONE){
 		outColorVert = inColorVert / 255.;
 	}
 	else{
-		outColorVert = ChooseColor(particle[gl_InstanceID]);
+		outColorVert = particle[gl_InstanceID].color;
 	}
 	outShapeOffset = particle[gl_InstanceID].position.xyz;
 	gl_Position = vec4(inPosition, 0);

@@ -12,11 +12,14 @@
 #include "Uniform.h"
 #include "glm/fwd.hpp"
 
-namespace details
+class Entity;
+namespace Essentials
 {
-using detail_controls_t =
+using DetailControls =
     std::vector<std::pair<std::string, std::function<void()>>>;
-};  // namespace details
+using EntityContainer = std::unordered_map<uint64_t, std::unique_ptr<Entity>>;
+
+};  // namespace Essentials
 
 class Entity
 {
@@ -55,7 +58,7 @@ class Entity
   virtual void Calculate() {}
   virtual void Draw() const {}
   virtual void Bind(uint32_t program_id) const;
-  virtual details::detail_controls_t Details();
+  virtual Essentials::DetailControls Details();
   uint64_t GetTerrainId();
   ShaderStorageBuffer<Essentials::ParticleBufferProperties> const&
   GetPhysicsBuffer();

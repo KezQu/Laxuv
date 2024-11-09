@@ -25,14 +25,13 @@ layout(std430, binding = 0) buffer dataBuffer{
 
 vec4 CalculateNDC(in vec3 position, in vec3 offset);
 vec3 CalculateNormal(in vec3 position);
-vec4 ChooseColor(ParticleProperties properties);
 
 void main(){
 	if(colorType == NONE){
 		outColorVert = inColorVert / 255.;
 	}
 	else{
-		outColorVert = ChooseColor(particle[gl_InstanceID]);
+		outColorVert = particle[gl_InstanceID].color;
 	}
 	normal = CalculateNormal(inPosition);
 	gl_Position = CalculateNDC(inPosition, particle[gl_InstanceID].position.xyz);

@@ -19,10 +19,12 @@ add_library(GraphicEngine ${GENGINE_SRC_FILES})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
+find_package(Threads REQUIRED)
 target_link_libraries(GraphicEngine PUBLIC glew)
 target_link_libraries(GraphicEngine PUBLIC glm)
 target_link_libraries(GraphicEngine PUBLIC glfw)
 target_link_libraries(GraphicEngine PUBLIC imgui)
+target_link_libraries(GraphicEngine PUBLIC pthread)
 # target_link_libraries(GraphicEngine PUBLIC implot)
 
 target_include_directories(GraphicEngine PUBLIC ${GENGINE_INC_DIR})

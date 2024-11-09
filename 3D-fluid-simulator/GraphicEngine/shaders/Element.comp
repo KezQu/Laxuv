@@ -102,6 +102,8 @@ void CheckWorldBounds(uint index_x);
 void UpdateTerrainOrientation(uint index_x);
 void CheckCollisions(uint index_x);
 
+vec4 ChooseColor(ParticleProperties properties);
+
 void main(){
 	if(SimulatorState == INIT){
 		particle[index].velocityDFSPHfactor = vec4(initVelocity, 0);
@@ -139,4 +141,5 @@ void main(){
 			particle[index].position.xyz = (inverse(model) * vec4(particle[index].position.xyz, 1.0)).xyz / scale;
 		}
 	}
+	particle[index].color = ChooseColor(particle[index]);
 }

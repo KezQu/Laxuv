@@ -23,7 +23,7 @@ class Particles : public Entity
   void Calculate() override;
   void Draw() const override;
   void Bind(uint32_t program_id) const override;
-  details::detail_controls_t Details() override;
+  Essentials::DetailControls Details() override;
 };
 
 template <GLenum Prim>
@@ -105,7 +105,7 @@ void Particles<Prim>::Bind(uint32_t program_id) const
 }
 
 template <GLenum Prim>
-details::detail_controls_t Particles<Prim>::Details()
+Essentials::DetailControls Particles<Prim>::Details()
 {
   auto details = Entity::Details();
   auto& shape_properties = this->_particleShape->GetShapeProperties();
@@ -113,7 +113,7 @@ details::detail_controls_t Particles<Prim>::Details()
   {
     auto old_sim_state_saved = Simulator::GetInstance()->GetSimulationState();
     Simulator::GetInstance()->SetSimulationState(
-        Essentials::SimulationState::INIT);
+        Essentials::SimulationState::IDLE);
     Initialize();
     Simulator::GetInstance()->SetSimulationState(old_sim_state_saved);
   };

@@ -2,10 +2,10 @@
 
 #include <cstdint>
 #include <cstring>
-#include <fstream>
 #include <limits>
 #include <memory>
 #include <ostream>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -40,7 +40,7 @@ void Simulator::CleanUp()
   GetInstance().reset(nullptr);
 }
 
-Simulator::EntityContainer& Simulator::GetEntities()
+Essentials::EntityContainer& Simulator::GetEntities()
 {
   return _entitiesContainer;
 }
@@ -63,50 +63,17 @@ void Simulator::UpdateDeltaTime(float dt)
   }
 }
 
-template <uint64_t N>
-struct HeatmapData
-{
-  using heatType = uint8_t[N][N][4];
-  heatType map_data;
-  uint64_t resolution = N;
-};
-
 void Simulator::CreateGraphs()
 {
-  static HeatmapData<2400> heatmap;
-  auto const res = heatmap.resolution;
-  std::vector<Essentials::ParticleBufferProperties> data;
-  for (auto& [id, entity] : _entitiesContainer)
-  {
-    auto const& physics_buffer = entity->GetPhysicsBuffer();
-    auto const buffer_data =
-        physics_buffer.GetBufferSubData(0U, physics_buffer.Size());
-    data.insert(data.end(), buffer_data.begin(), buffer_data.end());
-  }
-
-  std::memset(heatmap.map_data, 0, sizeof(heatmap.map_data));
-  for (int i = 0; i < data.size(); i++)
-  {
-    for (int j = 0; j < 4; j++)
-    {
-      heatmap.map_data[(int)data[i].position.x][(int)data[i].position.y][j] =
-          static_cast<uint8_t>(data[i].color[j] * 0xFF);
-    }
-  }
-  std::filesystem::path abs_path(__FILE__);
-  std::string system_path(abs_path.parent_path().string());
-
-  std::ofstream file{system_path + "/tmp.dat", std::ios_base::binary};
-  std::cout << sizeof(heatmap.map_data) << std::endl;
-  std::cout << "python3 " + system_path + "/plot.py --filename " + system_path +
-                   "/tmp.dat"
-            << std::endl;
-  file.write(reinterpret_cast<char*>(heatmap.map_data),
-             sizeof(heatmap.map_data));
-
-  std::system(("python3 " + system_path + "/plot.py --filename " + system_path +
-               "/tmp.dat")
-                  .c_str());
+  auto const simulation_data = _graphs.GetGraphData(_entitiesContainer);
+  std::thread{[simulation_data, this]()
+              {
+                auto const heatmap_data = _graphs.SerializeData(
+                    simulation_data, _space_boundries.GetValue() * 2);
+                _graphs.GenerateGraphs(heatmap_data,
+                                       _space_boundries.GetValue() * 2);
+              }}
+      .detach();
 }
 
 Uniform<float>& Simulator::GetDeltaTime()
@@ -124,9 +91,9 @@ void Simulator::ToggleTimesetType()
   _static_timestep = !_static_timestep;
 }
 
-details::detail_controls_t Simulator::GetDetails()
+Essentials::DetailControls Simulator::GetDetails()
 {
-  details::detail_controls_t details;
+  Essentials::DetailControls details;
   details.push_back({"Space bounds", this->_space_boundries.ExposeToUI()});
   details.push_back({"Bounds viscosity", this->_bounds_viscosity.ExposeToUI()});
   details.push_back({"World shape", [this]()
@@ -180,7 +147,7 @@ uint32_t Simulator::AddObstacle(
   return _terrain.Size() - 1;
 }
 
-void Simulator::RemoveObstacle(EntityContainer::key_type id)
+void Simulator::RemoveObstacle(Essentials::EntityContainer::key_type id)
 {
   if (id != std::numeric_limits<uint64_t>::max())
   {
@@ -195,7 +162,7 @@ void Simulator::CreateEntity(Essentials::EntityType entity_type,
   auto old_sim_state_saved = _global_simulation_state;
   Simulator::GetInstance()->SetSimulationState(
       Essentials::SimulationState::INIT);
-  EntityContainer::key_type entity_id{};
+  Essentials::EntityContainer::key_type entity_id{};
   switch (entity_shape)
   {
     case Essentials::EntityShape::POINT:
@@ -239,7 +206,7 @@ void Simulator::CreateEntity(Essentials::EntityType entity_type,
   _global_simulation_state = old_sim_state_saved;
 }
 
-void Simulator::Delete(EntityContainer::key_type id)
+void Simulator::Delete(Essentials::EntityContainer::key_type id)
 {
   RemoveObstacle(_entitiesContainer[id]->GetTerrainId());
   if (id != 0)

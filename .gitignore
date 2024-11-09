@@ -38,3 +38,5 @@ build/
 #dependency docs
 3D-fluid-simulator/Dependencies/glfw/docs/
 3D-fluid-simulator/Dependencies/glm/doc/
+#cache data
+3D-fluid-simulator/GraphicEngine/Physics/*.dat

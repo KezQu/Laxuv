@@ -7,16 +7,15 @@
 #include "CPUBuffer.h"
 #include "Entity.h"
 #include "Essentials.h"
+#include "GraphsHandler.h"
 #include "ShaderStorageBuffer.h"
 #include "Uniform.h"
 
 class Simulator
 {
- public:
-  using EntityContainer = std::unordered_map<uint64_t, std::unique_ptr<Entity>>;
-
  private:
-  EntityContainer _entitiesContainer;
+  GraphsHandler _graphs;
+  Essentials::EntityContainer _entitiesContainer;
   ShaderStorageBuffer<Essentials::TerrainBufferProperties, CPUBuffer> _terrain;
   Essentials::Light _simulaton_light;
   Uniform<uint32_t> _obstacles_number{0, "MaxObstacles"};
@@ -36,34 +35,34 @@ class Simulator
  private:
   Simulator();
   template <typename T>
-  EntityContainer::key_type Append(T&& entity);
+  Essentials::EntityContainer::key_type Append(T&& entity);
   uint32_t AddObstacle(
       Essentials::TerrainBufferProperties const& terrain_properties);
-  void RemoveObstacle(EntityContainer::key_type id);
+  void RemoveObstacle(Essentials::EntityContainer::key_type id);
 
  public:
   static std::unique_ptr<Simulator>& GetInstance();
   static void CleanUp();
-  EntityContainer& GetEntities();
+  Essentials::EntityContainer& GetEntities();
   Essentials::SimulationState GetSimulationState();
   void UpdateDeltaTime(float dt);
   void CreateGraphs();
   Uniform<float>& GetDeltaTime();
   bool IsStaticDtUsed();
   void ToggleTimesetType();
-  details::detail_controls_t GetDetails();
+  Essentials::DetailControls GetDetails();
   void BindUniforms(uint32_t program_id);
   void BindTerrain(uint32_t program_id);
   void SetSimulationState(Essentials::SimulationState new_global_state);
   void CreateEntity(Essentials::EntityType entity_type,
                     Essentials::EntityShape entity_shape);
-  void Delete(EntityContainer::key_type id = 0);
+  void Delete(Essentials::EntityContainer::key_type id = 0);
 };
 
 template <typename T>
-Simulator::EntityContainer::key_type Simulator::Append(T&& entity)
+Essentials::EntityContainer::key_type Simulator::Append(T&& entity)
 {
-  EntityContainer::key_type entity_id = entity.ID();
+  Essentials::EntityContainer::key_type entity_id = entity.ID();
   _entitiesContainer[entity_id] = std::make_unique<T>(std::move(entity));
   return entity_id;
 }

@@ -8,9 +8,9 @@
 
 uint64_t Entity::_internalID = 0U;
 
-details::detail_controls_t Entity::Details()
+Essentials::DetailControls Entity::Details()
 {
-  details::detail_controls_t details;
+  Essentials::DetailControls details;
   details.push_back({"Name", [this]() { ImGui::Text(this->Name().c_str()); }});
   details.push_back({"Physics type", [this]()
                      {

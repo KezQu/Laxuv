@@ -163,4 +163,5 @@ struct ShapeProperties
 
   Uniform<glm::mat4, float> Model() const;
 };
+
 }  // namespace Essentials

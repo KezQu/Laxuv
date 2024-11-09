@@ -15,6 +15,7 @@ PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
           static_cast<uint64_t>(dimensions.x * dimensions.y * dimensions.z)}
 {
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Element.comp");
+  _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/CalculateColor.glsl");
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/InitDefaultShape.glsl");
   _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Hydrodynamics.glsl");
 }

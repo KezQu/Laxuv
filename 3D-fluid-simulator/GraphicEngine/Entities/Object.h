@@ -30,7 +30,7 @@ class Object : public Entity
   void Initialize() override;
   void Calculate() override;
   void Draw() const override;
-  details::detail_controls_t Details() override;
+  Essentials::DetailControls Details() override;
 };
 
 template <GLenum Prim>
@@ -89,7 +89,7 @@ void Object<Prim>::Draw() const
 }
 
 template <GLenum Prim>
-details::detail_controls_t Object<Prim>::Details()
+Essentials::DetailControls Object<Prim>::Details()
 {
   auto details = Entity::Details();
   auto& shape_properties = this->_shape->GetShapeProperties();
@@ -97,7 +97,7 @@ details::detail_controls_t Object<Prim>::Details()
   {
     auto old_sim_state_saved = Simulator::GetInstance()->GetSimulationState();
     Simulator::GetInstance()->SetSimulationState(
-        Essentials::SimulationState::INIT);
+        Essentials::SimulationState::IDLE);
     Initialize();
     Simulator::GetInstance()->SetSimulationState(old_sim_state_saved);
   };
