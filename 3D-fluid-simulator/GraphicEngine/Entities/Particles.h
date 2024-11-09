@@ -109,27 +109,42 @@ details::detail_controls_t Particles<Prim>::Details()
 {
   auto details = Entity::Details();
   auto& shape_properties = this->_particleShape->GetShapeProperties();
+  auto const& ui_callback = [this]()
+  {
+    auto old_sim_state_saved = Simulator::GetInstance()->GetSimulationState();
+    Simulator::GetInstance()->SetSimulationState(
+        Essentials::SimulationState::INIT);
+    Initialize();
+    Simulator::GetInstance()->SetSimulationState(old_sim_state_saved);
+  };
 
   details.push_back({"Location", shape_properties._location.ExposeToUI()});
   details.push_back({"Rotation", shape_properties._rotation.ExposeToUI()});
   details.push_back({"Scale", shape_properties._scale.ExposeToUI()});
   details.push_back(
       {"Subdivision", shape_properties._subdivision.ExposeToUI()});
-  details.push_back({"Color type", [&shape_properties]()
-                     {
-                       ImGui::Combo(
-                           "##Color_type",
-                           (int32_t*)&shape_properties._color.first.GetValue(),
-                           Essentials::ColorPropertyTolist());
-                     }});
-  details.push_back({"Color", shape_properties._color.second.ExposeToUI()});
+  details.push_back(
+      {"Color type", [ui_callback, &shape_properties]()
+       {
+         if (ImGui::Combo("##Color_type",
+                          (int32_t*)&shape_properties._color.first.GetValue(),
+                          Essentials::ColorPropertyTolist()))
+         {
+           ui_callback();
+         }
+       }});
+  details.push_back(
+      {"Color", shape_properties._color.second.ExposeToUI(ui_callback)});
   details.push_back({"Radius", shape_properties._radius.ExposeToUI()});
   details.push_back(
-      {"Initial velocity", _particle_properties.init_velocity.ExposeToUI()});
+      {"Initial velocity",
+       _particle_properties.init_velocity.ExposeToUI(ui_callback)});
   details.push_back(
-      {"Particle spacing", _particle_properties.particle_spacing.ExposeToUI()});
+      {"Particle spacing",
+       _particle_properties.particle_spacing.ExposeToUI(ui_callback)});
   details.push_back(
-      {"Distribution", _particle_properties.distribution_shape.ExposeToUI()});
+      {"Distribution",
+       _particle_properties.distribution_shape.ExposeToUI(ui_callback)});
   details.push_back(
       {"Influence kernel", _particle_properties.influence_kernel.ExposeToUI()});
   details.push_back(
@@ -139,11 +154,14 @@ details::detail_controls_t Particles<Prim>::Details()
   details.push_back({"Mass", _particle_properties.mass.ExposeToUI()});
   details.push_back(
       {"Viscosity factor", _particle_properties.viscosity_factor.ExposeToUI()});
-  details.push_back({"Mesh radius", [this]()
-                     {
-                       ImGui::DragInt3("##Mesh_radius",
-                                       (int32_t*)&this->_mesh_size, 1.f, 0, 100,
-                                       "%d", ImGuiSliderFlags_AlwaysClamp);
-                     }});
+  details.push_back(
+      {"Mesh radius", [this, ui_callback]()
+       {
+         if (ImGui::DragInt3("##Mesh_radius", (int32_t*)&this->_mesh_size, 1.f,
+                             0, 100, "%d", ImGuiSliderFlags_AlwaysClamp))
+         {
+           ui_callback();
+         }
+       }});
   return details;
 }

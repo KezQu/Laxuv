@@ -152,86 +152,115 @@ class Uniform
     return _properties;
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires std::signed_integral<T>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragInt(("##" + _uniform_name).c_str(), &_value, 1.f,
-                     _properties._min, _properties._max,
-                     _properties._precision.c_str(),
-                     ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragInt(("##" + _uniform_name).c_str(), &_value, 1.f,
+                         _properties._min, _properties._max,
+                         _properties._precision.c_str(),
+                         ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires std::unsigned_integral<T>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragScalar(
-          ("##" + _uniform_name).c_str(), ImGuiDataType_U32, (void*)&_value,
-          1.f, (const void*)&_properties._min, (const void*)&_properties._max,
-          _properties._precision.c_str(), ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragScalar(("##" + _uniform_name).c_str(), ImGuiDataType_U32,
+                            (void*)&_value, 1.f, (const void*)&_properties._min,
+                            (const void*)&_properties._max,
+                            _properties._precision.c_str(),
+                            ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires std::floating_point<T>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragFloat(("##" + _uniform_name).c_str(), &_value, 0.1f,
-                       _properties._min, _properties._max,
-                       _properties._precision.c_str(),
-                       ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragFloat(("##" + _uniform_name).c_str(), &_value, 0.1f,
+                           _properties._min, _properties._max,
+                           _properties._precision.c_str(),
+                           ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires is_vec2<T> && std::floating_point<typename T::value_type>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragFloat2(("##" + _uniform_name).c_str(), glm::value_ptr(_value),
-                        0.1f, _properties._min, _properties._max,
-                        _properties._precision.c_str(),
-                        ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragFloat2(("##" + _uniform_name).c_str(),
+                            glm::value_ptr(_value), 0.1f, _properties._min,
+                            _properties._max, _properties._precision.c_str(),
+                            ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires is_vec3<T> && std::integral<typename T::value_type>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragInt3(("##" + _uniform_name).c_str(), glm::value_ptr(_value),
-                      1.f, _properties._min, _properties._max,
-                      _properties._precision.c_str(),
-                      ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragInt3(("##" + _uniform_name).c_str(),
+                          glm::value_ptr(_value), 1.f, _properties._min,
+                          _properties._max, _properties._precision.c_str(),
+                          ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires is_vec3<T> && std::floating_point<typename T::value_type>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragFloat3(("##" + _uniform_name).c_str(), glm::value_ptr(_value),
-                        0.1f, _properties._min, _properties._max,
-                        _properties._precision.c_str(),
-                        ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragFloat3(("##" + _uniform_name).c_str(),
+                            glm::value_ptr(_value), 0.1f, _properties._min,
+                            _properties._max, _properties._precision.c_str(),
+                            ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires is_vec4<T> && std::floating_point<typename T::value_type>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragFloat4(("##" + _uniform_name).c_str(), glm::value_ptr(_value),
-                        0.1f, _properties._min, _properties._max,
-                        _properties._precision.c_str(),
-                        ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragFloat4(("##" + _uniform_name).c_str(),
+                            glm::value_ptr(_value), 0.1f, _properties._min,
+                            _properties._max, _properties._precision.c_str(),
+                            ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
   ///////////////////////////////////////////////////////////////////////////////

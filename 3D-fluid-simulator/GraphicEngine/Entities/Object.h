@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 
 #include "Debug.h"
@@ -92,20 +93,32 @@ details::detail_controls_t Object<Prim>::Details()
 {
   auto details = Entity::Details();
   auto& shape_properties = this->_shape->GetShapeProperties();
+  auto const& ui_callback = [this]()
+  {
+    auto old_sim_state_saved = Simulator::GetInstance()->GetSimulationState();
+    Simulator::GetInstance()->SetSimulationState(
+        Essentials::SimulationState::INIT);
+    Initialize();
+    Simulator::GetInstance()->SetSimulationState(old_sim_state_saved);
+  };
 
   details.push_back({"Location", shape_properties._location.ExposeToUI()});
   details.push_back({"Rotation", shape_properties._rotation.ExposeToUI()});
   details.push_back({"Scale", shape_properties._scale.ExposeToUI()});
   details.push_back(
       {"Subdivision", shape_properties._subdivision.ExposeToUI()});
-  details.push_back({"Color type", [&shape_properties]()
-                     {
-                       ImGui::Combo(
-                           "##Color_type",
-                           (int32_t*)&shape_properties._color.first.GetValue(),
-                           Essentials::ColorPropertyTolist());
-                     }});
-  details.push_back({"Color", shape_properties._color.second.ExposeToUI()});
+  details.push_back(
+      {"Color type", [ui_callback, &shape_properties]()
+       {
+         if (ImGui::Combo("##Color_type",
+                          (int32_t*)&shape_properties._color.first.GetValue(),
+                          Essentials::ColorPropertyTolist()))
+         {
+           ui_callback();
+         }
+       }});
+  details.push_back(
+      {"Color", shape_properties._color.second.ExposeToUI(ui_callback)});
   details.push_back({"Radius", shape_properties._radius.ExposeToUI()});
   return details;
 }
