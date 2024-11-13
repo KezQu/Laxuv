@@ -54,7 +54,7 @@ const uint D_DISK = 4;
 const uint D_CUBE = 5;
 const uint D_SPHERE = 6;
 
-vec4 InitDefaultShape(in uint idx, in uvec3 invocation, in uint maxParticles){
+vec3 InitDefaultShape(in uint idx, in uvec3 invocation, in uint maxParticles){
 	vec4 positionCandidate = vec4(0);
 	switch (DistributionShape){
 	case D_LINE:
@@ -78,5 +78,5 @@ vec4 InitDefaultShape(in uint idx, in uvec3 invocation, in uint maxParticles){
 	default:
 		break;
 	}
-	return positionCandidate;
+	return positionCandidate.xyz;
 }

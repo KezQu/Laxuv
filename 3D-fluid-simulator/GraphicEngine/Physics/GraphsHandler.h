@@ -23,14 +23,18 @@ struct GraphsHandler
 {
   // Sections cross_sections;
   // void* heatmap_data;
-  float granularity{1.f};
+  float granularity{0.1f};
+  using HeatmapData = uint8_t const* const;
 
   glm::ivec3 GetDataPosition(Essentials::ParticleBufferProperties const& data,
                              uint64_t space_bounds);
   std::vector<Essentials::ParticleBufferProperties> GetGraphData(
       Essentials::EntityContainer const& entities);
-  uint8_t const* const SerializeData(
+  HeatmapData SerializeData(
       std::vector<Essentials::ParticleBufferProperties> const& data,
       uint64_t space_bounds);
-  void GenerateGraphs(uint8_t const* const data, uint64_t space_bounds);
+  void GenerateGraphs(HeatmapData data, uint64_t space_bounds);
+
+ private:
+  void DrawData(HeatmapData data, uint64_t offset, glm::ivec2 position);
 };

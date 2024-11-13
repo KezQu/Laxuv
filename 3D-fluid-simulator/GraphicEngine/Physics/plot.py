@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import os
-import struct
 
 
 def ReadData(filename, resolution):
@@ -25,7 +24,7 @@ def plot(data, resolution):
     fig.colorbar(imgXZ, ax=ax[0, 1])
 
     axis_ticks = (np.linspace(0, resolution, 10, dtype=int),
-                  np.linspace(-resolution/2, resolution/2, 10, dtype=int))
+                  np.linspace(-resolution/20, resolution/20, 10, dtype=int))
     plt.setp(ax, xticks=axis_ticks[0], yticks=axis_ticks[0],
              xticklabels=axis_ticks[1], yticklabels=axis_ticks[1])
     plt.show()
