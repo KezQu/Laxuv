@@ -14,7 +14,7 @@ uniform uint colorType;
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	vec4 VolumeDensityPressureDro_Dt;
+	vec4 MassDensityPressureDro_Dt;
   	vec4 color;
 	uint neighbours[MaxNeighbours];
 };

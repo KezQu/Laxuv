@@ -15,10 +15,6 @@ const mat4 I4 = mat4(1, 0, 0, 0,
 
 
 const uint MaxValueNeighbour = uint(0xffff);
-const float cellRadius = 5;
-const uint MaxCells = uint(1200 / cellRadius);
-const uint HashGridSize = MaxCells * MaxCells;
-const uint CellCapacity = uint(3.1415 * (4. / 3.) * pow(cellRadius, 3));
 const uint MaxNeighbours = 512;
 
 const uint NONE = 0;
@@ -49,13 +45,13 @@ uniform float searchKernel;
 
 uniform float viscosityFactor;
 uniform float dt;
-uniform float mass;
+uniform float density;
 
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	vec4 VolumeDensityPressureDro_Dt;
-  	vec4 color;
+	vec4 MassDensityPressureDro_Dt;
+  vec4 color;
 	uint neighbours[MaxNeighbours];
 };
 
@@ -84,6 +80,10 @@ layout(std430, binding = 1) buffer terrainBuffer{
 	restrict TerrainProperties terrain[];
 };
 
+float CalculateMass(float density){
+	return (4. / 3.) * PI * density * pow(shapeRadius, 3);
+}
+
 float CalculateKernelWeight(vec3 points_dist){
 	const float abs_dist = length(points_dist);
 	if(abs_dist > influenceKernel){
@@ -108,10 +108,6 @@ void ClampVelocity(uint index_x){
 	if(particle_speed > 50){
 //		particle[index_x].velocityDFSPHfactor.xyz *= 50 / particle_speed;
 	}
-}
-
-uint EncodeCellNumber(vec3 cell){
-	return uint(mod(73856093 * cell.x + 19349663 * cell.y + 83492791 * cell.z, HashGridSize));
 }
 
 vec3 BounceOfAWall(vec3 direction, vec3 surface_dir){
@@ -150,25 +146,25 @@ float CalculateDFSPHFactor(uint index_x){
 		if(curr_neighbour == MaxValueNeighbour){
 			break;
 		}
-		const float m_j = mass;
+		const float m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
 		const vec3 x_i = particle[index_x].position.xyz;
 		const vec3 x_j = particle[curr_neighbour].position.xyz;
 		const vec3 gradW_ij = CalculateGradKernelWeight(x_i - x_j);
 		sum += m_j * gradW_ij;
 		sum_of_squared += pow(length(m_j * gradW_ij), 2);
 	}
-	return pow(particle[index_x].VolumeDensityPressureDro_Dt.y, 2) / (pow(length(sum), 2) + sum_of_squared + 1e-6);
+	return pow(particle[index_x].MassDensityPressureDro_Dt.y, 2) / (pow(length(sum), 2) + sum_of_squared + 1e-6);
 }
 
 float CalculateDensity(uint index_x){
-	float kernel_sum = mass;
+	float kernel_sum = density; //particle[index_x].MassDensityPressureDro_Dt.x * CalculateKernelWeight(vec3(0));
 	uint curr_neighbour = 0;
 	for(int i = 0; i < MaxNeighbours; i++){
 		curr_neighbour = particle[index_x].neighbours[i];
 		if(curr_neighbour == MaxValueNeighbour){
 			break;
 		}
-		const float m_j = mass;
+		const float m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 		kernel_sum += m_j * CalculateKernelWeight(x_ij);
 	}
@@ -185,7 +181,7 @@ float CalculateDerivDensity(uint index_x){
 		if(curr_neighbour == MaxValueNeighbour){
 			break;
 		}
-		const float m_j = mass;
+		const float m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
 		const vec3 v_j = particle[curr_neighbour].velocityDFSPHfactor.xyz;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 
@@ -195,8 +191,8 @@ float CalculateDerivDensity(uint index_x){
 }
 
 vec3 CalculateGradPressure(uint index_x){
-	const float ro_i = particle[index_x].VolumeDensityPressureDro_Dt.y;
-	const float p_i = particle[index_x].VolumeDensityPressureDro_Dt.z;
+	const float ro_i = particle[index_x].MassDensityPressureDro_Dt.y;
+	const float p_i = particle[index_x].MassDensityPressureDro_Dt.z;
 	
 	vec3 kernel_sum = vec3(0);
 	uint curr_neighbour = 0;
@@ -205,9 +201,9 @@ vec3 CalculateGradPressure(uint index_x){
 		if(curr_neighbour == MaxValueNeighbour){
 			break;
 		}
-		const float m_j = mass;
-		const float ro_j = particle[curr_neighbour].VolumeDensityPressureDro_Dt.y;
-		const float p_j = particle[curr_neighbour].VolumeDensityPressureDro_Dt.z;
+		const float m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
+		const float ro_j = particle[curr_neighbour].MassDensityPressureDro_Dt.y;
+		const float p_j = particle[curr_neighbour].MassDensityPressureDro_Dt.z;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 
 		kernel_sum += m_j * (p_i / pow(ro_i, 2) + p_j / (ro_j * ro_i)) * CalculateGradKernelWeight(x_ij);
@@ -225,8 +221,8 @@ vec3 CalculateViscosity(uint index_x){
 		if(curr_neighbour == MaxValueNeighbour){
 			break;
 		}
-		const float m_j = mass;
-		const float ro_j = particle[curr_neighbour].VolumeDensityPressureDro_Dt.y;
+		const float m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
+		const float ro_j = particle[curr_neighbour].MassDensityPressureDro_Dt.y;
 		const vec3 v_ij = particle[index_x].velocityDFSPHfactor.xyz - particle[curr_neighbour].velocityDFSPHfactor.xyz;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 		kernel_sum += (m_j * dot(v_ij, x_ij) * CalculateGradKernelWeight(x_ij)) / (ro_j * (pow(length(x_ij), 2) + 0.01));
@@ -237,7 +233,7 @@ vec3 CalculateViscosity(uint index_x){
 void CheckWorldBounds(uint index_x){
 	vec3 vec_from_center = particle[index_x].position.xyz + dt * particle[index_x].velocityDFSPHfactor.xyz;
 	vec3 surface_dir = vec3(0);
-	vec3 correction = vec3(0);
+	// vec3 correction = vec3(0);
 
 	if(worldType == W_CUBE){
 		if(vec_from_center.x <= -spaceLimiter){
@@ -255,18 +251,18 @@ void CheckWorldBounds(uint index_x){
 		}else if(vec_from_center.z >= spaceLimiter){
 			surface_dir = vec3(0, 0, -1);
 		}
-		correction = 1 - vec_from_center / spaceLimiter;
-		correction.x = correction.x > 0 ? 0 :correction.x;
-		correction.y = correction.y > 0 ? 0 :correction.y;
-		correction.z = correction.z > 0 ? 0 :correction.z;
+		// correction = 1 - vec_from_center / spaceLimiter;
+		// correction.x = correction.x > 0 ? 0 :correction.x;
+		// correction.y = correction.y > 0 ? 0 :correction.y;
+		// correction.z = correction.z > 0 ? 0 :correction.z;
 	}else if(worldType == W_SPHERE){
 		if(length(vec_from_center) >= spaceLimiter){
 			surface_dir = vec_from_center;
-			correction = vec3(1 - length(vec_from_center) / spaceLimiter);
+			// correction = vec3(1 - length(vec_from_center) / spaceLimiter);
 		}
 	}
 	particle[index_x].velocityDFSPHfactor.xyz = BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, surface_dir);
-	particle[index_x].position.xyz += correction * vec_from_center;
+	// particle[index_x].position.xyz += correction * vec_from_center;
 }
 
 void UpdateTerrainOrientation(uint index_x){
@@ -296,7 +292,7 @@ void CheckCollisions(uint index_x){
 		const vec4 pos_vdt = t_model_1 * vec4(pos_local + dt * vel_local, 1);
 
 		vec3 surface_dir = vec3(0);
-		vec3 correction = vec3(0);
+		// vec3 correction = vec3(0);
 		vec3 abs_pos = abs(pos.xyz);
 
 		if(uint(terrain[i].center.w) == S_CUBE){
@@ -309,12 +305,12 @@ void CheckCollisions(uint index_x){
 				}if(max_side == abs_pos.z){
 					surface_dir += pos.z < 0.f ? vec3(0,0,1) : vec3(0,0,-1);
 				}
-				correction = vec3(-1);
+				// correction = vec3(-1);
 			}
 		}else if(uint(terrain[i].center.w) == S_SPHERE){
 			if(length(pos.xyz) <= 1){
 				surface_dir = pos.xyz;
-				correction = vec3(1);
+				// correction = vec3(1);
 			}
 		}
 		if(length(surface_dir) > 0){
@@ -327,33 +323,33 @@ void CheckCollisions(uint index_x){
 //			if(length(pos_vdt.xyz) <= 1){
 //			}
 //		}
-		particle[index_x].position.xyz += correction * surface_dir;
+		// particle[index_x].position.xyz += correction * surface_dir;
 		particle[index_x].velocityDFSPHfactor.xyz = BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, surface_dir);
 	}
 }
 
 void CalculateExternalForces(uint index_x){
-	const float ro_i = particle[index_x].VolumeDensityPressureDro_Dt.y;
+	const float ro_i = particle[index_x].MassDensityPressureDro_Dt.y;
 
 	vec3 viscosity_acceleration = CalculateViscosity(index_x) / ro_i;
 	particle[index_x].velocityDFSPHfactor.xyz += dt * (viscosity_acceleration - vec3(0, g, 0));
 }
 void SolveDensityError(uint index_x){
-	const float density0 = mass;
+	const float density0 = density;
 	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
 	
-	float ro_hash = particle[index_x].VolumeDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
+	float ro_hash = particle[index_x].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
 	for(int i = 0; i < 500; i++){
-		particle[index_x].VolumeDensityPressureDro_Dt.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
+		particle[index_x].MassDensityPressureDro_Dt.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
 
 		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
-		ro_hash = particle[index_x].VolumeDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
+		ro_hash = particle[index_x].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
 
 		if((abs((ro_hash - density0)) / density0 < 2e-2) && i > 5){
 			break;
 		}
 	}
-	particle[index_x].VolumeDensityPressureDro_Dt.w = abs(particle[index_x].VolumeDensityPressureDro_Dt.y - density0) / density0;
+	particle[index_x].MassDensityPressureDro_Dt.w = abs(particle[index_x].MassDensityPressureDro_Dt.y - density0) / density0;
 
 }
 void UpdatePosition(uint index_x){
@@ -363,16 +359,16 @@ void UpdatePosition(uint index_x){
 	particle[index_x].position.xyz += dt * particle[index_x].velocityDFSPHfactor.xyz;
 }
 void SolveDivergenceError(uint index_x){
-	particle[index_x].VolumeDensityPressureDro_Dt.y = CalculateDensity(index_x);
+	particle[index_x].MassDensityPressureDro_Dt.y = CalculateDensity(index_x);
 	particle[index_x].velocityDFSPHfactor.w = CalculateDFSPHFactor(index_x);
 	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
 
 	float d_ro = CalculateDerivDensity(index_x);
 	for(int i = 0; i < 500 && !((abs(d_ro) < 1e-2) && i > 2); i++){
-		particle[index_x].VolumeDensityPressureDro_Dt.z = d_ro * factor_x / dt;
+		particle[index_x].MassDensityPressureDro_Dt.z = d_ro * factor_x / dt;
 			
 		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
 		d_ro = CalculateDerivDensity(index_x);
 	}
-	particle[index_x].VolumeDensityPressureDro_Dt.w = d_ro;
+	particle[index_x].MassDensityPressureDro_Dt.w = d_ro;
 }

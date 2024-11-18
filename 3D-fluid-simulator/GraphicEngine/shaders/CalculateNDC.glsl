@@ -1,5 +1,7 @@
 #version 460 core
 
+const float worldScale = 1;
+
 uniform mat4 model;
 uniform vec3 scale;
 uniform mat4 view;
@@ -8,7 +10,7 @@ uniform vec2 viewport;
 uniform float shapeRadius;
 
 vec4 CalculateNDC(in vec3 position, in vec3 offset){
-	vec4 outPosition = vec4((position + offset) * scale * shapeRadius, 1.0);
+	vec4 outPosition = vec4((position + offset * worldScale) * scale * worldScale * shapeRadius, 1.0);
 
 	outPosition = projection * view * model * outPosition;
 	

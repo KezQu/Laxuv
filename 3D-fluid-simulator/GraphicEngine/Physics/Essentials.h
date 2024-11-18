@@ -10,13 +10,8 @@
 namespace Essentials
 {
 
-constexpr float cellRadius = 5;
-constexpr uint64_t MaxCells = static_cast<uint64_t>(1200 / cellRadius);
-constexpr uint64_t CellCapacity = static_cast<uint64_t>(
-    3.1415 * (4. / 3.) * cellRadius * cellRadius * cellRadius);
 constexpr uint32_t MaxNeighbours = 512;
-
-using space_grid_t = uint32_t[CellCapacity];
+constexpr float length_scale = 1;
 
 enum class EntityType : uint32_t
 {
@@ -96,13 +91,10 @@ struct ParticleBufferProperties
 {
   glm::vec4 velocityDFSPHfactor{0};
   glm::vec4 position{0};
-  glm::vec4 VolumeDensityPressureDro_Dt{0};
+  glm::vec4 MassDensityPressureDro_Dt{0};
   glm::vec4 color{0};
   uint32_t neighbours[MaxNeighbours];
 };
-
-auto const lengthDefaultProperties =
-    ValueProperties{0.1f, 600.f, 1.f, "%.1f mm"};
 
 auto const colorDefaultProperties = ValueProperties{0.f, 1.f, 1.f, "%.2f"};
 
@@ -125,26 +117,30 @@ struct ParticleProperties
   Uniform<glm::vec3, float> init_velocity{
       glm::vec3{0.f}, "initVelocity",
       ValueProperties{-50.f, 50.f, 1.f, "%.1f m/s"}};
-  Uniform<float> particle_spacing{2.f, "particleSpacing",
-                                  lengthDefaultProperties};
+  Uniform<float> particle_spacing{
+      2.f, "particleSpacing",
+      ValueProperties{0.1f, 600.f, length_scale, "%.1f mm"}};
   Uniform<uint32_t> distribution_shape{
       static_cast<uint32_t>(DistributionShape::CUBE), "DistributionShape"};
-  Uniform<float> influence_kernel{2.5f, "influenceKernel",
-                                  lengthDefaultProperties};
-  Uniform<float> search_kernel{2.5f, "searchKernel", lengthDefaultProperties};
+  Uniform<float> influence_kernel{
+      2.5f, "influenceKernel",
+      ValueProperties{0.1f, 600.f, length_scale, "%.1f mm"}};
+  Uniform<float> search_kernel{
+      2.5f, "searchKernel",
+      ValueProperties{0.1f, 600.f, length_scale, "%.1f mm"}};
   Uniform<float> kernel_a{4.f, "kernel_a"};
-  Uniform<float> mass{1.f, "mass",
-                      ValueProperties{0.1f, 1000.f, 1e-3f, "%.1f g"}};
+  Uniform<float> density{1000.f, "density",
+                         ValueProperties{0.1f, 13000.f, 1e-6f, "%.1f ug"}};
   Uniform<float> viscosity_factor{
       10.f, "viscosityFactor",
-      ValueProperties{0.1f, 1000.f, 1e-3f, "%.1f Pa*s"}};
+      ValueProperties{0.1f, 1000.f, 1e-3f, "%.1f mPa*s"}};
 };
 
 struct ShapeProperties
 {
   Uniform<glm::vec3, float> _location{
       glm::vec3{0.f}, "location",
-      ValueProperties{-1200.f, 1200.f, 1.f, "%.1f mm"}};
+      ValueProperties{-1200.f, 1200.f, length_scale, "%.1f mm"}};
   Uniform<glm::vec3, float> _scale{glm::vec3{1.f}, "scale",
                                    ValueProperties{0.f, 100.f, 1.f, "%.1f"}};
   Uniform<glm::vec3, float> _rotation{
@@ -152,9 +148,10 @@ struct ShapeProperties
       ValueProperties{-360.f, 360.f, 1.f, "%.1f deg"}};
   Uniform<glm::vec3, float> _center{
       glm::vec3{0.f}, "center",
-      ValueProperties{-1200.f, 1200.f, 1.f, "%.1f mm"}};
+      ValueProperties{-1200.f, 1200.f, length_scale, "%.1f mm"}};
   Uniform<uint32_t> _subdivision{5U, "subdivision", ValueProperties{1U, 50U}};
-  Uniform<float> _radius{1.f, "shapeRadius", lengthDefaultProperties};
+  Uniform<float> _radius{1.f, "shapeRadius",
+                         ValueProperties{0.1f, 600.f, length_scale, "%.1f mm"}};
   std::pair<Uniform<uint32_t>, Uniform<glm::vec4, float>> _color{
       {static_cast<uint32_t>(Essentials::ColorProperty::NONE), "colorType"},
       {glm::vec4{0.5f, 0.5f, 0.5f, 1.f}, "color", colorDefaultProperties}};

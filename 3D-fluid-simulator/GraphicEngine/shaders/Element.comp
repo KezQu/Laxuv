@@ -41,13 +41,13 @@ uniform float shapeRadius;
 uniform float particleSpacing;
 uniform float influenceKernel;
 uniform float dt;
-uniform float mass;
+uniform float density;
 
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	vec4 VolumeDensityPressureDro_Dt;
-  	vec4 color;
+	vec4 MassDensityPressureDro_Dt;
+  vec4 color;
 	uint neighbours[MaxNeighbours];
 };
 
@@ -87,6 +87,7 @@ float CalculateDFSPHFactor(uint index_x);
 vec3 CalculateGradPressure(uint index_x);
 vec3 CalculateViscosity(uint index_x);
 
+float CalculateMass(float density);
 float CalculateDensity(uint index_x);
 float CalculateAvgDensityHash(uint index_x);
 float CalculateDerivDensity(uint index_x);
@@ -108,15 +109,16 @@ void main(){
 	if(SimulatorState == INIT){
 		particle[index].velocityDFSPHfactor = vec4(initVelocity, 0);
 		particle[index].position = vec4(0, 0, 0, shapeRadius);
-		particle[index].VolumeDensityPressureDro_Dt = vec4(0);
+		particle[index].MassDensityPressureDro_Dt = vec4(0);
 		particle[index].color = vec4(0);
 		if(physicsType != NONE){
-			particle[index].position = vec4(InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * particleSpacing * shapeRadius, shapeRadius);
+			particle[index].position = vec4(InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * shapeRadius * 2, shapeRadius); //* particleSpacing 
 		}
 		if(physicsType == DYNAMIC){
 			FindNeighbours(index, MaxParticles);
 
-			particle[index].VolumeDensityPressureDro_Dt.y = CalculateDensity(index);
+			particle[index].MassDensityPressureDro_Dt.x = CalculateMass(density);
+			particle[index].MassDensityPressureDro_Dt.y = CalculateDensity(index);
 			particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
 		}
 		else if (physicsType == STATIC){
