@@ -112,12 +112,12 @@ void main(){
 		particle[index].MassDensityPressureDro_Dt = vec4(0);
 		particle[index].color = vec4(0);
 		if(physicsType != NONE){
-			particle[index].position = vec4(InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * shapeRadius * 2, shapeRadius); //* particleSpacing 
+			particle[index].position = vec4(InitDefaultShape(index, gl_GlobalInvocationID, MaxParticles) * particleSpacing * 2, 1) * shapeRadius;
 		}
 		if(physicsType == DYNAMIC){
 			FindNeighbours(index, MaxParticles);
 
-			particle[index].MassDensityPressureDro_Dt.x = CalculateMass(density);
+			particle[index].MassDensityPressureDro_Dt.x = density;
 			particle[index].MassDensityPressureDro_Dt.y = CalculateDensity(index);
 			particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
 		}
@@ -139,7 +139,7 @@ void main(){
 
 			FindNeighbours(index, MaxParticles);
 
-			SolveDivergenceError(index);
+			// SolveDivergenceError(index);
 			particle[index].position.xyz = (inverse(model) * vec4(particle[index].position.xyz, 1.0)).xyz / scale;
 		}
 	}

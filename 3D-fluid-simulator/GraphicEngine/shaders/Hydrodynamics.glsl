@@ -4,7 +4,6 @@ const float E = 2.71828;
 const float PI = 3.14159265358979323846264338327950288;
 const float g = 9.80665;
 const float R = 8.31446261815324;
-const float kernel_c = 3;
 const mat3 I = mat3(1, 0, 0,
 					0, 1, 0,
 					0, 0, 1);
@@ -80,17 +79,12 @@ layout(std430, binding = 1) buffer terrainBuffer{
 	restrict TerrainProperties terrain[];
 };
 
-float CalculateMass(float density){
-	return (4. / 3.) * PI * density * pow(shapeRadius, 3);
-}
-
 float CalculateKernelWeight(vec3 points_dist){
 	const float abs_dist = length(points_dist);
 	if(abs_dist > influenceKernel){
 		return 0.f;
 	}
-	return 2 * pow(influenceKernel - abs_dist, kernel_c) / pow(influenceKernel, kernel_a);
-//	return (35. / 32.) * pow(influenceKernel*influenceKernel - abs_dist*abs_dist, kernel_c) / pow(influenceKernel, 2 * kernel_a - 1);
+	return (kernel_a / 2.) * pow(influenceKernel - abs_dist, kernel_a - 1) / pow(influenceKernel, kernel_a);
 }
 
 vec3 CalculateGradKernelWeight(vec3 points_dist){
@@ -99,15 +93,7 @@ vec3 CalculateGradKernelWeight(vec3 points_dist){
 	if(abs_dist > influenceKernel){
 		return vec3(0);
 	}
-	return -2 * kernel_c * pow(influenceKernel - abs_dist, kernel_c - 1) / pow(influenceKernel, kernel_a) * versor_ij;
-//	return -(35. / 32.) * 2 * kernel_c * pow(influenceKernel*influenceKernel - abs_dist*abs_dist, kernel_c - 1) / pow(influenceKernel, 2 * kernel_a - 1) * versor_ij;
-}
-
-void ClampVelocity(uint index_x){
-	float particle_speed = length(particle[index_x].velocityDFSPHfactor.xyz);
-	if(particle_speed > 50){
-//		particle[index_x].velocityDFSPHfactor.xyz *= 50 / particle_speed;
-	}
+	return - (kernel_a / 2.) * (kernel_a - 1) * pow(influenceKernel - abs_dist, kernel_a - 2) / pow(influenceKernel, kernel_a) * versor_ij;
 }
 
 vec3 BounceOfAWall(vec3 direction, vec3 surface_dir){
@@ -157,7 +143,7 @@ float CalculateDFSPHFactor(uint index_x){
 }
 
 float CalculateDensity(uint index_x){
-	float kernel_sum = density; //particle[index_x].MassDensityPressureDro_Dt.x * CalculateKernelWeight(vec3(0));
+	float kernel_sum = density;
 	uint curr_neighbour = 0;
 	for(int i = 0; i < MaxNeighbours; i++){
 		curr_neighbour = particle[index_x].neighbours[i];
@@ -339,7 +325,7 @@ void SolveDensityError(uint index_x){
 	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
 	
 	float ro_hash = particle[index_x].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
-	for(int i = 0; i < 500; i++){
+	for(int i = 0; i < 1; i++){
 		particle[index_x].MassDensityPressureDro_Dt.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
 
 		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
@@ -355,7 +341,7 @@ void SolveDensityError(uint index_x){
 void UpdatePosition(uint index_x){
 	CheckWorldBounds(index_x);
 	CheckCollisions(index_x);
-	particle[index_x].velocityDFSPHfactor.xyz *= 0.995;
+	// particle[index_x].velocityDFSPHfactor.xyz *= 0.999;
 	particle[index_x].position.xyz += dt * particle[index_x].velocityDFSPHfactor.xyz;
 }
 void SolveDivergenceError(uint index_x){

@@ -21,7 +21,7 @@ class Simulator
   Uniform<uint32_t> _obstacles_number{0, "MaxObstacles"};
   Uniform<float> _space_boundries{
       100.f, "spaceLimiter",
-      ValueProperties{1.f, 1200.f, Essentials::length_scale, "%.1f mm"}};
+      ValueProperties{1.f, 1200.f, Essentials::length_scale, "%.1f m"}};
   Uniform<float> _bounds_viscosity{0.95f, "boundsViscosity",
                                    ValueProperties{0.f, 1.f, 1.f, "%.2f"}};
   Uniform<float> _global_delta_time{
