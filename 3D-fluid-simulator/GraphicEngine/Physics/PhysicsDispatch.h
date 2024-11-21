@@ -9,7 +9,7 @@ class PhysicsDispatch
  private:
   ShaderStorageBuffer<Essentials::ParticleBufferProperties> _particleMesh;
   Program _physicsGenerator;
-  uint32_t _work_groups{1U};
+  uint32_t _work_groups{5U};
 
  public:
   PhysicsDispatch(glm::ivec3 dimensions);

@@ -1,8 +1,8 @@
 #version 460 core
 
-layout (local_size_x = 1,
-		local_size_y = 1,
-		local_size_z = 1) in;
+layout (local_size_x = 5,
+		local_size_y = 5,
+		local_size_z = 5) in;
 
 const uint NONE = 0;
 const uint STATIC = 1;
@@ -41,12 +41,12 @@ uniform float shapeRadius;
 uniform float particleSpacing;
 uniform float influenceKernel;
 uniform float dt;
-uniform float density;
+uniform float init_mass;
 
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	vec4 MassDensityPressureDro_Dt;
+	dvec4 MassDensityPressureDro_Dt;
   vec4 color;
 	uint neighbours[MaxNeighbours];
 };
@@ -55,18 +55,6 @@ struct TerrainProperties {
 	vec4 center;
 	vec4 bounds;
 	mat4 model;
-};
-
-struct stateVector{
-	float x;
-	vec3 y;
-	float z;
-};
-
-struct Flux {
-	vec3 x;
-	mat3 y;
-	vec3 z;
 };
 
 layout(std430, binding = 0) buffer dataBuffer{
@@ -79,19 +67,11 @@ layout(std430, binding = 1) buffer terrainBuffer{
 
 vec3 InitDefaultShape(in uint idx, in uvec3 invocation, in uint maxParticles);
 
-void ClearSpaceGrid(uint index_x, uint MaxParticles);
-void AssignToCell(uint index_x);
 void FindNeighbours(uint index_x, uint MaxParticles);
 
 float CalculateDFSPHFactor(uint index_x);
-vec3 CalculateGradPressure(uint index_x);
-vec3 CalculateViscosity(uint index_x);
 
-float CalculateMass(float density);
-float CalculateDensity(uint index_x);
-float CalculateAvgDensityHash(uint index_x);
-float CalculateDerivDensity(uint index_x);
-float CalculateAvgDerivDensity(uint index_x);
+double CalculateDensity(uint index_x);
 
 void CalculateExternalForces(uint index_x);
 void SolveDensityError(uint index_x);
@@ -99,9 +79,9 @@ void SolveDivergenceError(uint index_x);
 void UpdatePosition(uint index_x);
 
 void CheckWorldBounds(uint index_x);
+void CheckCollisions(uint index_x);
 
 void UpdateTerrainOrientation(uint index_x);
-void CheckCollisions(uint index_x);
 
 vec4 ChooseColor(ParticleProperties properties);
 
@@ -117,7 +97,7 @@ void main(){
 		if(physicsType == DYNAMIC){
 			FindNeighbours(index, MaxParticles);
 
-			particle[index].MassDensityPressureDro_Dt.x = density;
+			particle[index].MassDensityPressureDro_Dt.x = init_mass;
 			particle[index].MassDensityPressureDro_Dt.y = CalculateDensity(index);
 			particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
 		}
@@ -139,7 +119,10 @@ void main(){
 
 			FindNeighbours(index, MaxParticles);
 
-			// SolveDivergenceError(index);
+			SolveDivergenceError(index);
+
+			CheckWorldBounds(index);
+			CheckCollisions(index);
 			particle[index].position.xyz = (inverse(model) * vec4(particle[index].position.xyz, 1.0)).xyz / scale;
 		}
 	}

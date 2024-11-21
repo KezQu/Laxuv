@@ -188,10 +188,10 @@ void Simulator::CreateEntity(Essentials::EntityType entity_type,
               : Append(Particles{new Cube{Vertex{}, 1.f}, glm::uvec3{5U}});
       break;
     case Essentials::EntityShape::SPHERE:
-      entity_id =
-          entity_type == Essentials::EntityType::OBJECT
-              ? Append(Object{new Sphere{}})
-              : Append(Particles{new Sphere{Vertex{}, 1.f}, glm::uvec3{5U}});
+      entity_id = entity_type == Essentials::EntityType::OBJECT
+                      ? Append(Object{new Sphere{}})
+                      : Append(Particles{new Sphere{Vertex{}, 1.f},
+                                         glm::uvec3{1U, 2, 1}});
       break;
     default:
       break;

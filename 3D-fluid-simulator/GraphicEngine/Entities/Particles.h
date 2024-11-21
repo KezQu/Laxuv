@@ -93,11 +93,11 @@ void Particles<Prim>::Bind(uint32_t program_id) const
   Entity::Bind(program_id);
 
   _particle_properties.viscosity_factor.MapUniform(program_id);
-  _particle_properties.density.MapUniform(program_id);
+  // _particle_properties.density.MapUniform(program_id);
+  _particle_properties.mass.MapUniform(program_id);
 
   _particle_properties.kernel_a.MapUniform(program_id);
   _particle_properties.influence_kernel.MapUniform(program_id);
-  _particle_properties.search_kernel.MapUniform(program_id);
 
   _particle_properties.init_velocity.MapUniform(program_id);
   _particle_properties.particle_spacing.MapUniform(program_id);
@@ -148,10 +148,9 @@ Essentials::DetailControls Particles<Prim>::Details()
   details.push_back(
       {"Influence kernel", _particle_properties.influence_kernel.ExposeToUI()});
   details.push_back(
-      {"Search kernel", _particle_properties.search_kernel.ExposeToUI()});
-  details.push_back(
       {"Kernel factor A", _particle_properties.kernel_a.ExposeToUI()});
-  details.push_back({"Mass", _particle_properties.density.ExposeToUI()});
+  // details.push_back({"Density", _particle_properties.density.ExposeToUI()});
+  details.push_back({"Particle mass", _particle_properties.mass.ExposeToUI()});
   details.push_back(
       {"Viscosity factor", _particle_properties.viscosity_factor.ExposeToUI()});
   details.push_back(

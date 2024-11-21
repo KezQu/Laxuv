@@ -91,7 +91,7 @@ struct ParticleBufferProperties
 {
   glm::vec4 velocityDFSPHfactor{0};
   glm::vec4 position{0};
-  glm::vec4 MassDensityPressureDro_Dt{0};
+  glm::dvec4 MassDensityPressureDro_Dt{0};
   glm::vec4 color{0};
   uint32_t neighbours[MaxNeighbours];
 };
@@ -123,14 +123,13 @@ struct ParticleProperties
   Uniform<uint32_t> distribution_shape{
       static_cast<uint32_t>(DistributionShape::CUBE), "DistributionShape"};
   Uniform<float> influence_kernel{
-      2.f, "influenceKernel",
+      2.5f, "influenceKernel",
       ValueProperties{0.1f, 600.f, length_scale, "%.1f m"}};
-  Uniform<float> search_kernel{
-      2.f, "searchKernel",
-      ValueProperties{0.1f, 600.f, length_scale, "%.1f m"}};
-  Uniform<float> kernel_a{6.f, "kernel_a"};
-  Uniform<float> density{1000.f, "density",
-                         ValueProperties{0.1f, 13000.f, 1.f, "%.1f kg/m^3"}};
+  Uniform<float> kernel_a{4.f, "kernel_a"};
+  // Uniform<float> density{1000.f, "density",
+  //                        ValueProperties{0.1f, 13000.f, 1.f, "%.1f kg/m^3"}};
+  Uniform<float> mass{100.f, "init_mass",
+                      ValueProperties{0.1f, 1e+6f, 1e-6f, "%.1f ug"}};
   Uniform<float> viscosity_factor{
       10.f, "viscosityFactor",
       ValueProperties{0.f, 1000.f, 1e-3f, "%.1f mPa*s"}};

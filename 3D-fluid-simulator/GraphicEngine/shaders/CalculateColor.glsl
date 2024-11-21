@@ -17,7 +17,7 @@ uniform vec4 color;
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	vec4 MassDensityPressureDro_Dt;
+	dvec4 MassDensityPressureDro_Dt;
   	vec4 color;
 	uint neighbours[MaxNeighbours];
 };
@@ -65,13 +65,13 @@ vec4 ChooseColor(ParticleProperties properties){
 			chosen_color = CalculateColor(length(properties.velocityDFSPHfactor.xyz) / max_speed);
 			break;
 		case DENSITY_ERROR:
-			chosen_color = CalculateColor(abs(properties.MassDensityPressureDro_Dt.y - density0) / density0);
+			chosen_color = CalculateColor(float(abs(properties.MassDensityPressureDro_Dt.y)));
 			break;
 		case DIVERGENCE_ERROR:
-			chosen_color = CalculateColor(abs(properties.MassDensityPressureDro_Dt.w) * 1e+2);
+			chosen_color = CalculateColor(float(abs(properties.MassDensityPressureDro_Dt.w)) * 1e+2);
 			break;
 		case PRESSURE:
-			chosen_color = CalculateColor(2 * log(abs(properties.MassDensityPressureDro_Dt.z) + 1) / (density * 1e+3));
+			chosen_color = CalculateColor(2 * log(float(abs(properties.MassDensityPressureDro_Dt.z)) + 1) / (density * 1e+3));
 			break;
 	}
 	return chosen_color;

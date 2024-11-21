@@ -40,16 +40,14 @@ uniform float kernel_a;
 
 uniform float shapeRadius;
 uniform float influenceKernel;
-uniform float searchKernel;
 
 uniform float viscosityFactor;
 uniform float dt;
-uniform float density;
 
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	vec4 MassDensityPressureDro_Dt;
+	dvec4 MassDensityPressureDro_Dt;
   vec4 color;
 	uint neighbours[MaxNeighbours];
 };
@@ -60,17 +58,6 @@ struct TerrainProperties {
 	mat4 model;
 };
 
-struct stateVector{
-	float x;
-	vec3 y;
-	float z;
-};
-
-struct Flux {
-	vec3 x;
-	mat3 y;
-	vec3 z;
-};
 
 layout(std430, binding = 0) buffer dataBuffer{
 	restrict ParticleProperties particle[];
@@ -79,7 +66,7 @@ layout(std430, binding = 1) buffer terrainBuffer{
 	restrict TerrainProperties terrain[];
 };
 
-float CalculateKernelWeight(vec3 points_dist){
+double CalculateKernelWeight(vec3 points_dist){
 	const float abs_dist = length(points_dist);
 	if(abs_dist > influenceKernel){
 		return 0.f;
@@ -94,6 +81,10 @@ vec3 CalculateGradKernelWeight(vec3 points_dist){
 		return vec3(0);
 	}
 	return - (kernel_a / 2.) * (kernel_a - 1) * pow(influenceKernel - abs_dist, kernel_a - 2) / pow(influenceKernel, kernel_a) * versor_ij;
+}
+
+double GetInternalDensity(uint index_x){
+	return particle[index_x].MassDensityPressureDro_Dt.x * CalculateKernelWeight(vec3(0));
 }
 
 vec3 BounceOfAWall(vec3 direction, vec3 surface_dir){
@@ -114,7 +105,7 @@ void FindNeighbours(uint index_x, uint MaxParticles){
 		for(uint i = 0; i < MaxParticles && num_neighbours < MaxNeighbours; i++){
 			if(i != index_x){
 				const vec3 pos_neighbour = particle[i].position.xyz;
-				if(length(pos_x - pos_neighbour) < searchKernel){
+				if(length(pos_x - pos_neighbour) < influenceKernel){
 					particle[index_x].neighbours[num_neighbours] = i;
 					num_neighbours++;
 				}
@@ -132,42 +123,42 @@ float CalculateDFSPHFactor(uint index_x){
 		if(curr_neighbour == MaxValueNeighbour){
 			break;
 		}
-		const float m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
+		const double m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
 		const vec3 x_i = particle[index_x].position.xyz;
 		const vec3 x_j = particle[curr_neighbour].position.xyz;
 		const vec3 gradW_ij = CalculateGradKernelWeight(x_i - x_j);
-		sum += m_j * gradW_ij;
-		sum_of_squared += pow(length(m_j * gradW_ij), 2);
+		sum += float(m_j) * gradW_ij;
+		sum_of_squared += pow(float(length(m_j * gradW_ij)), 2);
 	}
-	return pow(particle[index_x].MassDensityPressureDro_Dt.y, 2) / (pow(length(sum), 2) + sum_of_squared + 1e-6);
+	return pow(float(particle[index_x].MassDensityPressureDro_Dt.y), 2) / (pow(length(sum), 2) + sum_of_squared + 1e-6);
 }
 
-float CalculateDensity(uint index_x){
-	float kernel_sum = density;
+double CalculateDensity(uint index_x){
+	double kernel_sum = GetInternalDensity(index_x);
 	uint curr_neighbour = 0;
 	for(int i = 0; i < MaxNeighbours; i++){
 		curr_neighbour = particle[index_x].neighbours[i];
 		if(curr_neighbour == MaxValueNeighbour){
 			break;
 		}
-		const float m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
+		const double m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 		kernel_sum += m_j * CalculateKernelWeight(x_ij);
 	}
 	return kernel_sum;
 }
 
-float CalculateDerivDensity(uint index_x){
+double CalculateDerivDensity(uint index_x){
 	const vec3 v_i = particle[index_x].velocityDFSPHfactor.xyz;
 	
-	float kernel_sum = 0.f;
+	double kernel_sum = 0.f;
 	uint curr_neighbour = 0;
 	for(int i = 0; i < MaxNeighbours; i++){
 		curr_neighbour = particle[index_x].neighbours[i];
 		if(curr_neighbour == MaxValueNeighbour){
 			break;
 		}
-		const float m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
+		const double m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
 		const vec3 v_j = particle[curr_neighbour].velocityDFSPHfactor.xyz;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 
@@ -177,8 +168,8 @@ float CalculateDerivDensity(uint index_x){
 }
 
 vec3 CalculateGradPressure(uint index_x){
-	const float ro_i = particle[index_x].MassDensityPressureDro_Dt.y;
-	const float p_i = particle[index_x].MassDensityPressureDro_Dt.z;
+	const double ro_i = particle[index_x].MassDensityPressureDro_Dt.y;
+	const double p_i = particle[index_x].MassDensityPressureDro_Dt.z;
 	
 	vec3 kernel_sum = vec3(0);
 	uint curr_neighbour = 0;
@@ -187,14 +178,14 @@ vec3 CalculateGradPressure(uint index_x){
 		if(curr_neighbour == MaxValueNeighbour){
 			break;
 		}
-		const float m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
-		const float ro_j = particle[curr_neighbour].MassDensityPressureDro_Dt.y;
-		const float p_j = particle[curr_neighbour].MassDensityPressureDro_Dt.z;
+		const double m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
+		const double ro_j = particle[curr_neighbour].MassDensityPressureDro_Dt.y;
+		const double p_j = particle[curr_neighbour].MassDensityPressureDro_Dt.z;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 
-		kernel_sum += m_j * (p_i / pow(ro_i, 2) + p_j / (ro_j * ro_i)) * CalculateGradKernelWeight(x_ij);
+		kernel_sum += float(m_j) * (p_i / pow(float(ro_i) + 1e-6, 2) + p_j / pow(float(ro_j) + 1e-6, 2)) * CalculateGradKernelWeight(x_ij);
 	}
-	return ro_i * kernel_sum;
+	return kernel_sum; // zostaje na pamiątkę zmarnowanego miesiąca szukania błędu ro_i * kernel_sum
 }
 
 vec3 CalculateViscosity(uint index_x){
@@ -207,11 +198,11 @@ vec3 CalculateViscosity(uint index_x){
 		if(curr_neighbour == MaxValueNeighbour){
 			break;
 		}
-		const float m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
-		const float ro_j = particle[curr_neighbour].MassDensityPressureDro_Dt.y;
+		const double m_j = particle[curr_neighbour].MassDensityPressureDro_Dt.x;
+		const double ro_j = particle[curr_neighbour].MassDensityPressureDro_Dt.y;
 		const vec3 v_ij = particle[index_x].velocityDFSPHfactor.xyz - particle[curr_neighbour].velocityDFSPHfactor.xyz;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
-		kernel_sum += (m_j * dot(v_ij, x_ij) * CalculateGradKernelWeight(x_ij)) / (ro_j * (pow(length(x_ij), 2) + 0.01));
+		kernel_sum += (m_j * dot(v_ij, x_ij) * CalculateGradKernelWeight(x_ij)) / (ro_j * (pow(float(length(x_ij)), 2) + 0.01));
 	}
 	return kernel_sum * viscosityFactor * 2 * (d + 2);
 }
@@ -315,46 +306,43 @@ void CheckCollisions(uint index_x){
 }
 
 void CalculateExternalForces(uint index_x){
-	const float ro_i = particle[index_x].MassDensityPressureDro_Dt.y;
-
-	vec3 viscosity_acceleration = CalculateViscosity(index_x) / ro_i;
-	particle[index_x].velocityDFSPHfactor.xyz += dt * (viscosity_acceleration - vec3(0, g, 0));
+	const double density0 = 0;//particle[index_x].MassDensityPressureDro_Dt.x * CalculateKernelWeight(vec3(0));
+	vec3 viscosity_acceleration = CalculateViscosity(index_x);
+	particle[index_x].velocityDFSPHfactor.xyz += dt * (viscosity_acceleration * 1e-3 - vec3(0, g, 0));
 }
 void SolveDensityError(uint index_x){
-	const float density0 = density;
+	const double density0 = GetInternalDensity(index_x);
 	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
-	
-	float ro_hash = particle[index_x].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
-	for(int i = 0; i < 1; i++){
+
+	double ro_hash = particle[index_x].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
+	for(int i = 0; i < 200; i++){
 		particle[index_x].MassDensityPressureDro_Dt.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
+		barrier();
 
 		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
 		ro_hash = particle[index_x].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
-
-		if((abs((ro_hash - density0)) / density0 < 2e-2) && i > 5){
-			break;
-		}
+		barrier();
 	}
-	particle[index_x].MassDensityPressureDro_Dt.w = abs(particle[index_x].MassDensityPressureDro_Dt.y - density0) / density0;
-
+	particle[index_x].MassDensityPressureDro_Dt.w = abs(ro_hash);
 }
+
 void UpdatePosition(uint index_x){
-	CheckWorldBounds(index_x);
-	CheckCollisions(index_x);
-	// particle[index_x].velocityDFSPHfactor.xyz *= 0.999;
 	particle[index_x].position.xyz += dt * particle[index_x].velocityDFSPHfactor.xyz;
 }
+
 void SolveDivergenceError(uint index_x){
 	particle[index_x].MassDensityPressureDro_Dt.y = CalculateDensity(index_x);
 	particle[index_x].velocityDFSPHfactor.w = CalculateDFSPHFactor(index_x);
 	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
 
-	float d_ro = CalculateDerivDensity(index_x);
-	for(int i = 0; i < 500 && !((abs(d_ro) < 1e-2) && i > 2); i++){
+	double d_ro = CalculateDerivDensity(index_x);
+	for(int i = 0; i < 200; i++){
 		particle[index_x].MassDensityPressureDro_Dt.z = d_ro * factor_x / dt;
+		barrier();
 			
 		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
 		d_ro = CalculateDerivDensity(index_x);
+		barrier();
 	}
 	particle[index_x].MassDensityPressureDro_Dt.w = d_ro;
 }
