@@ -183,7 +183,7 @@ vec3 CalculateGradPressure(uint index_x){
 		const double p_j = particle[curr_neighbour].MassDensityPressureDro_Dt.z;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
 
-		kernel_sum += float(m_j) * (p_i / pow(float(ro_i) + 1e-6, 2) + p_j / pow(float(ro_j) + 1e-6, 2)) * CalculateGradKernelWeight(x_ij);
+		kernel_sum += float(m_j * p_i / pow(float(ro_i), 2) + p_j / pow(float(ro_j), 2)) * CalculateGradKernelWeight(x_ij);
 	}
 	return kernel_sum; // zostaje na pamiątkę zmarnowanego miesiąca szukania błędu ro_i * kernel_sum
 }
@@ -202,7 +202,7 @@ vec3 CalculateViscosity(uint index_x){
 		const double ro_j = particle[curr_neighbour].MassDensityPressureDro_Dt.y;
 		const vec3 v_ij = particle[index_x].velocityDFSPHfactor.xyz - particle[curr_neighbour].velocityDFSPHfactor.xyz;
 		const vec3 x_ij = particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
-		kernel_sum += (m_j * dot(v_ij, x_ij) * CalculateGradKernelWeight(x_ij)) / (ro_j * (pow(float(length(x_ij)), 2) + 0.01));
+		kernel_sum += (float(m_j) * dot(v_ij, x_ij) * CalculateGradKernelWeight(x_ij)) / (float(ro_j) * (pow(length(x_ij), 2) + 0.01));
 	}
 	return kernel_sum * viscosityFactor * 2 * (d + 2);
 }
@@ -315,7 +315,7 @@ void SolveDensityError(uint index_x){
 	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
 
 	double ro_hash = particle[index_x].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
-	for(int i = 0; i < 200; i++){
+	for(int i = 0; i < 1000; i++){
 		particle[index_x].MassDensityPressureDro_Dt.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
 		barrier();
 
