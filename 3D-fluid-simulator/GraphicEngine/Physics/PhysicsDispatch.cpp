@@ -21,35 +21,39 @@ PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
               {GL_COMPUTE_SHADER, "/EvaluateColor.glsl"},
               {GL_COMPUTE_SHADER, "/InitHelpers.glsl"},
               {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
-  _physics_runtime_pipeline["WorldCoord"] =
-      Program{{GL_COMPUTE_SHADER, "/TranslateToWorldCoords.comp"}};
-  _physics_runtime_pipeline["ExtForces"] =
-      Program{{GL_COMPUTE_SHADER, "/CalculateExternalForces.comp"},
+  _physics_runtime_pipeline["Runtime"] =
+      Program{{GL_COMPUTE_SHADER, "/Runtime.comp"},
+              {GL_COMPUTE_SHADER, "/EvaluateColor.glsl"},
               {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
-  _physics_runtime_pipeline["GetDen"] =
-      Program{{GL_COMPUTE_SHADER, "/GetDensity.comp"},
-              {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
-  _physics_runtime_pipeline["CorrVel"] =
-      Program{{GL_COMPUTE_SHADER, "/CorrectVelocity.comp"},
-              {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
-  _physics_runtime_pipeline["UptPos"] =
-      Program{{GL_COMPUTE_SHADER, "/UpdatePositions.comp"},
-              {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
-  _physics_runtime_pipeline["FindNeigh"] =
-      Program{{GL_COMPUTE_SHADER, "/FindNeighbours.comp"},
-              {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
-  _physics_runtime_pipeline["UptProp"] =
-      Program{{GL_COMPUTE_SHADER, "/UpdateProperties.comp"},
-              {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
-  _physics_runtime_pipeline["DivErr"] =
-      Program{{GL_COMPUTE_SHADER, "/DivergenceError.comp"},
-              {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
-  _physics_runtime_pipeline["CheckColl"] =
-      Program{{GL_COMPUTE_SHADER, "/CheckCollisions.comp"},
-              {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
-  _physics_runtime_pipeline["ModelCoord"] =
-      Program{{GL_COMPUTE_SHADER, "/TranslateToModelCoords.comp"},
-              {GL_COMPUTE_SHADER, "/EvaluateColor.glsl"}};
+  // _physics_runtime_pipeline["WorldCoord"] =
+  //     Program{{GL_COMPUTE_SHADER, "/TranslateToWorldCoords.comp"}};
+  // _physics_runtime_pipeline["ExtForces"] =
+  //     Program{{GL_COMPUTE_SHADER, "/CalculateExternalForces.comp"},
+  //             {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
+  // _physics_runtime_pipeline["GetDen"] =
+  //     Program{{GL_COMPUTE_SHADER, "/GetDensity.comp"},
+  //             {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
+  // _physics_runtime_pipeline["CorrVel"] =
+  //     Program{{GL_COMPUTE_SHADER, "/CorrectVelocity.comp"},
+  //             {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
+  // _physics_runtime_pipeline["UptPos"] =
+  //     Program{{GL_COMPUTE_SHADER, "/UpdatePositions.comp"},
+  //             {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
+  // _physics_runtime_pipeline["FindNeigh"] =
+  //     Program{{GL_COMPUTE_SHADER, "/FindNeighbours.comp"},
+  //             {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
+  // _physics_runtime_pipeline["UptProp"] =
+  //     Program{{GL_COMPUTE_SHADER, "/UpdateProperties.comp"},
+  //             {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
+  // _physics_runtime_pipeline["DivErr"] =
+  //     Program{{GL_COMPUTE_SHADER, "/DivergenceError.comp"},
+  //             {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
+  // _physics_runtime_pipeline["CheckColl"] =
+  //     Program{{GL_COMPUTE_SHADER, "/CheckCollisions.comp"},
+  //             {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}};
+  // _physics_runtime_pipeline["ModelCoord"] =
+  //     Program{{GL_COMPUTE_SHADER, "/TranslateToModelCoords.comp"},
+  //             {GL_COMPUTE_SHADER, "/EvaluateColor.glsl"}};
   std::for_each(_physics_runtime_pipeline.begin(),
                 _physics_runtime_pipeline.end(),
                 [](auto& program)
@@ -84,34 +88,54 @@ void PhysicsDispatch::CalculateFrame(glm::uvec3 mesh_radius,
                                      bool create_snapshot,
                                      PhysicsDispatch::bind_callback callback)
 {
-  ProcessStage("WorldCoord", mesh_radius, callback);
-  ProcessStage("ExtForces", mesh_radius, callback);
+  _physics_runtime_pipeline["Runtime"].Bind();
+
+  callback(_physics_runtime_pipeline["Runtime"].ID());
+  BindMesh(_physics_runtime_pipeline["Runtime"].ID());
+  physics_stage = static_cast<uint32_t>(PhysicsStage::WORLD_COORD);
+  ProcessStage("Runtime", mesh_radius, callback);
+  physics_stage = static_cast<uint32_t>(PhysicsStage::EXT_FORCES);
+  ProcessStage("Runtime", mesh_radius, callback);
   for (int i = 0; i < 1000; i++)
   {
-    ProcessStage("GetDen", mesh_radius, callback);
-    ProcessStage("CorrVel", mesh_radius, callback);
+    physics_stage = static_cast<uint32_t>(PhysicsStage::GET_DEN);
+    ProcessStage("Runtime", mesh_radius, callback);
+    physics_stage = static_cast<uint32_t>(PhysicsStage::CORR_VEL);
+    ProcessStage("Runtime", mesh_radius, callback);
   }
-  ProcessStage("UptPos", mesh_radius, callback);
-  ProcessStage("FindNeigh", mesh_radius, callback);
-  ProcessStage("UptProp", mesh_radius, callback);
-  for (int i = 0; i < 100; i++)
+  physics_stage = static_cast<uint32_t>(PhysicsStage::UPT_POS);
+  ProcessStage("Runtime", mesh_radius, callback);
+  physics_stage = static_cast<uint32_t>(PhysicsStage::FIND_NEIGH);
+  ProcessStage("Runtime", mesh_radius, callback);
+  physics_stage = static_cast<uint32_t>(PhysicsStage::UPT_PROP);
+  ProcessStage("Runtime", mesh_radius, callback);
+  for (int i = 0; i < 1000; i++)
   {
-    ProcessStage("DivErr", mesh_radius, callback);
-    ProcessStage("CorrVel", mesh_radius, callback);
+    physics_stage = static_cast<uint32_t>(PhysicsStage::DIV_ERR);
+    ProcessStage("Runtime", mesh_radius, callback);
+    physics_stage = static_cast<uint32_t>(PhysicsStage::CORR_VEL);
+    ProcessStage("Runtime", mesh_radius, callback);
   }
-  ProcessStage("CheckColl", mesh_radius, callback);
-  ProcessStage("ModelCoord", mesh_radius, callback);
-  if (create_snapshot)
-  {
-    auto lookupBuffer =
-        _particleMesh.GetBufferSubData(0U, _particleMesh.Size());
-  }
+  physics_stage = static_cast<uint32_t>(PhysicsStage::CHECK_COLL);
+  ProcessStage("Runtime", mesh_radius, callback);
+  physics_stage = static_cast<uint32_t>(PhysicsStage::MODEL_COORD);
+  ProcessStage("Runtime", mesh_radius, callback);
+  // if (create_snapshot)
+  // {
+  //   auto lookupBuffer =
+  //       _particleMesh.GetBufferSubData(0U, _particleMesh.Size());
+  // }
 }
 
 void PhysicsDispatch::Initialize(glm::uvec3 mesh_radius,
                                  PhysicsDispatch::bind_callback callback)
 {
   UpdateMeshDimensions(mesh_radius);
+  _physics_runtime_pipeline["Init"].Bind();
+
+  callback(_physics_runtime_pipeline["Init"].ID());
+  BindMesh(_physics_runtime_pipeline["Init"].ID());
+  physics_stage = static_cast<uint32_t>(PhysicsStage::NONE);
   ProcessStage("Init", mesh_radius, callback);
 }
 
@@ -119,20 +143,18 @@ void PhysicsDispatch::ProcessStage(std::string const& stage_name,
                                    glm::uvec3 mesh_radius,
                                    bind_callback callback)
 {
-  // std::chrono::high_resolution_clock::time_point start =
-  //     std::chrono::high_resolution_clock::now();
-  _physics_runtime_pipeline[stage_name].Bind();
+  std::chrono::high_resolution_clock::time_point start =
+      std::chrono::high_resolution_clock::now();
+  physics_stage.MapUniform(_physics_runtime_pipeline[stage_name].ID());
 
-  callback(_physics_runtime_pipeline[stage_name].ID());
-  BindMesh(_physics_runtime_pipeline[stage_name].ID());
-  // std::chrono::high_resolution_clock::time_point stop =
-  //     std::chrono::high_resolution_clock::now();
-  // std::chrono::duration<double> elapsed_time = stop - start;
-  // std::cout << "Elapsed time for is " << elapsed_time.count() << "\n";
+  std::chrono::high_resolution_clock::time_point stop =
+      std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed_time = stop - start;
+  std::cout << "Elapsed time for is " << elapsed_time.count() << "\n";
   _(glDispatchCompute(mesh_radius.x, mesh_radius.y, mesh_radius.z));
   _(glMemoryBarrier(GL_ALL_BARRIER_BITS));
   glFinish();
-  // start = std::chrono::high_resolution_clock::now();
-  // elapsed_time = start - stop;
-  // std::cout << "--Elapsed time for is " << elapsed_time.count() << "\n";
+  start = std::chrono::high_resolution_clock::now();
+  elapsed_time = start - stop;
+  std::cout << "--Elapsed time for is " << elapsed_time.count() << "\n";
 }
