@@ -2,7 +2,6 @@
 
 ProgramDispatch::ProgramDispatch()
     : _shaderPipelineSimple{{GL_VERTEX_SHADER, "/ElementTessOff.vert"},
-                            {GL_VERTEX_SHADER, "/CalculateColor.glsl"},
                             {GL_VERTEX_SHADER, "/CalculateNDC.glsl"},
                             {GL_FRAGMENT_SHADER, "/Element.frag"}},
       _shaderPipelineWithTesselation{

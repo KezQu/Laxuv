@@ -1,6 +1,6 @@
 #version 460 core
 
-const uint MaxNeighbours =  512;
+const uint MaxNeighbours = 512;
 const uint NONE = 0;
 
 const uint CUSTOM = 1;

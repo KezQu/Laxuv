@@ -44,29 +44,33 @@ Object<Prim>::Object(Shape<Prim>* const shape)
 template <GLenum Prim>
 void Object<Prim>::Initialize()
 {
-  _physicsDispatch.Bind();
-  auto program_id = _physicsDispatch.GetProgram().ID();
-
-  _shape->BindUniforms(program_id);
-  Simulator::GetInstance()->BindUniforms(program_id);
-  Bind(program_id);
-  _physicsDispatch.InitDefaultShape(_mesh_size);
+  _physicsDispatch.Initialize(
+      _mesh_size,
+      [this](uint32_t program_id)
+      {
+        _shape->BindUniforms(program_id);
+        Simulator::GetInstance()->BindUniforms(program_id);
+        Bind(program_id);
+      });
 }
+
 template <GLenum Prim>
 void Object<Prim>::Calculate()
 {
   if (_visible)
   {
-    _physicsDispatch.Bind();
-    auto program_id = _physicsDispatch.GetProgram().ID();
-
-    _shape->BindUniforms(program_id);
-    Simulator::GetInstance()->BindUniforms(program_id);
-    Simulator::GetInstance()->BindTerrain(program_id);
-    Bind(program_id);
-    _physicsDispatch.Calculate(_mesh_size, false);
+    _physicsDispatch.CalculateFrame(
+        _mesh_size, false,
+        [this](uint32_t program_id)
+        {
+          _shape->BindUniforms(program_id);
+          Simulator::GetInstance()->BindUniforms(program_id);
+          Simulator::GetInstance()->BindTerrain(program_id);
+          Bind(program_id);
+        });
   }
 }
+
 template <GLenum Prim>
 void Object<Prim>::Draw() const
 {
@@ -82,7 +86,7 @@ void Object<Prim>::Draw() const
 
     _shape->Bind(renderer.ID());
     Simulator::GetInstance()->BindUniforms(renderer.ID());
-    _physicsDispatch.GetParticleMeshBuffer().Bind(renderer.ID());
+    _physicsDispatch.BindMesh(renderer.ID());
     _(glDrawElements(_shape->GetDrawPrimitive(), _shape->GetVA().Size(),
                      _shape->GetVA().IndexBufferType(), nullptr));
   }

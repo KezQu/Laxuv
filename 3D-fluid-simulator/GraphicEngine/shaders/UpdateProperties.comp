@@ -1,8 +1,8 @@
 #version 460 core
 
-layout (local_size_x = 5,
-		local_size_y = 5,
-		local_size_z = 5) in;
+layout (local_size_x = 1,
+		local_size_y = 1,
+		local_size_z = 1) in;
 
 const uvec3 MeshSize = gl_NumWorkGroups * gl_WorkGroupSize;
 

@@ -95,8 +95,8 @@ void Toolbar::Generate()
       }
     }
 
-    ImGui::SameLine(_size.x - 200);
-    ImGui::Text("%mouse speed: %.1f", Camera::GetCamera().GetMoveSpeed());
+    // ImGui::SameLine(_size.x - 200);
+    // ImGui::Text("%mouse speed: %.1f", Camera::GetCamera().GetMoveSpeed());
     std::string framerate =
         std::to_string(static_cast<int>(ImGui::GetIO().Framerate)) + " FPS";
     auto FPS_text_size = ImGui::CalcTextSize(framerate.c_str()).x;

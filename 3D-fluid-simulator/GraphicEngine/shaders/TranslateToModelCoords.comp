@@ -1,8 +1,8 @@
 #version 460 core
 
-layout (local_size_x = 5,
-		local_size_y = 5,
-		local_size_z = 5) in;
+layout (local_size_x = 1,
+		local_size_y = 1,
+		local_size_z = 1) in;
 
 const uint NONE = 0;
 const uint STATIC = 1;
@@ -32,6 +32,7 @@ struct ParticleProperties {
 layout(std430, binding = 0) buffer dataBuffer{
 	restrict ParticleProperties particle[];
 };
+vec4 ChooseColor(ParticleProperties properties);
 
 void main(){
 	if(physicsType == DYNAMIC){

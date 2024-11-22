@@ -31,10 +31,10 @@ void WorldAxes::Draw() const
   {
     axis.Bind(renderer.ID());
     Simulator::GetInstance()->BindUniforms(renderer.ID());
-    _physicsDispatch.GetParticleMeshBuffer().Bind(renderer.ID());
+    _physicsDispatch.BindMesh(renderer.ID());
     _(glDrawElements(axis.GetDrawPrimitive(), axis.GetVA().Size(),
                      axis.GetVA().IndexBufferType(), nullptr));
-    _physicsDispatch.GetParticleMeshBuffer().Unbind(renderer.ID());
+    _physicsDispatch.BindMesh(renderer.ID());
   }
   //_floor.Draw();
 }

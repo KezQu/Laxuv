@@ -62,7 +62,10 @@ inline void ShaderStorageBuffer<T, BufferT>::Bind(
   BufferT<GL_SHADER_STORAGE_BUFFER, T>::Bind();
   auto bindingIndex = _(glGetProgramResourceIndex(
       programID, GL_SHADER_STORAGE_BLOCK, _buffer_name.c_str()));
-  _(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, this->_id));
+  if (bindingIndex != GL_INVALID_INDEX)
+  {
+    _(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bindingIndex, this->_id));
+  }
 }
 
 template <typename T, template <GLenum, typename> typename BufferT>
