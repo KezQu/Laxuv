@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "Essentials.h"
 #include "Program.h"
 #include "ShaderStorageBuffer.h"
@@ -8,7 +10,8 @@ class PhysicsDispatch
 {
  private:
   ShaderStorageBuffer<Essentials::ParticleBufferProperties> _particleMesh;
-  Program _physicsGenerator;
+  std::vector<Program> _physics_runtime_pipeline;
+  Program _physics_initialize;
   uint32_t _work_groups{5U};
 
  public:

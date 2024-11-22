@@ -62,6 +62,7 @@ struct TerrainProperties {
 layout(std430, binding = 0) buffer dataBuffer{
 	restrict ParticleProperties particle[];
 };
+
 layout(std430, binding = 1) buffer terrainBuffer{
 	restrict TerrainProperties terrain[];
 };
@@ -305,26 +306,21 @@ void CheckCollisions(uint index_x){
 	}
 }
 
-void CalculateExternalForces(uint index_x){
-	const double density0 = 0;//particle[index_x].MassDensityPressureDro_Dt.x * CalculateKernelWeight(vec3(0));
-	vec3 viscosity_acceleration = CalculateViscosity(index_x);
-	particle[index_x].velocityDFSPHfactor.xyz += dt * (viscosity_acceleration * 1e-3 - vec3(0, g, 0));
-}
-void SolveDensityError(uint index_x){
-	const double density0 = GetInternalDensity(index_x);
-	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
+// void SolveDensityError(uint index_x){
+// 	const double density0 = GetInternalDensity(index_x);
+// 	const float factor_x = particle[index_x].velocityDFSPHfactor.w;
 
-	double ro_hash = particle[index_x].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
-	for(int i = 0; i < 1000; i++){
-		particle[index_x].MassDensityPressureDro_Dt.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
-		barrier();
+// 	double ro_hash = particle[index_x].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
+// 	for(int i = 0; i < 1000; i++){
+// 		particle[index_x].MassDensityPressureDro_Dt.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
+// 		barrier();
 
-		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
-		ro_hash = particle[index_x].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
-		barrier();
-	}
-	particle[index_x].MassDensityPressureDro_Dt.w = abs(ro_hash);
-}
+// 		particle[index_x].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(index_x);
+// 		ro_hash = particle[index_x].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(index_x);
+// 		barrier();
+// 	}
+// 	particle[index_x].MassDensityPressureDro_Dt.w = abs(ro_hash);
+// }
 
 void UpdatePosition(uint index_x){
 	particle[index_x].position.xyz += dt * particle[index_x].velocityDFSPHfactor.xyz;

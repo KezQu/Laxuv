@@ -10,14 +10,26 @@
 #include "glm/fwd.hpp"
 
 PhysicsDispatch::PhysicsDispatch(glm::ivec3 dimensions)
-    : _particleMesh{
-          "dataBuffer",
-          static_cast<uint64_t>(dimensions.x * dimensions.y * dimensions.z)}
+    : _particleMesh{"dataBuffer",
+                    static_cast<uint64_t>(dimensions.x * dimensions.y *
+                                          dimensions.z)},
+      _physics_runtime_pipeline{
+          Program{{GL_COMPUTE_SHADER, "/TranslateToWorldCoords.comp"}},
+          Program{{GL_COMPUTE_SHADER, "/CalculateExternalForces.comp"},
+                  {GL_COMPUTE_SHADER, "/HydroHelperFunctions.comp"}},
+          Program{{GL_COMPUTE_SHADER, "/DensityError.comp"},
+                  {GL_COMPUTE_SHADER, "/HydroHelperFunctions.comp"}},
+          Program{{GL_COMPUTE_SHADER, "/FindNeighbours.comp"},
+                  {GL_COMPUTE_SHADER, "/HydroHelperFunctions.comp"}},
+          Program{{GL_COMPUTE_SHADER, "/DivergenceError.comp"},
+                  {GL_COMPUTE_SHADER, "/HydroHelperFunctions.comp"}},
+          Program{{GL_COMPUTE_SHADER, "/CheckCollisions.comp"},
+                  {GL_COMPUTE_SHADER, "/HydroHelperFunctions.comp"}},
+          Program{{GL_COMPUTE_SHADER, "/TranslateToModelCoords.comp"}}},
+      _physics_initialize{{GL_COMPUTE_SHADER, "/Initialize.comp"},
+                          {GL_COMPUTE_SHADER, "/InitHelpers.glsl"},
+                          {GL_COMPUTE_SHADER, "/HydroHelperFunctions.glsl"}}
 {
-  _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Element.comp");
-  _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/CalculateColor.glsl");
-  _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/InitDefaultShape.glsl");
-  _physicsGenerator.AddShader(GL_COMPUTE_SHADER, "/Hydrodynamics.glsl");
 }
 
 void PhysicsDispatch::Bind() const
