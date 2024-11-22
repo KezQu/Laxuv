@@ -11,7 +11,7 @@ const uint index = gl_GlobalInvocationID.x +
 			(gl_GlobalInvocationID.z * MeshSize.y * MeshSize.x);
 
 const uint MaxNeighbours = 512;
-
+			
 const uint NONE = 0;
 const uint STATIC = 1;
 const uint DYNAMIC = 2;
@@ -31,17 +31,8 @@ layout(std430, binding = 0) buffer dataBuffer{
 	restrict ParticleProperties particle[];
 };
 
-float CalculateDFSPHFactor(uint index_x);
-double CalculateDensity(uint index_x);
-double CalculateDerivDensity(uint index_x);
-
 void main(){
 	if(physicsType == DYNAMIC){
-		particle[index].MassDensityPressureDro_Dt.y = CalculateDensity(index);
-		particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
-		const float factor_x = particle[index].velocityDFSPHfactor.w;
-
-		double d_ro = CalculateDerivDensity(index);
-		particle[index].MassDensityPressureDro_Dt.z = d_ro * factor_x / dt;
+	particle[index_x].position.xyz += dt * particle[index_x].velocityDFSPHfactor.xyz;
 	}
 }
