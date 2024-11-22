@@ -10,7 +10,7 @@ if (POLICY CMP0141)
 endif()
 
 project ("3D-fluid-simulator")
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}")
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -O3")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS}")
 # Include sub-projects.
 add_subdirectory (${PROJECT_NAME})

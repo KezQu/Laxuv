@@ -211,7 +211,7 @@ vec3 CalculateViscosity(uint index_x){
 void CheckWorldBounds(uint index_x){
 	vec3 vec_from_center = particle[index_x].position.xyz + dt * particle[index_x].velocityDFSPHfactor.xyz;
 	vec3 surface_dir = vec3(0);
-	// vec3 correction = vec3(0);
+	vec3 correction = vec3(0);
 
 	if(worldType == W_CUBE){
 		if(vec_from_center.x <= -spaceLimiter){
@@ -229,18 +229,18 @@ void CheckWorldBounds(uint index_x){
 		}else if(vec_from_center.z >= spaceLimiter){
 			surface_dir = vec3(0, 0, -1);
 		}
-		// correction = 1 - vec_from_center / spaceLimiter;
-		// correction.x = correction.x > 0 ? 0 :correction.x;
-		// correction.y = correction.y > 0 ? 0 :correction.y;
-		// correction.z = correction.z > 0 ? 0 :correction.z;
+		correction = 1 - vec_from_center / spaceLimiter;
+		correction.x = correction.x > 0 ? 0 :correction.x;
+		correction.y = correction.y > 0 ? 0 :correction.y;
+		correction.z = correction.z > 0 ? 0 :correction.z;
 	}else if(worldType == W_SPHERE){
 		if(length(vec_from_center) >= spaceLimiter){
 			surface_dir = vec_from_center;
-			// correction = vec3(1 - length(vec_from_center) / spaceLimiter);
+			correction = vec3(1 - length(vec_from_center) / spaceLimiter);
 		}
 	}
 	particle[index_x].velocityDFSPHfactor.xyz = BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, surface_dir);
-	// particle[index_x].position.xyz += correction * vec_from_center;
+	particle[index_x].position.xyz += correction * vec_from_center;
 }
 
 void UpdateTerrainOrientation(uint index_x){
@@ -270,7 +270,7 @@ void CheckCollisions(uint index_x){
 		const vec4 pos_vdt = t_model_1 * vec4(pos_local + dt * vel_local, 1);
 
 		vec3 surface_dir = vec3(0);
-		// vec3 correction = vec3(0);
+		vec3 correction = vec3(0);
 		vec3 abs_pos = abs(pos.xyz);
 
 		if(uint(terrain[i].center.w) == S_CUBE){
@@ -283,25 +283,25 @@ void CheckCollisions(uint index_x){
 				}if(max_side == abs_pos.z){
 					surface_dir += pos.z < 0.f ? vec3(0,0,1) : vec3(0,0,-1);
 				}
-				// correction = vec3(-1);
+				correction = vec3(-1);
 			}
 		}else if(uint(terrain[i].center.w) == S_SPHERE){
 			if(length(pos.xyz) <= 1){
 				surface_dir = pos.xyz;
-				// correction = vec3(1);
+				correction = vec3(1);
 			}
 		}
 		if(length(surface_dir) > 0){
 			surface_dir = (transpose(transpose(terrain[i].model) * inverse(translate_mat)) * inverse(scale_mat) * vec4(surface_dir, 1)).xyz;
 		}
-//		if(uint(terrain[i].center.w) == S_CUBE){
-//			if(abs(pos_vdt).x < 1 && abs(pos_vdt).y < 1 && abs(pos_vdt).z < 1){
-//			}
-//		}else if(uint(terrain[i].center.w) == S_SPHERE){
-//			if(length(pos_vdt.xyz) <= 1){
-//			}
-//		}
-		// particle[index_x].position.xyz += correction * surface_dir;
+		if(uint(terrain[i].center.w) == S_CUBE){
+			if(abs(pos_vdt).x < 1 && abs(pos_vdt).y < 1 && abs(pos_vdt).z < 1){
+			}
+		}else if(uint(terrain[i].center.w) == S_SPHERE){
+			if(length(pos_vdt.xyz) <= 1){
+			}
+		}
+		particle[index_x].position.xyz += correction * surface_dir;
 		particle[index_x].velocityDFSPHfactor.xyz = BounceOfAWall(particle[index_x].velocityDFSPHfactor.xyz, surface_dir);
 	}
 }

@@ -119,20 +119,20 @@ void PhysicsDispatch::ProcessStage(std::string const& stage_name,
                                    glm::uvec3 mesh_radius,
                                    bind_callback callback)
 {
-  std::chrono::high_resolution_clock::time_point start =
-      std::chrono::high_resolution_clock::now();
+  // std::chrono::high_resolution_clock::time_point start =
+  //     std::chrono::high_resolution_clock::now();
   _physics_runtime_pipeline[stage_name].Bind();
 
   callback(_physics_runtime_pipeline[stage_name].ID());
   BindMesh(_physics_runtime_pipeline[stage_name].ID());
-  std::chrono::high_resolution_clock::time_point stop =
-      std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed_time = stop - start;
-  std::cout << "Elapsed time for is " << elapsed_time.count() << "\n";
+  // std::chrono::high_resolution_clock::time_point stop =
+  //     std::chrono::high_resolution_clock::now();
+  // std::chrono::duration<double> elapsed_time = stop - start;
+  // std::cout << "Elapsed time for is " << elapsed_time.count() << "\n";
   _(glDispatchCompute(mesh_radius.x, mesh_radius.y, mesh_radius.z));
   _(glMemoryBarrier(GL_ALL_BARRIER_BITS));
   glFinish();
-  start = std::chrono::high_resolution_clock::now();
-  elapsed_time = start - stop;
-  std::cout << "--Elapsed time for is " << elapsed_time.count() << "\n";
+  // start = std::chrono::high_resolution_clock::now();
+  // elapsed_time = start - stop;
+  // std::cout << "--Elapsed time for is " << elapsed_time.count() << "\n";
 }
