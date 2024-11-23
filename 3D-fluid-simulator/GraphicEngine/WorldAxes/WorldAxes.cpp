@@ -3,11 +3,11 @@
 WorldAxes::WorldAxes()
     : Entity(Essentials::PhysicsType::NONE),
       _axes{{{{-1.f, 0.f, 0.f}, {0x00, 0x00, 0x00, 0xFF}},
-             {{1.f, 0.f, 0.f}, {0x00, 0x00, 0xFF, 0xFF}}},
+             {{1.f, 0.f, 0.f}, {0xFF, 0x00, 0x00, 0xFF}}},
             {{{0.f, -1.f, 0.f}, {0x00, 0x00, 0x00, 0xFF}},
              {{0.f, 1.f, 0.f}, {0x00, 0xFF, 0x00, 0xFF}}},
             {{{0.f, 0.f, -1.f}, {0x00, 0x00, 0x00, 0xFF}},
-             {{0.f, 0.f, 1.f}, {0xFF, 0x00, 0x00, 0xFF}}}},
+             {{0.f, 0.f, 1.f}, {0x00, 0x00, 0xFF, 0xFF}}}},
       _floor{{{0.f, 0.f, 0.f}, {0x80, 0x80, 0x80, 0x80}}, 1}
 {
   for (auto& axis : _axes)
@@ -31,10 +31,10 @@ void WorldAxes::Draw() const
   {
     axis.Bind(renderer.ID());
     Simulator::GetInstance()->BindUniforms(renderer.ID());
-    _physicsDispatch.BindMesh(renderer.ID());
+    _physicsDispatch.BindPhysicsMesh(renderer.ID());
     _(glDrawElements(axis.GetDrawPrimitive(), axis.GetVA().Size(),
                      axis.GetVA().IndexBufferType(), nullptr));
-    _physicsDispatch.BindMesh(renderer.ID());
+    _physicsDispatch.BindPhysicsMesh(renderer.ID());
   }
   //_floor.Draw();
 }

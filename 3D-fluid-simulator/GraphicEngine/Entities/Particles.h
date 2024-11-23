@@ -13,7 +13,7 @@ class Particles : public Entity
   Essentials::ParticleProperties _particle_properties;
 
  public:
-  Particles(Shape<Prim>* const particleShape, glm::uvec3 mesh_size);
+  Particles(Shape<Prim>* const particleShape, glm::ivec3 mesh_size);
   Particles(Particles<Prim> const& obj_copy) = delete;
   Particles(Particles<Prim>&& obj_move) = default;
   Particles& operator=(Particles<Prim> const& obj_copy) = delete;
@@ -28,7 +28,7 @@ class Particles : public Entity
 
 template <GLenum Prim>
 Particles<Prim>::Particles(Shape<Prim>* const particleShape,
-                           glm::uvec3 mesh_size)
+                           glm::ivec3 mesh_size)
     : Entity{Essentials::PhysicsType::DYNAMIC, mesh_size},
       _particleShape{std::unique_ptr<Shape<Prim>>(particleShape)}
 {
@@ -39,11 +39,12 @@ template <GLenum Prim>
 void Particles<Prim>::Initialize()
 {
   _physicsDispatch.Initialize(
-      _mesh_size,
+      _mesh_size.GetValue(),
       [this](uint32_t program_id)
       {
         _particleShape->BindUniforms(program_id);
         Simulator::GetInstance()->BindUniforms(program_id);
+        Simulator::GetInstance()->BindTerrain(program_id);
         Bind(program_id);
       });
 }
@@ -54,7 +55,7 @@ void Particles<Prim>::Calculate()
   if (_visible)
   {
     _physicsDispatch.CalculateFrame(
-        _mesh_size, false,
+        _mesh_size.GetValue(), false,
         [this](uint32_t program_id)
         {
           _particleShape->BindUniforms(program_id);
@@ -81,7 +82,7 @@ void Particles<Prim>::Draw() const
     Bind(renderer.ID());
     _particleShape->Bind(renderer.ID());
     Simulator::GetInstance()->BindUniforms(renderer.ID());
-    _physicsDispatch.BindMesh(renderer.ID());
+    _physicsDispatch.BindPhysicsMesh(renderer.ID());
     _(glDrawElementsInstanced(
         _particleShape->GetDrawPrimitive(), _particleShape->GetVA().Size(),
         _particleShape->GetVA().IndexBufferType(), nullptr,
@@ -155,14 +156,6 @@ Essentials::DetailControls Particles<Prim>::Details()
   details.push_back({"Particle mass", _particle_properties.mass.ExposeToUI()});
   details.push_back(
       {"Viscosity factor", _particle_properties.viscosity_factor.ExposeToUI()});
-  details.push_back(
-      {"Mesh radius", [this, ui_callback]()
-       {
-         if (ImGui::DragInt3("##Mesh_radius", (int32_t*)&this->_mesh_size, 1.f,
-                             0, 100, "%d", ImGuiSliderFlags_AlwaysClamp))
-         {
-           ui_callback();
-         }
-       }});
+  details.push_back({"Mesh radius", this->_mesh_size.ExposeToUI(ui_callback)});
   return details;
 }

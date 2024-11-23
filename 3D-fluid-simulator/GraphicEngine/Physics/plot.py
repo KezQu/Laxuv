@@ -13,7 +13,7 @@ def ReadData(filename, resolution):
 def plot(data, resolution):
     fig, ax = plt.subplots(2, 2)
 
-    imgXY = ax[0, 0].imshow(data[0], origin='lower', cmap='jet')
+    imgXY = ax[0, 0].imshow(data[0], origin='lower', cmap='jet', vmin=0, vmax=2000)
     ax[0, 0].set_title("Projection XY")
     fig.colorbar(imgXY, ax=ax[0, 0])
     imgYZ = ax[1, 0].imshow(data[1], origin='lower', cmap='jet')

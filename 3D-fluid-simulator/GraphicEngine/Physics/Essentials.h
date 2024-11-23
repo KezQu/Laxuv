@@ -91,7 +91,7 @@ struct ParticleBufferProperties
 {
   glm::vec4 velocityDFSPHfactor{0};
   glm::vec4 position{0};
-  glm::dvec4 MassDensityPressureDro_Dt{0};
+  glm::vec4 MassDensityPressureDro_Dt{0};
   glm::vec4 color{0};
   uint32_t neighbours[MaxNeighbours];
 };
@@ -116,16 +116,16 @@ struct ParticleProperties
 {
   Uniform<glm::vec3, float> init_velocity{
       glm::vec3{0.f}, "initVelocity",
-      ValueProperties{-50.f, 50.f, 1.f, "%.1f m/s"}};
+      ValueProperties{-1000.f, 1000.f, 1.f, "%.1f mm/s"}};
   Uniform<float> particle_spacing{
       1.f, "particleSpacing",
-      ValueProperties{0.1f, 600.f, length_scale, "%.1f m"}};
+      ValueProperties{0.1f, 600.f, length_scale, "%.1f mm"}};
   Uniform<uint32_t> distribution_shape{
       static_cast<uint32_t>(DistributionShape::CUBE), "DistributionShape"};
   Uniform<float> influence_kernel{
       2.5f, "influenceKernel",
-      ValueProperties{0.1f, 600.f, length_scale, "%.1f m"}};
-  Uniform<float> kernel_a{4.f, "kernel_a"};
+      ValueProperties{0.1f, 600.f, length_scale, "%.1f mm"}};
+  Uniform<float> kernel_a{3.f, "kernel_a"};
   // Uniform<float> density{1000.f, "density",
   //                        ValueProperties{0.1f, 13000.f, 1.f, "%.1f kg/m^3"}};
   Uniform<float> mass{4.2f, "init_mass",
@@ -139,7 +139,7 @@ struct ShapeProperties
 {
   Uniform<glm::vec3, float> _location{
       glm::vec3{0.f}, "location",
-      ValueProperties{-1200.f, 1200.f, length_scale, "%.1f m"}};
+      ValueProperties{-1200.f, 1200.f, length_scale, "%.1f mm"}};
   Uniform<glm::vec3, float> _scale{glm::vec3{1.f}, "scale",
                                    ValueProperties{0.f, 100.f, 1.f, "%.1f"}};
   Uniform<glm::vec3, float> _rotation{
@@ -147,10 +147,10 @@ struct ShapeProperties
       ValueProperties{-360.f, 360.f, 1.f, "%.1f deg"}};
   Uniform<glm::vec3, float> _center{
       glm::vec3{0.f}, "center",
-      ValueProperties{-1200.f, 1200.f, length_scale, "%.1f m"}};
+      ValueProperties{-1200.f, 1200.f, length_scale, "%.1f mm"}};
   Uniform<uint32_t> _subdivision{5U, "subdivision", ValueProperties{1U, 50U}};
   Uniform<float> _radius{1.f, "shapeRadius",
-                         ValueProperties{0.1f, 600.f, length_scale, "%.1f m"}};
+                         ValueProperties{0.1f, 600.f, length_scale, "%.1f mm"}};
   std::pair<Uniform<uint32_t>, Uniform<glm::vec4, float>> _color{
       {static_cast<uint32_t>(Essentials::ColorProperty::NONE), "colorType"},
       {glm::vec4{0.5f, 0.5f, 0.5f, 1.f}, "color", colorDefaultProperties}};

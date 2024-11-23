@@ -1,8 +1,10 @@
 #pragma once
 
+#include <array>
 #include <functional>
 #include <unordered_map>
 
+#include "CPUBuffer.h"
 #include "Essentials.h"
 #include "Program.h"
 #include "ShaderStorageBuffer.h"
@@ -34,21 +36,24 @@ class PhysicsDispatch
   PhysicsDispatch& operator=(PhysicsDispatch&& obj_move) = default;
   ~PhysicsDispatch() = default;
 
-  void BindMesh(uint32_t const& program_id) const;
+  void BindPhysicsMesh(uint32_t const& program_id) const;
   ShaderStorageBuffer<Essentials::ParticleBufferProperties> const&
   GetParticleMeshBuffer() const;
-  void UpdateMeshDimensions(glm::uvec3 mesh_radius);
-  void Initialize(glm::uvec3 mesh_radius, bind_callback callback);
-  void CalculateFrame(glm::uvec3 mesh_radius, bool create_snapshot,
+  void UpdateMeshDimensions(glm::ivec3 mesh_radius);
+  void Initialize(glm::ivec3 mesh_radius, bind_callback callback);
+  void CalculateFrame(glm::ivec3 mesh_radius, bool create_snapshot,
                       bind_callback callback);
 
  private:
-  ShaderStorageBuffer<Essentials::ParticleBufferProperties> _particleMesh;
-  std::unordered_map<std::string, Program> _physics_runtime_pipeline;
-  Uniform<uint32_t> physics_stage{static_cast<uint32_t>(PhysicsStage::NONE),
-                                  "physicsStage"};
-  uint32_t _work_groups{1U};
+  using granularity_t = uint32_t[16];
 
-  void ProcessStage(std::string const& stage_name, glm::uvec3 mesh_radius,
+  ShaderStorageBuffer<Essentials::ParticleBufferProperties> _particleMesh;
+  ShaderStorageBuffer<granularity_t, CPUBuffer> _mesh_granularity;
+  std::unordered_map<std::string, Program> _physics_runtime_pipeline;
+  Uniform<uint32_t> _max_particles;
+  uint32_t _work_groups{10U};
+
+  void ProcessStage(std::string const& stage_name, glm::ivec3 mesh_radius,
                     bind_callback callback);
+  void UpdateGranularityMesh(glm::ivec3 mesh_radius);
 };

@@ -45,11 +45,12 @@ template <GLenum Prim>
 void Object<Prim>::Initialize()
 {
   _physicsDispatch.Initialize(
-      _mesh_size,
+      _mesh_size.GetValue(),
       [this](uint32_t program_id)
       {
         _shape->BindUniforms(program_id);
         Simulator::GetInstance()->BindUniforms(program_id);
+        Simulator::GetInstance()->BindTerrain(program_id);
         Bind(program_id);
       });
 }
@@ -60,7 +61,7 @@ void Object<Prim>::Calculate()
   if (_visible)
   {
     _physicsDispatch.CalculateFrame(
-        _mesh_size, false,
+        _mesh_size.GetValue(), false,
         [this](uint32_t program_id)
         {
           _shape->BindUniforms(program_id);
@@ -86,7 +87,7 @@ void Object<Prim>::Draw() const
 
     _shape->Bind(renderer.ID());
     Simulator::GetInstance()->BindUniforms(renderer.ID());
-    _physicsDispatch.BindMesh(renderer.ID());
+    _physicsDispatch.BindPhysicsMesh(renderer.ID());
     _(glDrawElements(_shape->GetDrawPrimitive(), _shape->GetVA().Size(),
                      _shape->GetVA().IndexBufferType(), nullptr));
   }

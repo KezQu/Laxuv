@@ -9,17 +9,19 @@ const uint DENSITY_ERROR = 3;
 const uint DIVERGENCE_ERROR = 4;
 const uint PRESSURE = 5;
 
-uniform float density;
-
 uniform uint colorType;
 uniform vec4 color;
 
 struct ParticleProperties {
 	vec4 velocityDFSPHfactor;
 	vec4 position;
-	dvec4 MassDensityPressureDro_Dt;
-  	vec4 color;
+	vec4 MassDensityPressureDro_Dt;
+  vec4 color;
 	uint neighbours[MaxNeighbours];
+};
+
+layout(std430, binding = 0) buffer dataBuffer{
+	restrict ParticleProperties particle[];
 };
 
 vec4 CalculateColor(float property_value){
@@ -53,25 +55,27 @@ vec4 CalculateColor(float property_value){
 	return chosen_color;
 }
 
-vec4 ChooseColor(ParticleProperties properties){
-	const float max_speed = 50.f;
-	const float density0 = density;
+float GetInternalDensity(uint index_x);
+
+vec4 ChooseColor(uint index_x){
+	const float max_speed = 2e+3;
+	const float density0 = GetInternalDensity(index_x);
 	vec4 chosen_color = vec4(0);
 	switch(colorType){
 		case CUSTOM:
 			chosen_color = color;
 			break;
 		case VELOCITY:
-			chosen_color = CalculateColor(length(properties.velocityDFSPHfactor.xyz) / max_speed);
+			chosen_color = CalculateColor(length(particle[index_x].velocityDFSPHfactor.xyz) / max_speed);
 			break;
 		case DENSITY_ERROR:
-			chosen_color = CalculateColor(float(abs(properties.MassDensityPressureDro_Dt.y)));
+			chosen_color = CalculateColor(pow(abs(density0 - particle[index_x].MassDensityPressureDro_Dt.y) * 1e+9, 3));
 			break;
 		case DIVERGENCE_ERROR:
-			chosen_color = CalculateColor(float(abs(properties.MassDensityPressureDro_Dt.w)) * 1e+2);
+			chosen_color = CalculateColor(abs(particle[index_x].MassDensityPressureDro_Dt.w) * 1e+20);
 			break;
 		case PRESSURE:
-			chosen_color = CalculateColor(2 * log(float(abs(properties.MassDensityPressureDro_Dt.z)) + 1) / (density * 1e+3));
+			chosen_color = CalculateColor(abs(particle[index_x].MassDensityPressureDro_Dt.z) * 1e+20);
 			break;
 	}
 	return chosen_color;

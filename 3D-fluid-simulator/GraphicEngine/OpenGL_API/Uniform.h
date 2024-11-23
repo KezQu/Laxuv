@@ -309,7 +309,7 @@ class Uniform
     requires is_vec3<T> && std::signed_integral<typename T::value_type>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    T scaled_value = static_cast<T>(_value * _properties._scale);
+    T scaled_value = static_cast<T>(glm::vec3{_value} * _properties._scale);
     if (location != -1) glUniform3iv(location, 1, glm::value_ptr(scaled_value));
   }
 
@@ -317,7 +317,7 @@ class Uniform
     requires is_vec3<T> && std::unsigned_integral<typename T::value_type>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    T scaled_value = static_cast<T>(_value * _properties._scale);
+    T scaled_value = static_cast<T>(glm::vec3{_value} * _properties._scale);
     if (location != -1)
       glUniform3uiv(location, 1, glm::value_ptr(scaled_value));
   }
