@@ -1,8 +1,6 @@
 #version 460 core
 
-layout (local_size_x = 10,
-		local_size_y = 10,
-		local_size_z = 10) in;
+layout(local_size_x = 10, local_size_y = 10, local_size_z = 10) in;
 
 const uint MaxNeighbours = 512;
 const uint MaxGranularity = 16;
@@ -29,30 +27,35 @@ uniform float shapeRadius;
 uniform float particleSpacing;
 uniform float init_mass;
 
-struct ParticleProperties {
-	vec4 velocityDFSPHfactor;
-	vec4 position;
-	vec4 MassDensityPressureDro_Dt;
+struct ParticleProperties
+{
+  vec4 velocityDFSPHfactor;
+  vec4 position;
+  vec4 MassDensityPressureDro_Dt;
   vec4 color;
-	uint neighbours[MaxNeighbours];
+  uint neighbours[MaxNeighbours];
 };
 
-struct TerrainProperties {
-	vec4 center;
-	vec4 bounds;
-	mat4 model;
+struct TerrainProperties
+{
+  vec4 center;
+  vec4 bounds;
+  mat4 model;
 };
 
-layout(std430, binding = 0) buffer dataBuffer{
-	restrict ParticleProperties particle[];
+layout(std430, binding = 0) buffer dataBuffer
+{
+  restrict ParticleProperties particle[];
 };
 
-layout(std430, binding = 1) buffer granularityBuffer{
-	restrict uint granularity[][MaxGranularity];
+layout(std430, binding = 1) buffer granularityBuffer
+{
+  restrict uint granularity[][MaxGranularity];
 };
 
-layout(std430, binding = 2) buffer terrainBuffer{
-	restrict TerrainProperties terrain[];
+layout(std430, binding = 2) buffer terrainBuffer
+{
+  restrict TerrainProperties terrain[];
 };
 
 vec4 ChooseColor(uint index_x);
@@ -67,92 +70,128 @@ void CheckWorldBounds(uint index_x);
 void CheckCollisions(uint index_x);
 vec3 CalculateGradPressure(uint index_x);
 
-bool CheckI(int i){
-	return i < MaxGranularity && granularity[gl_LocalInvocationIndex][i] < 0xffffffff;
+bool CheckI(int i)
+{
+  return i < MaxGranularity &&
+         granularity[gl_LocalInvocationIndex][i] < 0xffffffff;
 }
 
-uint GetIndex(int i){
-	return granularity[gl_LocalInvocationIndex][i];
+uint GetIndex(int i)
+{
+  return granularity[gl_LocalInvocationIndex][i];
 }
 
-void main(){
-	if(physicsType == DYNAMIC){
-		for(int i = 0; CheckI(i); i++){
-			particle[GetIndex(i)].position.xyz = (model * vec4(particle[GetIndex(i)].position.xyz * scale, 1.0)).xyz;
-		}
-		barrier();
-//----------------------------------------------------------------------------------
-		for(int i = 0; CheckI(i); i++){
-			vec3 viscosity_acceleration = CalculateViscosity(GetIndex(i));
-			particle[GetIndex(i)].velocityDFSPHfactor.xyz += dt * (viscosity_acceleration - vec3(0, g, 0) * 1e+3);
-		}
-		barrier();
-//----------------------------------------------------------------------------------
-	for(int iter = 0; iter < 1000; iter++){
-		for(int i = 0; CheckI(i); i++){
-			const float factor_x = particle[GetIndex(i)].velocityDFSPHfactor.w;
-			const float density0 = GetInternalDensity(GetIndex(i));
+void main()
+{
+  if (physicsType == DYNAMIC)
+  {
+    for (int i = 0; CheckI(i); i++)
+    {
+      particle[GetIndex(i)].position.xyz =
+          (model * vec4(particle[GetIndex(i)].position.xyz * scale, 1.0)).xyz;
+    }
+    barrier();
+    //----------------------------------------------------------------------------------
+    for (int i = 0; CheckI(i); i++)
+    {
+      vec3 viscosity_acceleration = CalculateViscosity(GetIndex(i));
+      particle[GetIndex(i)].velocityDFSPHfactor.xyz +=
+          dt * (viscosity_acceleration - vec3(0, g, 0) * 1e+3);
+    }
+    barrier();
+    //----------------------------------------------------------------------------------
+    for (int iter = 0; iter < 1000; iter++)
+    {
+      for (int i = 0; CheckI(i); i++)
+      {
+        const float factor_x = particle[GetIndex(i)].velocityDFSPHfactor.w;
+        const float density0 = GetInternalDensity(GetIndex(i));
 
-			float ro_hash = particle[GetIndex(i)].MassDensityPressureDro_Dt.y + dt * CalculateDerivDensity(GetIndex(i));
-			particle[GetIndex(i)].MassDensityPressureDro_Dt.z = (ro_hash  - density0) * factor_x / pow(dt, 2);
-		}
-		barrier();
-//----------------------------------------------------------------------------------
-		for(int i = 0; CheckI(i); i++){
-			particle[GetIndex(i)].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(GetIndex(i));
-		}
-		barrier();
-	}
-//----------------------------------------------------------------------------------
-		for(int i = 0; CheckI(i); i++){
-			particle[GetIndex(i)].position.xyz += dt * particle[GetIndex(i)].velocityDFSPHfactor.xyz;
-		}
-		barrier();
-//----------------------------------------------------------------------------------
-		for(int i = 0; CheckI(i); i++){
-			FindNeighbours(GetIndex(i), MaxParticles);
-		}
-		barrier();
-//----------------------------------------------------------------------------------
-		for(int i = 0; CheckI(i); i++){
-			particle[GetIndex(i)].velocityDFSPHfactor.w = CalculateDFSPHFactor(GetIndex(i));
-			particle[GetIndex(i)].MassDensityPressureDro_Dt.y = CalculateDensity(GetIndex(i));
-		}
-		barrier();
-//----------------------------------------------------------------------------------
-	for(int iter = 0; iter < 50; iter++){
-		for(int i = 0; CheckI(i); i++){
-			const float factor_x = particle[GetIndex(i)].velocityDFSPHfactor.w;
-			particle[GetIndex(i)].MassDensityPressureDro_Dt.y = CalculateDensity(GetIndex(i));
-			particle[GetIndex(i)].velocityDFSPHfactor.w = CalculateDFSPHFactor(GetIndex(i));
+        float ro_hash = particle[GetIndex(i)].MassDensityPressureDro_Dt.y +
+                        dt * CalculateDerivDensity(GetIndex(i));
+        particle[GetIndex(i)].MassDensityPressureDro_Dt.z =
+            (ro_hash - density0) * factor_x / pow(dt, 2);
+      }
+      barrier();
+      //----------------------------------------------------------------------------------
+      for (int i = 0; CheckI(i); i++)
+      {
+        particle[GetIndex(i)].velocityDFSPHfactor.xyz -=
+            dt * CalculateGradPressure(GetIndex(i));
+      }
+      barrier();
+    }
+    //----------------------------------------------------------------------------------
+    for (int i = 0; CheckI(i); i++)
+    {
+      particle[GetIndex(i)].position.xyz +=
+          dt * particle[GetIndex(i)].velocityDFSPHfactor.xyz;
+    }
+    barrier();
+    //----------------------------------------------------------------------------------
+    for (int i = 0; CheckI(i); i++)
+    {
+      FindNeighbours(GetIndex(i), MaxParticles);
+    }
+    barrier();
+    //----------------------------------------------------------------------------------
+    for (int i = 0; CheckI(i); i++)
+    {
+      particle[GetIndex(i)].velocityDFSPHfactor.w =
+          CalculateDFSPHFactor(GetIndex(i));
+      particle[GetIndex(i)].MassDensityPressureDro_Dt.y =
+          CalculateDensity(GetIndex(i));
+    }
+    barrier();
+    //----------------------------------------------------------------------------------
+    for (int iter = 0; iter < 50; iter++)
+    {
+      for (int i = 0; CheckI(i); i++)
+      {
+        const float factor_x = particle[GetIndex(i)].velocityDFSPHfactor.w;
+        particle[GetIndex(i)].MassDensityPressureDro_Dt.y =
+            CalculateDensity(GetIndex(i));
+        particle[GetIndex(i)].velocityDFSPHfactor.w =
+            CalculateDFSPHFactor(GetIndex(i));
 
-			float d_ro = CalculateDerivDensity(GetIndex(i));
-			particle[GetIndex(i)].MassDensityPressureDro_Dt.z = d_ro * factor_x / dt;
-		}
-		barrier();
-//----------------------------------------------------------------------------------
-		for(int i = 0; CheckI(i); i++){
-			particle[GetIndex(i)].velocityDFSPHfactor.xyz -= dt * CalculateGradPressure(GetIndex(i));
-		}
-		barrier();
-	}
-//----------------------------------------------------------------------------------
-		for(int i = 0; CheckI(i); i++){
-			CheckWorldBounds(GetIndex(i));
-			CheckCollisions(GetIndex(i));
-		}
-		barrier();
-//----------------------------------------------------------------------------------
-		for(int i = 0; CheckI(i); i++){
-			particle[GetIndex(i)].position.xyz = (inverse(model) * vec4(particle[GetIndex(i)].position.xyz, 1.0)).xyz / scale;
-		}
-		barrier();
-	}else if(physicsType == STATIC){
-		for(int i = 0; CheckI(i); i++){
-			UpdateTerrainOrientation(GetIndex(i));
-		}
-	}
-	for(int i = 0; CheckI(i); i++){
-		particle[GetIndex(i)].color = ChooseColor(GetIndex(i));
-	}
+        float d_ro = CalculateDerivDensity(GetIndex(i));
+        particle[GetIndex(i)].MassDensityPressureDro_Dt.z =
+            d_ro * factor_x / dt;
+      }
+      barrier();
+      //----------------------------------------------------------------------------------
+      for (int i = 0; CheckI(i); i++)
+      {
+        particle[GetIndex(i)].velocityDFSPHfactor.xyz -=
+            dt * CalculateGradPressure(GetIndex(i));
+      }
+      barrier();
+    }
+    //----------------------------------------------------------------------------------
+    for (int i = 0; CheckI(i); i++)
+    {
+      CheckWorldBounds(GetIndex(i));
+      CheckCollisions(GetIndex(i));
+    }
+    barrier();
+    //----------------------------------------------------------------------------------
+    for (int i = 0; CheckI(i); i++)
+    {
+      particle[GetIndex(i)].position.xyz =
+          (inverse(model) * vec4(particle[GetIndex(i)].position.xyz, 1.0)).xyz /
+          scale;
+    }
+    barrier();
+  }
+  else if (physicsType == STATIC)
+  {
+    for (int i = 0; CheckI(i); i++)
+    {
+      UpdateTerrainOrientation(GetIndex(i));
+    }
+  }
+  for (int i = 0; CheckI(i); i++)
+  {
+    particle[GetIndex(i)].color = ChooseColor(GetIndex(i));
+  }
 }

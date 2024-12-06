@@ -1,8 +1,6 @@
 #version 460 core
 
-layout (local_size_x = 10,
-		local_size_y = 10,
-		local_size_z = 10) in;
+layout(local_size_x = 10, local_size_y = 10, local_size_z = 10) in;
 
 const uint MaxNeighbours = 512;
 const uint MaxGranularity = 16;
@@ -21,23 +19,24 @@ uniform float shapeRadius;
 uniform float particleSpacing;
 uniform float init_mass;
 
-struct ParticleProperties {
-	vec4 velocityDFSPHfactor;
-	vec4 position;
-	vec4 MassDensityPressureDro_Dt;
+struct ParticleProperties
+{
+  vec4 velocityDFSPHfactor;
+  vec4 position;
+  vec4 MassDensityPressureDro_Dt;
   vec4 color;
-	uint neighbours[MaxNeighbours];
+  uint neighbours[MaxNeighbours];
 };
 
-layout(std430, binding = 0) buffer dataBuffer{
-	restrict ParticleProperties particle[];
+layout(std430, binding = 0) buffer dataBuffer
+{
+  restrict ParticleProperties particle[];
 };
 
-layout(std430, binding = 1) buffer granularityBuffer{
-	restrict uint granularity[][MaxGranularity];
+layout(std430, binding = 1) buffer granularityBuffer
+{
+  restrict uint granularity[][MaxGranularity];
 };
-
-
 
 vec4 ChooseColor(uint index_x);
 vec3 InitDefaultShape(in uint idx, in uint maxParticles);
@@ -46,28 +45,37 @@ float CalculateDFSPHFactor(uint index_x);
 void UpdateTerrainOrientation(uint index_x);
 void FindNeighbours(uint index_x, uint MaxParticles);
 
-void main(){
-	for(int iter = 0; iter < MaxGranularity; iter++){
-		uint index = granularity[gl_LocalInvocationIndex][iter];
-		if(index < 0xffffffff){
-			particle[index].velocityDFSPHfactor = vec4(initVelocity, 0);
-			particle[index].position = vec4(0, 0, 0, shapeRadius);
-			particle[index].MassDensityPressureDro_Dt = vec4(0);
-			particle[index].color = vec4(0);
-			if(physicsType != NONE){
-				particle[index].position = vec4(InitDefaultShape(index, MaxParticles) * particleSpacing * 2, 1) * shapeRadius;
-			}
-			if(physicsType == DYNAMIC){
-				FindNeighbours(index, MaxParticles);
+void main()
+{
+  for (int iter = 0; iter < MaxGranularity; iter++)
+  {
+    uint index = granularity[gl_LocalInvocationIndex][iter];
+    if (index < 0xffffffff)
+    {
+      particle[index].velocityDFSPHfactor = vec4(initVelocity, 0);
+      particle[index].position = vec4(0, 0, 0, shapeRadius);
+      particle[index].MassDensityPressureDro_Dt = vec4(0);
+      particle[index].color = vec4(0);
+      if (physicsType != NONE)
+      {
+        particle[index].position =
+            vec4(InitDefaultShape(index, MaxParticles) * particleSpacing * 2,
+                 1) *
+            shapeRadius;
+      }
+      if (physicsType == DYNAMIC)
+      {
+        FindNeighbours(index, MaxParticles);
 
-				particle[index].MassDensityPressureDro_Dt.x = init_mass;
-				particle[index].MassDensityPressureDro_Dt.y = CalculateDensity(index);
-				particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
-			}
-			else if (physicsType == STATIC){
-				UpdateTerrainOrientation(index);
-			}
-			particle[index].color = ChooseColor(index);
-		}
-	}
+        particle[index].MassDensityPressureDro_Dt.x = init_mass;
+        particle[index].MassDensityPressureDro_Dt.y = CalculateDensity(index);
+        particle[index].velocityDFSPHfactor.w = CalculateDFSPHFactor(index);
+      }
+      else if (physicsType == STATIC)
+      {
+        UpdateTerrainOrientation(index);
+      }
+      particle[index].color = ChooseColor(index);
+    }
+  }
 }

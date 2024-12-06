@@ -128,8 +128,8 @@ struct ParticleProperties
   Uniform<float> kernel_a{3.f, "kernel_a"};
   // Uniform<float> density{1000.f, "density",
   //                        ValueProperties{0.1f, 13000.f, 1.f, "%.1f kg/m^3"}};
-  Uniform<float> mass{4.2f, "init_mass",
-                      ValueProperties{0.1f, 1e+9f, 1e-9f, "%.1f ng"}};
+  Uniform<float> mass{15.f, "init_mass",
+                      ValueProperties{0.1f, 1e+9f, 1e-9f, "%.1f ug"}};
   Uniform<float> viscosity_factor{
       10.f, "viscosityFactor",
       ValueProperties{0.f, 1000.f, 1e-3f, "%.1f mPa*s"}};

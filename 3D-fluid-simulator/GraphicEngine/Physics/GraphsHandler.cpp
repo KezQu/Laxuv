@@ -4,6 +4,9 @@
 #include <memory>
 #include <vector>
 
+#include "Essentials.h"
+#include "glm/geometric.hpp"
+
 glm::ivec3 GraphsHandler::GetDataPosition(
     Essentials::ParticleBufferProperties const& data, uint64_t offset)
 {
@@ -12,87 +15,123 @@ glm::ivec3 GraphsHandler::GetDataPosition(
   return rescaled_position;
 }
 
-std::vector<Essentials::ParticleBufferProperties> GraphsHandler::GetGraphData(
+std::vector<GraphsHandler::HeatmapData> GraphsHandler::GetGraphData(
     Essentials::EntityContainer const& entities)
 {
-  std::vector<Essentials::ParticleBufferProperties> data;
+  std::vector<GraphsHandler::HeatmapData> data;
   for (auto& [id, entity] : entities)
   {
     auto const& physics_buffer = entity->GetPhysicsBuffer();
+    if (entity->GetColorType() != Essentials::ColorProperty::NONE)
+    {
+      color_type = entity->GetColorType();
+    }
     auto const buffer_data =
         physics_buffer.GetBufferSubData(0U, physics_buffer.Size());
     data.insert(data.end(), buffer_data.begin(), buffer_data.end());
   }
   return data;
 }
-GraphsHandler::HeatmapData GraphsHandler::SerializeData(
-    std::vector<Essentials::ParticleBufferProperties> const& data,
-    uint64_t space_bounds)
+GraphsHandler::HeatmapData_t const GraphsHandler::SerializeData(
+    std::vector<GraphsHandler::HeatmapData> const& data, uint64_t space_bounds)
 {
-  uint64_t const resolution = static_cast<uint64_t>(space_bounds / granularity);
-  uint64_t const heatmap_size =
-      static_cast<uint64_t>(std::pow(resolution, 2) * 4);
+  GraphsHandler::HeatmapData_t heatmap_data;
 
-  uint8_t* const heatmap_data = new uint8_t[heatmap_size * 3];
-  std::memset(heatmap_data, 0, heatmap_size * 3);
-
-  auto draw_data = [=, this](Projection proj_type, glm::ivec2 position,
-                             glm::vec4 data_color, float data_radius)
+  auto insert_data = [&heatmap_data, this](
+                         Projection proj_type, glm::ivec2 position,
+                         Essentials::ParticleBufferProperties const& properties,
+                         float data_radius)
   {
-    uint16_t scaled_radius = glm::round(data_radius / granularity);
-    for (int col_offset = 0; col_offset < 4; col_offset++)
+    for (int i = -static_cast<int>(data_radius); i < data_radius; i++)
     {
-      uint64_t offset = proj_type * heatmap_size + 4 * (position.x) +
-                        resolution * 4 * (position.y) + col_offset;
-      auto color_value = static_cast<uint8_t>(data_color[col_offset] * 0xFF);
-      for (int i = -scaled_radius / 2; i < scaled_radius / 2; i++)
+      for (int j = -static_cast<int>(data_radius); j < data_radius; j++)
       {
-        for (int j = -scaled_radius / 2; j < scaled_radius / 2; j++)
-        {
-          int64_t radius_offset = j * resolution * 4 + i * 4;
-          if ((offset + radius_offset) > heatmap_size * proj_type &&
-              (offset + radius_offset) < heatmap_size * (proj_type + 1))
-          {
-            heatmap_data[offset + radius_offset] = color_value;
-          }
-        }
+        glm::ivec2 pos_with_offset = position + glm::ivec2{i, j};
+        std::span<uint8_t> pos_x{reinterpret_cast<uint8_t*>(&pos_with_offset.x),
+                                 4};
+        std::span<uint8_t> pos_y{reinterpret_cast<uint8_t*>(&pos_with_offset.y),
+                                 4};
+        heatmap_data.insert(heatmap_data.end(), pos_x.begin(), pos_x.end());
+        heatmap_data.insert(heatmap_data.end(), pos_y.begin(), pos_y.end());
+        InsertColorValue(heatmap_data, properties);
       }
     }
   };
 
-  for (int i = 0; i < data.size(); i++)
-  {
-    auto const position = GetDataPosition(data[i], space_bounds);
-    draw_data(Projection::XY, {position.x, position.y}, data[i].color,
-              data[i].position.w);
-    draw_data(Projection::YZ, {position.z, position.y}, data[i].color,
-              data[i].position.w);
-    draw_data(Projection::XZ, {position.x, position.z}, data[i].color,
-              data[i].position.w);
-  }
+  std::for_each(
+      data.begin(), data.end(),
+      [&heatmap_data, this, &space_bounds, &insert_data](auto const& data)
+      {
+        auto const position = GetDataPosition(data, space_bounds);
+        insert_data(Projection::XY, {position.y, position.x}, data,
+                    data.position.w / granularity);
+      });
+  std::for_each(
+      data.begin(), data.end(),
+      [&heatmap_data, this, &space_bounds, &insert_data](auto const& data)
+      {
+        auto const position = GetDataPosition(data, space_bounds);
+        insert_data(Projection::YZ, {position.y, position.z}, data,
+                    data.position.w / granularity);
+      });
+  std::for_each(
+      data.begin(), data.end(),
+      [&heatmap_data, this, &space_bounds, &insert_data](auto const& data)
+      {
+        auto const position = GetDataPosition(data, space_bounds);
+        insert_data(Projection::XZ, {position.z, position.x}, data,
+                    data.position.w / granularity);
+      });
   return heatmap_data;
 }
 
-void GraphsHandler::GenerateGraphs(GraphsHandler::HeatmapData data,
+void GraphsHandler::GenerateGraphs(GraphsHandler::HeatmapData_t const data,
                                    uint64_t space_bounds)
 {
-  uint64_t const resolution = static_cast<uint64_t>(space_bounds / granularity);
-
   std::filesystem::path abs_path{__FILE__};
   std::string const script_path{abs_path.parent_path().string() + "/plot.py"};
   std::string const data_filepath{abs_path.parent_path().string() + "/tmp.dat"};
 
   std::ofstream file{data_filepath, std::ios_base::binary};
-  file.write(reinterpret_cast<char const* const>(data),
-             resolution * resolution * 4 * 3);
+  file.write(reinterpret_cast<char const* const>(data.data()), data.size());
   file.close();
-  delete[] data;
 
   std::cout << "python3 " + script_path + " --filename " + data_filepath +
-                   " --resolution " + std::to_string(resolution)
+                   " --granularity " + std::to_string(granularity)
             << std::endl;
 
   std::system(("python3 " + script_path + " --filename " + data_filepath +
-               " --resolution " + std::to_string(resolution))
+               " --granularity " + std::to_string(granularity))
                   .c_str());
+}
+void GraphsHandler::InsertColorValue(
+    GraphsHandler::HeatmapData_t& heatmap_data,
+    Essentials::ParticleBufferProperties const& properties)
+{
+  float value_to_draw = 0.f;
+  switch (color_type)
+  {
+    case Essentials::ColorProperty::NONE:
+      break;
+    case Essentials::ColorProperty::CUSTOM:
+      break;
+    case Essentials::ColorProperty::VELOCITY:
+      value_to_draw = glm::length(glm::vec3{properties.velocityDFSPHfactor.x,
+                                            properties.velocityDFSPHfactor.y,
+                                            properties.velocityDFSPHfactor.z});
+      break;
+    case Essentials::ColorProperty::DENSITY_ERROR:
+      value_to_draw = properties.MassDensityPressureDro_Dt.y;
+      break;
+    case Essentials::ColorProperty::DIVERGENCE_ERROR:
+      value_to_draw = properties.MassDensityPressureDro_Dt.w;
+      break;
+    case Essentials::ColorProperty::PRESSURE:
+      value_to_draw = properties.MassDensityPressureDro_Dt.z;
+      break;
+  }
+  std::span<uint8_t> value_in_byte{reinterpret_cast<uint8_t*>(&value_to_draw),
+                                   4};
+  heatmap_data.insert(heatmap_data.end(), value_in_byte.begin(),
+                      value_in_byte.end());
 }

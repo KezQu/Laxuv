@@ -24,6 +24,7 @@ class Particles : public Entity
   void Draw() const override;
   void Bind(uint32_t program_id) const override;
   Essentials::DetailControls Details() override;
+  Essentials::ColorProperty GetColorType() const override;
 };
 
 template <GLenum Prim>
@@ -158,4 +159,11 @@ Essentials::DetailControls Particles<Prim>::Details()
       {"Viscosity factor", _particle_properties.viscosity_factor.ExposeToUI()});
   details.push_back({"Mesh radius", this->_mesh_size.ExposeToUI(ui_callback)});
   return details;
+}
+
+template <GLenum Prim>
+Essentials::ColorProperty Particles<Prim>::GetColorType() const
+{
+  return static_cast<Essentials::ColorProperty>(
+      this->_particleShape->GetShapeProperties()._color.first.GetValue());
 }

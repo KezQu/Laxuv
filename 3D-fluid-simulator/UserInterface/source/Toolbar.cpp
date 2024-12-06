@@ -6,7 +6,7 @@
 #include "Simulator.h"
 #include "imgui.h"
 
-float Toolbar::static_timestep = 6.f;
+float Toolbar::static_timestep = 1.f;
 
 Toolbar::Toolbar(ImVec2 const& size, ImVec2 const& position)
     : Interface(size, position,
@@ -62,7 +62,7 @@ void Toolbar::Generate()
       }
       ImGui::SameLine();
       ImGui::PushItemWidth(100.f);
-      ImGui::DragFloat("##timestep_value", &static_timestep, 0.1f, 0.f, 1000.f,
+      ImGui::DragFloat("##timestep_value", &static_timestep, 0.1f, 0.1f, 1000.f,
                        "%.1f ms", ImGuiSliderFlags_AlwaysClamp);
       ImGui::SameLine();
       if (ImGui::Button(simulatorInstance->IsStaticDtUsed()

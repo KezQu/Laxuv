@@ -62,6 +62,10 @@ class Entity
   uint64_t GetTerrainId();
   ShaderStorageBuffer<Essentials::ParticleBufferProperties> const&
   GetPhysicsBuffer();
+  virtual Essentials::ColorProperty GetColorType() const
+  {
+    return Essentials::ColorProperty::NONE;
+  }
   void SetTerrainId(uint64_t const terrain_id);
 
  protected:
