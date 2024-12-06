@@ -25,10 +25,10 @@ std::vector<GraphsHandler::HeatmapData> GraphsHandler::GetGraphData(
     if (entity->GetColorType() != Essentials::ColorProperty::NONE)
     {
       color_type = entity->GetColorType();
+      auto const buffer_data =
+          physics_buffer.GetBufferSubData(0U, physics_buffer.Size());
+      data.insert(data.end(), buffer_data.begin(), buffer_data.end());
     }
-    auto const buffer_data =
-        physics_buffer.GetBufferSubData(0U, physics_buffer.Size());
-    data.insert(data.end(), buffer_data.begin(), buffer_data.end());
   }
   return data;
 }
@@ -79,7 +79,7 @@ GraphsHandler::HeatmapData_t const GraphsHandler::SerializeData(
       [&heatmap_data, this, &space_bounds, &insert_data](auto const& data)
       {
         auto const position = GetDataPosition(data, space_bounds);
-        insert_data(Projection::XZ, {position.z, position.x}, data,
+        insert_data(Projection::XZ, {position.x, position.z}, data,
                     data.position.w / granularity);
       });
   return heatmap_data;
