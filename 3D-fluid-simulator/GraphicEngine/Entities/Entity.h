@@ -12,11 +12,14 @@
 #include "Uniform.h"
 #include "glm/fwd.hpp"
 
-namespace details
+class Entity;
+namespace Essentials
 {
-using detail_controls_t =
+using DetailControls =
     std::vector<std::pair<std::string, std::function<void()>>>;
-};  // namespace details
+using EntityContainer = std::unordered_map<uint64_t, std::unique_ptr<Entity>>;
+
+};  // namespace Essentials
 
 class Entity
 {
@@ -24,7 +27,7 @@ class Entity
   PhysicsDispatch _physicsDispatch;
   Uniform<uint32_t> _physics_type{
       static_cast<uint32_t>(Essentials::PhysicsType::NONE), "physicsType"};
-  glm::uvec3 _mesh_size{1U};
+  Uniform<glm::ivec3, int32_t> _mesh_size;
   static uint64_t _internalID;
   uint64_t _id;
   Uniform<uint64_t> _terrain_id{std::numeric_limits<uint64_t>::max(),
@@ -55,11 +58,17 @@ class Entity
   virtual void Calculate() {}
   virtual void Draw() const {}
   virtual void Bind(uint32_t program_id) const;
-  virtual details::detail_controls_t Details();
+  virtual Essentials::DetailControls Details();
   uint64_t GetTerrainId();
+  ShaderStorageBuffer<Essentials::ParticleBufferProperties> const&
+  GetPhysicsBuffer();
+  virtual Essentials::ColorProperty GetColorType() const
+  {
+    return Essentials::ColorProperty::NONE;
+  }
   void SetTerrainId(uint64_t const terrain_id);
 
  protected:
   Entity(Essentials::PhysicsType physics,
-         glm::uvec3 const& mesh_size = {1, 1, 1});
+         glm::ivec3 const& mesh_size = {1, 1, 1});
 };

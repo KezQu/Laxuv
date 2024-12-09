@@ -8,27 +8,10 @@ Shader::Shader(GLenum type, std::string const& filepath) : _type{type}
   AddSource(filepath);
 }
 
-// Shader::Shader(Shader const& objCopy)
-//	:_source{objCopy._source},
-//	_type{ objCopy._type }
-//{
-//	_id = _(glCreateShader(_type));
-// }
-
 Shader::Shader(Shader&& objMove)
 {
   *this = std::move(objMove);
 }
-
-// Shader& Shader::operator=(Shader const& objCopy)
-//{
-//	this->~Shader();
-//	_source = objCopy._source;
-//	_type = objCopy._type;
-//	_id = _(glCreateShader(_type));
-//
-//	return *this;
-// }
 
 Shader& Shader::operator=(Shader&& objMove)
 {

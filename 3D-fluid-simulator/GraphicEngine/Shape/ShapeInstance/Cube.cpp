@@ -1,4 +1,4 @@
-#include <Cube.h>
+#include "Cube.h"
 
 Cube::Cube(Vertex center, float radius, bool enableTess)
     : Cube({{center.coordinate.x - 1.f, center.coordinate.y + 1.f,

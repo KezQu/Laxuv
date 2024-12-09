@@ -1,9 +1,5 @@
 #pragma once
 
-#include <Debug.h>
-#include <GL/glew.h>
-#include <imgui.h>
-
 #include <concepts>
 #include <cstdint>
 #include <functional>
@@ -12,6 +8,10 @@
 #include <limits>
 #include <string>
 #include <type_traits>
+
+#include "Debug.h"
+#include "GL/glew.h"
+#include "imgui.h"
 
 template <typename T>
 concept has_z = requires(T value) { value.z; };
@@ -152,86 +152,115 @@ class Uniform
     return _properties;
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires std::signed_integral<T>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragInt(("##" + _uniform_name).c_str(), &_value, 1.f,
-                     _properties._min, _properties._max,
-                     _properties._precision.c_str(),
-                     ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragInt(("##" + _uniform_name).c_str(), &_value, 1.f,
+                         _properties._min, _properties._max,
+                         _properties._precision.c_str(),
+                         ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires std::unsigned_integral<T>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragScalar(
-          ("##" + _uniform_name).c_str(), ImGuiDataType_U32, (void*)&_value,
-          1.f, (const void*)&_properties._min, (const void*)&_properties._max,
-          _properties._precision.c_str(), ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragScalar(("##" + _uniform_name).c_str(), ImGuiDataType_U32,
+                            (void*)&_value, 1.f, (const void*)&_properties._min,
+                            (const void*)&_properties._max,
+                            _properties._precision.c_str(),
+                            ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires std::floating_point<T>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragFloat(("##" + _uniform_name).c_str(), &_value, 0.1f,
-                       _properties._min, _properties._max,
-                       _properties._precision.c_str(),
-                       ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragFloat(("##" + _uniform_name).c_str(), &_value, 0.1f,
+                           _properties._min, _properties._max,
+                           _properties._precision.c_str(),
+                           ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires is_vec2<T> && std::floating_point<typename T::value_type>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragFloat2(("##" + _uniform_name).c_str(), glm::value_ptr(_value),
-                        0.1f, _properties._min, _properties._max,
-                        _properties._precision.c_str(),
-                        ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragFloat2(("##" + _uniform_name).c_str(),
+                            glm::value_ptr(_value), 0.1f, _properties._min,
+                            _properties._max, _properties._precision.c_str(),
+                            ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires is_vec3<T> && std::integral<typename T::value_type>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragInt3(("##" + _uniform_name).c_str(), glm::value_ptr(_value),
-                      1.f, _properties._min, _properties._max,
-                      _properties._precision.c_str(),
-                      ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragInt3(("##" + _uniform_name).c_str(),
+                          glm::value_ptr(_value), 1.f, _properties._min,
+                          _properties._max, _properties._precision.c_str(),
+                          ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires is_vec3<T> && std::floating_point<typename T::value_type>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragFloat3(("##" + _uniform_name).c_str(), glm::value_ptr(_value),
-                        0.1f, _properties._min, _properties._max,
-                        _properties._precision.c_str(),
-                        ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragFloat3(("##" + _uniform_name).c_str(),
+                            glm::value_ptr(_value), 0.1f, _properties._min,
+                            _properties._max, _properties._precision.c_str(),
+                            ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
 
-  ui_control ExposeToUI()
+  ui_control ExposeToUI(std::function<void()> const action_callback = nullptr)
     requires is_vec4<T> && std::floating_point<typename T::value_type>
   {
-    return [this]()
+    auto const callback = action_callback;
+    return [this, callback]()
     {
-      ImGui::DragFloat4(("##" + _uniform_name).c_str(), glm::value_ptr(_value),
-                        0.1f, _properties._min, _properties._max,
-                        _properties._precision.c_str(),
-                        ImGuiSliderFlags_AlwaysClamp);
+      if (ImGui::DragFloat4(("##" + _uniform_name).c_str(),
+                            glm::value_ptr(_value), 0.1f, _properties._min,
+                            _properties._max, _properties._precision.c_str(),
+                            ImGuiSliderFlags_AlwaysClamp))
+      {
+        if (callback) callback();
+      }
     };
   }
   ///////////////////////////////////////////////////////////////////////////////
@@ -280,7 +309,7 @@ class Uniform
     requires is_vec3<T> && std::signed_integral<typename T::value_type>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    T scaled_value = static_cast<T>(_value * _properties._scale);
+    T scaled_value = static_cast<T>(glm::vec3{_value} * _properties._scale);
     if (location != -1) glUniform3iv(location, 1, glm::value_ptr(scaled_value));
   }
 
@@ -288,7 +317,7 @@ class Uniform
     requires is_vec3<T> && std::unsigned_integral<typename T::value_type>
   {
     auto location = CheckIfExists(program_id, _uniform_name);
-    T scaled_value = static_cast<T>(_value * _properties._scale);
+    T scaled_value = static_cast<T>(glm::vec3{_value} * _properties._scale);
     if (location != -1)
       glUniform3uiv(location, 1, glm::value_ptr(scaled_value));
   }

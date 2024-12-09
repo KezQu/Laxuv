@@ -1,13 +1,14 @@
 #pragma once
 
-#include <Debug.h>
-#include <GL/glew.h>
-
 #include <filesystem>
 #include <fstream>
 #include <regex>
 #include <sstream>
 #include <vector>
+
+#include "Debug.h"
+#include "GL/glew.h"
+
 
 class Shader
 {

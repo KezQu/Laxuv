@@ -87,7 +87,7 @@ void Camera::Rotate(glm::vec3 rotation)
 
 void Camera::AddMoveSpeed(float delta_speed)
 {
-  if (_moveSpeed < 1)
+  if (_moveSpeed <= 1)
   {
     _moveSpeed += delta_speed * 1e-1;
   }

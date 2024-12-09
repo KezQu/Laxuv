@@ -1,12 +1,9 @@
 #pragma once
 
-#include <GL/glew.h>
-
 #include <chrono>
-#include <deque>
 #include <iostream>
-#include <regex>
-#include <sstream>
+
+#include "GL/glew.h"
 
 template <typename T>
 concept is_streamable = requires(std::ostringstream stream, T value) {
@@ -37,16 +34,15 @@ class console
 
 extern console LOG;
 
-#define _(x)                                                                \
-  x;                                                                        \
-  {                                                                         \
-    GLenum err = glGetError();                                              \
-    if (err != GL_NO_ERROR)                                                 \
-    {                                                                       \
-      LOG << "Error " << std::hex << err << " in file : " << __FILE__       \
-          << " line : " << __LINE__ << std::endl;                           \
-      std::cout << "Error " << std::hex << err << " in file : " << __FILE__ \
-                << " line : " << __LINE__ << std::endl;                     \
-      __debugbreak();                                                       \
-    }                                                                       \
-  }
+#define _(x) x;
+// {                                                                         \
+  //   GLenum err = glGetError();                                              \
+  //   if (err != GL_NO_ERROR)                                                 \
+  //   {                                                                       \
+  //     LOG << "Error " << std::hex << err << " in file : " << __FILE__       \
+  //         << " line : " << __LINE__ << std::endl;                           \
+  //     std::cout << "Error " << std::hex << err << " in file : " << __FILE__ \
+  //               << " line : " << __LINE__ << std::endl;                     \
+  //     __debugbreak();                                                       \
+  //   }                                                                       \
+  // }

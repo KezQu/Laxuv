@@ -5,8 +5,8 @@ std::deque<std::string> Logger::_logHistory;
 Logger::Logger(std::ostringstream& log, ImVec2 const& size,
                ImVec2 const& position)
     : Interface(size, position,
-                ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
-                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
+                    ImGuiWindowFlags_NoTitleBar |
                     ImGuiWindowFlags_AlwaysAutoResize)
 {
   if (_logHistory.size() > 10) _logHistory.pop_front();
