@@ -264,29 +264,29 @@ void CheckWorldBounds(uint index_x)
   {
     if (vec_from_center.x <= -spaceLimiter)
     {
-      surface_dir = vec3(1, 0, 0);
+      surface_dir += vec3(1, 0, 0);
     }
     else if (vec_from_center.x >= spaceLimiter)
     {
-      surface_dir = vec3(-1, 0, 0);
+      surface_dir += vec3(-1, 0, 0);
     }
     if (vec_from_center.y <= -spaceLimiter)
     {
-      surface_dir = vec3(0, 1, 0);
+      surface_dir += vec3(0, 1, 0);
     }
     else if (vec_from_center.y >= spaceLimiter)
     {
-      surface_dir = vec3(0, -1, 0);
+      surface_dir += vec3(0, -1, 0);
     }
     if (vec_from_center.z <= -spaceLimiter)
     {
-      surface_dir = vec3(0, 0, 1);
+      surface_dir += vec3(0, 0, 1);
     }
     else if (vec_from_center.z >= spaceLimiter)
     {
-      surface_dir = vec3(0, 0, -1);
+      surface_dir += vec3(0, 0, -1);
     }
-    correction = 1 - vec_from_center / spaceLimiter;
+    correction = 1 - abs(vec_from_center) / spaceLimiter;
     correction.x = correction.x > 0 ? 0 : correction.x;
     correction.y = correction.y > 0 ? 0 : correction.y;
     correction.z = correction.z > 0 ? 0 : correction.z;
@@ -370,18 +370,6 @@ void CheckCollisions(uint index_x)
           (transpose(transpose(terrain[i].model) * inverse(translate_mat)) *
            inverse(scale_mat) * vec4(surface_dir, 1))
               .xyz;
-    }
-    if (uint(terrain[i].center.w) == S_CUBE)
-    {
-      if (abs(pos_vdt).x < 1 && abs(pos_vdt).y < 1 && abs(pos_vdt).z < 1)
-      {
-      }
-    }
-    else if (uint(terrain[i].center.w) == S_SPHERE)
-    {
-      if (length(pos_vdt.xyz) <= 1)
-      {
-      }
     }
     particle[index_x].position.xyz += correction * surface_dir;
     particle[index_x].velocityDFSPHfactor.xyz =

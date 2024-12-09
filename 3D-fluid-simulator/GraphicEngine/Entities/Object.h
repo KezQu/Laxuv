@@ -61,7 +61,7 @@ void Object<Prim>::Calculate()
   if (_visible)
   {
     _physicsDispatch.CalculateFrame(
-        _mesh_size.GetValue(), false,
+        _mesh_size.GetValue(),
         [this](uint32_t program_id)
         {
           _shape->BindUniforms(program_id);

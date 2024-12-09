@@ -12,12 +12,6 @@ Essentials::DetailControls Entity::Details()
 {
   Essentials::DetailControls details;
   details.push_back({"Name", [this]() { ImGui::Text(this->Name().c_str()); }});
-  details.push_back({"Physics type", [this]()
-                     {
-                       ImGui::Combo("##Physics_type",
-                                    (int32_t*)&this->_physics_type.GetValue(),
-                                    Essentials::PhysTypesTolist());
-                     }});
   return details;
 }
 

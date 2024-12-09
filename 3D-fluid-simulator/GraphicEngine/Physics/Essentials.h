@@ -36,16 +36,14 @@ enum class DistributionShape : uint32_t
 {
   UNDEFINED,
   LINE,
-  CIRCLE,
   SQUARE,
-  DISK,
-  CUBE,
-  SPHERE
+  CUBE
 };
 char const* DistShapeTolist() noexcept;
 
 enum class SimulationState : uint32_t
 {
+  NONE,
   IDLE,
   INIT,
   SIMULATION,

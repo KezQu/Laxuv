@@ -9,8 +9,12 @@ const uint NONE = 0;
 const uint STATIC = 1;
 const uint DYNAMIC = 2;
 
+const uint IDLE = 1;
+const uint INIT = 2;
+
 uniform uint MaxParticles;
 
+uniform uint SimulatorState = NONE;
 uniform uint physicsType = NONE;
 
 uniform vec3 initVelocity;
@@ -52,12 +56,12 @@ void main()
     uint index = granularity[gl_LocalInvocationIndex][iter];
     if (index < 0xffffffff)
     {
-      particle[index].velocityDFSPHfactor = vec4(initVelocity, 0);
-      particle[index].position = vec4(0, 0, 0, shapeRadius);
-      particle[index].MassDensityPressureDro_Dt = vec4(0);
-      particle[index].color = vec4(0);
-      if (physicsType != NONE)
+      if (physicsType != NONE && SimulatorState == INIT)
       {
+        particle[index].velocityDFSPHfactor = vec4(initVelocity, 0);
+        particle[index].position = vec4(0, 0, 0, shapeRadius);
+        particle[index].MassDensityPressureDro_Dt = vec4(0);
+        particle[index].color = vec4(0);
         particle[index].position =
             vec4(InitDefaultShape(index, MaxParticles) * particleSpacing * 2,
                  1) *

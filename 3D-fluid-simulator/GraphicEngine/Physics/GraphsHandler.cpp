@@ -42,20 +42,11 @@ GraphsHandler::HeatmapData_t const GraphsHandler::SerializeData(
                          Essentials::ParticleBufferProperties const& properties,
                          float data_radius)
   {
-    for (int i = -static_cast<int>(data_radius); i < data_radius; i++)
-    {
-      for (int j = -static_cast<int>(data_radius); j < data_radius; j++)
-      {
-        glm::ivec2 pos_with_offset = position + glm::ivec2{i, j};
-        std::span<uint8_t> pos_x{reinterpret_cast<uint8_t*>(&pos_with_offset.x),
-                                 4};
-        std::span<uint8_t> pos_y{reinterpret_cast<uint8_t*>(&pos_with_offset.y),
-                                 4};
-        heatmap_data.insert(heatmap_data.end(), pos_x.begin(), pos_x.end());
-        heatmap_data.insert(heatmap_data.end(), pos_y.begin(), pos_y.end());
-        InsertColorValue(heatmap_data, properties);
-      }
-    }
+    std::span<uint8_t> pos_x{reinterpret_cast<uint8_t*>(&position.x), 4};
+    std::span<uint8_t> pos_y{reinterpret_cast<uint8_t*>(&position.y), 4};
+    heatmap_data.insert(heatmap_data.end(), pos_x.begin(), pos_x.end());
+    heatmap_data.insert(heatmap_data.end(), pos_y.begin(), pos_y.end());
+    InsertColorValue(heatmap_data, properties);
   };
 
   std::for_each(
@@ -79,7 +70,7 @@ GraphsHandler::HeatmapData_t const GraphsHandler::SerializeData(
       [&heatmap_data, this, &space_bounds, &insert_data](auto const& data)
       {
         auto const position = GetDataPosition(data, space_bounds);
-        insert_data(Projection::XZ, {position.x, position.z}, data,
+        insert_data(Projection::XZ, {position.z, position.x}, data,
                     data.position.w / granularity);
       });
   return heatmap_data;
@@ -127,7 +118,7 @@ void GraphsHandler::InsertColorValue(
       value_to_draw = properties.MassDensityPressureDro_Dt.w;
       break;
     case Essentials::ColorProperty::PRESSURE:
-      value_to_draw = properties.MassDensityPressureDro_Dt.z;
+      value_to_draw = glm::abs(properties.MassDensityPressureDro_Dt.z);
       break;
   }
   std::span<uint8_t> value_in_byte{reinterpret_cast<uint8_t*>(&value_to_draw),

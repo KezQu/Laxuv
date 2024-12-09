@@ -56,7 +56,6 @@ void PhysicsDispatch::UpdateMeshDimensions(glm::ivec3 mesh_radius)
 }
 
 void PhysicsDispatch::CalculateFrame(glm::ivec3 mesh_radius,
-                                     bool create_snapshot,
                                      PhysicsDispatch::bind_callback callback)
 {
   ProcessStage("Runtime", mesh_radius, callback);

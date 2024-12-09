@@ -83,17 +83,17 @@ vec4 ChooseColor(uint index_x)
           length(particle[index_x].velocityDFSPHfactor.xyz) / max_speed);
       break;
     case DENSITY_ERROR:
-      chosen_color = CalculateColor(pow(
-          abs(density0 - particle[index_x].MassDensityPressureDro_Dt.y) * 1e+9,
-          3));
+      chosen_color = CalculateColor(
+          abs(density0 - particle[index_x].MassDensityPressureDro_Dt.y) / particle[index_x].MassDensityPressureDro_Dt.x
+          );
       break;
     case DIVERGENCE_ERROR:
       chosen_color = CalculateColor(
-          abs(particle[index_x].MassDensityPressureDro_Dt.w) * 1e+20);
+          1e-2 * sqrt(abs(particle[index_x].MassDensityPressureDro_Dt.w)) / particle[index_x].MassDensityPressureDro_Dt.x);
       break;
     case PRESSURE:
       chosen_color = CalculateColor(
-          abs(particle[index_x].MassDensityPressureDro_Dt.z) * 1e+20);
+          1e-2 * sqrt(abs(particle[index_x].MassDensityPressureDro_Dt.z)) / particle[index_x].MassDensityPressureDro_Dt.y);
       break;
   }
   return chosen_color;

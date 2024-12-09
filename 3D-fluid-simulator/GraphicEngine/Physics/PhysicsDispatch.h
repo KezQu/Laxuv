@@ -41,8 +41,7 @@ class PhysicsDispatch
   GetParticleMeshBuffer() const;
   void UpdateMeshDimensions(glm::ivec3 mesh_radius);
   void Initialize(glm::ivec3 mesh_radius, bind_callback callback);
-  void CalculateFrame(glm::ivec3 mesh_radius, bool create_snapshot,
-                      bind_callback callback);
+  void CalculateFrame(glm::ivec3 mesh_radius, bind_callback callback);
 
  private:
   using granularity_t = uint32_t[16];

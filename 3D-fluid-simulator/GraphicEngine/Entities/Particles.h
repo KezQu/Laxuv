@@ -56,7 +56,7 @@ void Particles<Prim>::Calculate()
   if (_visible)
   {
     _physicsDispatch.CalculateFrame(
-        _mesh_size.GetValue(), false,
+        _mesh_size.GetValue(),
         [this](uint32_t program_id)
         {
           _particleShape->BindUniforms(program_id);
@@ -97,7 +97,6 @@ void Particles<Prim>::Bind(uint32_t program_id) const
   Entity::Bind(program_id);
 
   _particle_properties.viscosity_factor.MapUniform(program_id);
-  // _particle_properties.density.MapUniform(program_id);
   _particle_properties.mass.MapUniform(program_id);
 
   _particle_properties.kernel_a.MapUniform(program_id);
@@ -139,7 +138,6 @@ Essentials::DetailControls Particles<Prim>::Details()
        }});
   details.push_back(
       {"Color", shape_properties._color.second.ExposeToUI(ui_callback)});
-  details.push_back({"Radius", shape_properties._radius.ExposeToUI()});
   details.push_back(
       {"Initial velocity",
        _particle_properties.init_velocity.ExposeToUI(ui_callback)});
@@ -150,11 +148,9 @@ Essentials::DetailControls Particles<Prim>::Details()
       {"Distribution",
        _particle_properties.distribution_shape.ExposeToUI(ui_callback)});
   details.push_back(
-      {"Influence kernel", _particle_properties.influence_kernel.ExposeToUI()});
-  details.push_back(
       {"Kernel factor A", _particle_properties.kernel_a.ExposeToUI()});
-  // details.push_back({"Density", _particle_properties.density.ExposeToUI()});
-  details.push_back({"Particle mass", _particle_properties.mass.ExposeToUI()});
+  details.push_back(
+      {"Particle mass", _particle_properties.mass.ExposeToUI(ui_callback)});
   details.push_back(
       {"Viscosity factor", _particle_properties.viscosity_factor.ExposeToUI()});
   details.push_back({"Mesh radius", this->_mesh_size.ExposeToUI(ui_callback)});
