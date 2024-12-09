@@ -1,14 +1,15 @@
 #pragma once
 
-#include <Line.h>
-#include <Square.h>
-#include <Entity.h>
+#include "Entity.h"
+#include "Line.h"
+#include "Square.h"
 
-class WorldAxes : public Entity {
-private:
-	Line _axes[3];
-	Square _floor;
-public:
-	WorldAxes();
-	void Draw() const;
+class WorldAxes : public Entity
+{
+ private:
+  Line _axes[3];
+
+ public:
+  WorldAxes();
+  void Draw() const;
 };

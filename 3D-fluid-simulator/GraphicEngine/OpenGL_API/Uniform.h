@@ -1,9 +1,5 @@
 #pragma once
 
-#include <Debug.h>
-#include <GL/glew.h>
-#include <imgui.h>
-
 #include <concepts>
 #include <cstdint>
 #include <functional>
@@ -12,6 +8,10 @@
 #include <limits>
 #include <string>
 #include <type_traits>
+
+#include "Debug.h"
+#include "GL/glew.h"
+#include "imgui.h"
 
 template <typename T>
 concept has_z = requires(T value) { value.z; };

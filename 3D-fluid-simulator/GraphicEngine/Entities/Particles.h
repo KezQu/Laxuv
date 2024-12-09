@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Entity.h>
-#include <Essentials.h>
-#include <Program.h>
-#include <Shape.h>
+#include "Entity.h"
+#include "Essentials.h"
+#include "Program.h"
+#include "Shape.h"
 
 template <GLenum Prim>
 class Particles : public Entity

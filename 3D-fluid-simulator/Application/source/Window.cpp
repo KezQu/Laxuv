@@ -18,7 +18,6 @@
 #include "Toolbar.h"
 #include "WorldAxes.h"
 #include "imgui.h"
-// #include "implot.h"
 
 Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     : _windowSize{windowSize}, _windowTitle{windowTitle}
@@ -38,15 +37,13 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
 
     _window = glfwCreateWindow(_windowSize.x, _windowSize.y,
                                _windowTitle.c_str(), nullptr, nullptr);
-    //_window = glfwCreateWindow(_windowSize.first, _windowSize.second,
-    //_windowTitle.c_str(), glfwGetPrimaryMonitor(), nullptr);
     if (_window == nullptr)
     {
       throw std::runtime_error("Unable to create window");
     }
 
     glfwMakeContextCurrent(_window);
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
     GLenum errorCode = glewInit();
     if (errorCode != GLEW_OK)
@@ -74,24 +71,12 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     glfwSetFramebufferSizeCallback(_window,
                                    Window::GLFWFrameBufferResizeCallback);
     ImGui::CreateContext();
-    // ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-    io.ConfigFlags |=
-        ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-    io.ConfigFlags |=
-        ImGuiConfigFlags_DockingEnable;  // IF using Docking Branch
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    // std::filesystem::path filePath(__FILE__);
-    // auto font_path_symbols{filePath.parent_path().string() +
-    //                        "\\NotoSansSymbols2-Regular.ttf"};
-    //  LoadFont({font_path_symbols});
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(
-        _window, true);  // Second param install_callback=true will install GLFW
-                         // callbacks and chain to existing ones.
+    ImGui_ImplGlfw_InitForOpenGL(_window, true);
     ImGui_ImplOpenGL3_Init();
   }
 }
@@ -102,7 +87,6 @@ Window::~Window()
   ProgramDispatch::CleanUp();
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
-  // ImPlot::DestroyContext();
   ImGui::DestroyContext();
   glfwDestroyWindow(_window);
   glfwTerminate();
@@ -116,7 +100,6 @@ void Window::EventLoop()
   while (glfwWindowShouldClose(_window) == GLFW_FALSE)
   {
     Refresh();
-    // ImPlot::ShowDemoWindow();
     Toolbar(ImVec2{_windowSize.x, 20}, ImVec2{0, 0}).Generate();
     Explorer(ImVec2{_windowSize.x / 4.f, _windowSize.y - 20}, ImVec2{0, 20})
         .Generate();

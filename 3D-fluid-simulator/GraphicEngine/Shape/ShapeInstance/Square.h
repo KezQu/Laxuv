@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Shape.h>
+#include "Shape.h"
 
 class Square : public Shape<GL_TRIANGLES>
 {

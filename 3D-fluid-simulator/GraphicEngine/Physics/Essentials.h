@@ -124,8 +124,6 @@ struct ParticleProperties
       2.5f, "influenceKernel",
       ValueProperties{0.1f, 600.f, length_scale, "%.1f mm"}};
   Uniform<float> kernel_a{3.f, "kernel_a"};
-  // Uniform<float> density{1000.f, "density",
-  //                        ValueProperties{0.1f, 13000.f, 1.f, "%.1f kg/m^3"}};
   Uniform<float> mass{15.f, "init_mass",
                       ValueProperties{0.1f, 1e+9f, 1e-9f, "%.1f ug"}};
   Uniform<float> viscosity_factor{

@@ -1,4 +1,6 @@
-#include <WorldAxes.h>
+#include "WorldAxes.h"
+
+#include "Essentials.h"
 
 WorldAxes::WorldAxes()
     : Entity(Essentials::PhysicsType::NONE),
@@ -7,15 +9,13 @@ WorldAxes::WorldAxes()
             {{{0.f, -1.f, 0.f}, {0x00, 0x00, 0x00, 0xFF}},
              {{0.f, 1.f, 0.f}, {0x00, 0xFF, 0x00, 0xFF}}},
             {{{0.f, 0.f, -1.f}, {0x00, 0x00, 0x00, 0xFF}},
-             {{0.f, 0.f, 1.f}, {0x00, 0x00, 0xFF, 0xFF}}}},
-      _floor{{{0.f, 0.f, 0.f}, {0x80, 0x80, 0x80, 0x80}}, 1}
+             {{0.f, 0.f, 1.f}, {0x00, 0x00, 0xFF, 0xFF}}}}
 {
   for (auto& axis : _axes)
   {
     axis.GetShapeProperties()._scale = {1200, 1200, 1200};
     axis.EnableLight(false);
   }
-  _floor.GetShapeProperties()._scale = {1200, 1200, 1200};
 }
 void WorldAxes::Draw() const
 {
@@ -36,5 +36,4 @@ void WorldAxes::Draw() const
                      axis.GetVA().IndexBufferType(), nullptr));
     _physicsDispatch.BindPhysicsMesh(renderer.ID());
   }
-  //_floor.Draw();
 }

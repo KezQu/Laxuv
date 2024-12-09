@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+#include "Cube.h"
 #include "Explorer.h"
 #include "GLFW/glfw3.h"
 #include "Line.h"
@@ -11,7 +12,6 @@
 #include "Particles.h"
 #include "PhysicsDispatch.h"
 #include "Point.h"
-#include "Cube.h"
 #include "Sphere.h"
 #include "Square.h"
 #include "Toolbar.h"
@@ -19,11 +19,6 @@
 
 class Window
 {
- private:
-  std::string _windowTitle;
-  ImVec2 _windowSize;
-  GLFWwindow* _window;
-
  public:
   Window(ImVec2 const& windowSize, std::string const& windowTitle);
   ~Window();
@@ -44,4 +39,8 @@ class Window
 
  private:
   static ImVec4 CalculateViewport(ImVec2 const& windowSize);
+
+  std::string _windowTitle;
+  ImVec2 _windowSize;
+  GLFWwindow* _window;
 };

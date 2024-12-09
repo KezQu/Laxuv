@@ -35,8 +35,6 @@ def ReadData(filename, granularity):
              for i in range(values_data.shape[0])])
         pos_data = np.flip(pos_data, axis=1)
         color_data = np.flip(color_data, axis=1)
-        print(pos_data.shape)
-        print(color_data.shape)
 
         for i in range(color_data.shape[0]):
             for j in range(color_data.shape[1]):
@@ -80,10 +78,8 @@ def plot(data, values, min_max, bounds, granularity):
                  xticklabels=axis_ticks[1], yticklabels=axis_ticks[2], xlabel="axis X", ylabel="axis Z")
         fig.colorbar(imgXZ, ax=ax[0, 1])
 
-        imgHist = ax[1, 1].hist(values[0], bins=20, density=True)
-        print(values[0].shape)
+        imgHist = ax[1, 1].hist(values[0], bins=20)
         ax[1, 1].set_title("Values distribution")
-        # ax[1, 1].yaxis.set_major_formatter(ticker.PercentFormatter(xmax=0.01))
 
         plt.show()
 

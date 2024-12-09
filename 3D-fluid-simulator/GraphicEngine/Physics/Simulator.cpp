@@ -215,6 +215,6 @@ void Simulator::Delete(Essentials::EntityContainer::key_type id)
   }
   else
   {
-    _entitiesContainer.erase(std::prev(_entitiesContainer.end()));
+    LOG << "No entity id specified for deletion" << std::endl;
   }
 }

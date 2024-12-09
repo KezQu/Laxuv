@@ -11,7 +11,7 @@ glm::ivec3 GraphsHandler::GetDataPosition(
     Essentials::ParticleBufferProperties const& data, uint64_t offset)
 {
   glm::ivec3 rescaled_position{};
-  rescaled_position = glm::round((data.position + offset / 2.f) / granularity);
+  rescaled_position = glm::round((data.position) / granularity);
   return rescaled_position;
 }
 
@@ -86,10 +86,6 @@ void GraphsHandler::GenerateGraphs(GraphsHandler::HeatmapData_t const data,
   std::ofstream file{data_filepath, std::ios_base::binary};
   file.write(reinterpret_cast<char const* const>(data.data()), data.size());
   file.close();
-
-  std::cout << "python3 " + script_path + " --filename " + data_filepath +
-                   " --granularity " + std::to_string(granularity)
-            << std::endl;
 
   std::system(("python3 " + script_path + " --filename " + data_filepath +
                " --granularity " + std::to_string(granularity))

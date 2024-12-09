@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Program.h>
-
 #include <memory>
+
+#include "Program.h"
 
 class ProgramDispatch
 {
@@ -11,11 +11,43 @@ class ProgramDispatch
   Program _shaderPipelineWithTesselation;
 
  private:
-  ProgramDispatch();
+  ProgramDispatch()
+      : _shaderPipelineSimple{{GL_VERTEX_SHADER, "/ElementTessOff.vert"},
+                              {GL_VERTEX_SHADER, "/CalculateNDC.glsl"},
+                              {GL_FRAGMENT_SHADER, "/Element.frag"}},
+        _shaderPipelineWithTesselation{
+            {GL_VERTEX_SHADER, "/ElementTessOn.vert"},
+            {GL_TESS_CONTROL_SHADER, "/Element.tesc"},
+            {GL_TESS_EVALUATION_SHADER, "/Element.tese"},
+            {GL_TESS_EVALUATION_SHADER, "/CalculateNDC.glsl"},
+            {GL_FRAGMENT_SHADER, "/Element.frag"}}
+  {
+  }
 
  public:
-  static std::unique_ptr<ProgramDispatch>& GetInstance();
-  static void CleanUp();
-  Program& GetSimplePipeline();
-  Program& GetTesselationPipeline();
+  static std::unique_ptr<ProgramDispatch>& GetInstance()
+  {
+    static std::unique_ptr<ProgramDispatch> instance{nullptr};
+
+    if (instance == nullptr)
+    {
+      instance = std::unique_ptr<ProgramDispatch>{new ProgramDispatch{}};
+    }
+    return instance;
+  }
+
+  static void CleanUp()
+  {
+    GetInstance().reset(nullptr);
+  }
+
+  Program& GetSimplePipeline()
+  {
+    return GetInstance()->_shaderPipelineSimple;
+  }
+
+  Program& GetTesselationPipeline()
+  {
+    return GetInstance()->_shaderPipelineWithTesselation;
+  }
 };
