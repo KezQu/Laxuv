@@ -76,7 +76,8 @@ enum class ColorProperty : uint32_t
   DIVERGENCE_ERROR,
   PRESSURE,
 };
-char const* ColorPropertyTolist() noexcept;
+char const* ColorPropertyTolistParticles() noexcept;
+char const* ColorPropertyTolistObject() noexcept;
 
 struct TerrainBufferProperties
 {
@@ -123,9 +124,10 @@ struct ParticleProperties
   Uniform<float> influence_kernel{
       2.5f, "influenceKernel",
       ValueProperties{0.1f, 600.f, length_scale, "%.1f mm"}};
-  Uniform<float> kernel_a{3.f, "kernel_a"};
-  Uniform<float> mass{15.f, "init_mass",
-                      ValueProperties{0.1f, 1e+9f, 1e-9f, "%.1f ug"}};
+  Uniform<float> kernel_a{3.5f, "kernel_a",
+                          ValueProperties{3.f, 100.f, 1.f, "%.1f"}};
+  Uniform<float> mass{1000.f, "init_mass",
+                      ValueProperties{0.1f, 1e+4f, 1e-9f, "%.1f ug"}};
   Uniform<float> viscosity_factor{
       10.f, "viscosityFactor",
       ValueProperties{0.f, 1000.f, 1e-3f, "%.1f mPa*s"}};

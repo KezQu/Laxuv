@@ -84,16 +84,18 @@ vec4 ChooseColor(uint index_x)
       break;
     case DENSITY_ERROR:
       chosen_color = CalculateColor(
-          abs(density0 - particle[index_x].MassDensityPressureDro_Dt.y) / particle[index_x].MassDensityPressureDro_Dt.x
-          );
+          abs(density0 - particle[index_x].MassDensityPressureDro_Dt.y) /
+          particle[index_x].MassDensityPressureDro_Dt.x);
       break;
     case DIVERGENCE_ERROR:
       chosen_color = CalculateColor(
-          1e-2 * sqrt(abs(particle[index_x].MassDensityPressureDro_Dt.w)) / particle[index_x].MassDensityPressureDro_Dt.x);
+          1e-2 * sqrt(abs(particle[index_x].MassDensityPressureDro_Dt.w)) /
+          particle[index_x].MassDensityPressureDro_Dt.x);
       break;
     case PRESSURE:
       chosen_color = CalculateColor(
-          1e-2 * sqrt(abs(particle[index_x].MassDensityPressureDro_Dt.z)) / particle[index_x].MassDensityPressureDro_Dt.y);
+          1e-2 * sqrt(abs(particle[index_x].MassDensityPressureDro_Dt.z)) /
+          particle[index_x].MassDensityPressureDro_Dt.y);
       break;
   }
   return chosen_color;

@@ -28,9 +28,14 @@ char const* Essentials::PhysTypesTolist() noexcept
   return "NONE\0STATIC\0DYNAMIC\0";
 }
 
-char const* Essentials::ColorPropertyTolist() noexcept
+char const* Essentials::ColorPropertyTolistParticles() noexcept
 {
   return "NONE\0CUSTOM\0VELOCITY\0DENSITY_ERROR\0DIVERGENCE_ERROR\0PRESSURE\0";
+}
+
+char const* Essentials::ColorPropertyTolistObject() noexcept
+{
+  return "NONE\0CUSTOM\0";
 }
 
 Uniform<glm::mat4, float> Essentials::ShapeProperties::Model() const

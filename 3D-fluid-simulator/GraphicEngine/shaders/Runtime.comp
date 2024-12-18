@@ -100,12 +100,13 @@ void main()
     }
     barrier();
     //----------------------------------------------------------------------------------
-    for (int iter = 0; iter < 1000; iter++)
+    float density0;
+    for (int iter = 0; iter < int(1e-5 / init_mass); iter++)
     {
       for (int i = 0; CheckI(i); i++)
       {
         const float factor_x = particle[GetIndex(i)].velocityDFSPHfactor.w;
-        const float density0 = GetInternalDensity(GetIndex(i));
+        density0 = GetInternalDensity(GetIndex(i));
 
         float ro_hash = particle[GetIndex(i)].MassDensityPressureDro_Dt.y +
                         dt * CalculateDerivDensity(GetIndex(i));
@@ -149,10 +150,6 @@ void main()
       for (int i = 0; CheckI(i); i++)
       {
         const float factor_x = particle[GetIndex(i)].velocityDFSPHfactor.w;
-        particle[GetIndex(i)].MassDensityPressureDro_Dt.y =
-            CalculateDensity(GetIndex(i));
-        particle[GetIndex(i)].velocityDFSPHfactor.w =
-            CalculateDFSPHFactor(GetIndex(i));
 
         float d_ro = CalculateDerivDensity(GetIndex(i));
         particle[GetIndex(i)].MassDensityPressureDro_Dt.z =

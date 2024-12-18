@@ -93,6 +93,18 @@ vec3 CalculateGradKernelWeight(vec3 points_dist)
          pow(influenceKernel, kernel_a) * versor_ij;
 }
 
+float CalculateLaplasjanKernelWeight(vec3 points_dist)
+{
+  const float abs_dist = length(points_dist);
+  if (abs_dist > influenceKernel)
+  {
+    return 0;
+  }
+  return (kernel_a / 2.) * (kernel_a - 1) * (kernel_a - 2) *
+         pow(influenceKernel - abs_dist, kernel_a - 3) /
+         pow(influenceKernel, kernel_a);
+}
+
 float GetInternalDensity(uint index_x)
 {
   return particle[index_x].MassDensityPressureDro_Dt.x *
@@ -229,9 +241,7 @@ vec3 CalculateGradPressure(uint index_x)
 
 vec3 CalculateViscosity(uint index_x)
 {
-  const int d = 3;
   uint curr_neighbour = 0;
-
   vec3 kernel_sum = vec3(0);
   for (int i = 0; i < MaxNeighbours; i++)
   {
@@ -246,11 +256,10 @@ vec3 CalculateViscosity(uint index_x)
                       particle[curr_neighbour].velocityDFSPHfactor.xyz;
     const vec3 x_ij =
         particle[index_x].position.xyz - particle[curr_neighbour].position.xyz;
-    kernel_sum +=
-        (float(m_j) * dot(v_ij, x_ij) * CalculateGradKernelWeight(x_ij)) /
-        (float(ro_j) * (pow(length(x_ij), 2) + 0.01));
+    kernel_sum += (v_ij * float(m_j) * CalculateLaplasjanKernelWeight(x_ij)) /
+                  float(ro_j);
   }
-  return kernel_sum * viscosityFactor * 2 * (d + 2);
+  return kernel_sum * viscosityFactor;
 }
 
 void CheckWorldBounds(uint index_x)

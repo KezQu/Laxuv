@@ -131,7 +131,7 @@ Essentials::DetailControls Particles<Prim>::Details()
        {
          if (ImGui::Combo("##Color_type",
                           (int32_t*)&shape_properties._color.first.GetValue(),
-                          Essentials::ColorPropertyTolist()))
+                          Essentials::ColorPropertyTolistParticles()))
          {
            ui_callback();
          }

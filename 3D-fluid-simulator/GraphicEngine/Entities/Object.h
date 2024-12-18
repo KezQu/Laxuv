@@ -117,7 +117,7 @@ Essentials::DetailControls Object<Prim>::Details()
        {
          if (ImGui::Combo("##Color_type",
                           (int32_t*)&shape_properties._color.first.GetValue(),
-                          Essentials::ColorPropertyTolist()))
+                          Essentials::ColorPropertyTolistObject()))
          {
            ui_callback();
          }
