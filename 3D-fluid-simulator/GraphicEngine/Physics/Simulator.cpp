@@ -165,22 +165,6 @@ void Simulator::CreateEntity(Essentials::EntityType entity_type,
   Essentials::EntityContainer::key_type entity_id{};
   switch (entity_shape)
   {
-    case Essentials::EntityShape::POINT:
-      entity_id = entity_type == Essentials::EntityType::OBJECT
-                      ? Append(Object{new Point{}})
-                      : Append(Particles{new Point{}, glm::ivec3{5}});
-      break;
-    case Essentials::EntityShape::LINE:
-      entity_id = entity_type == Essentials::EntityType::OBJECT
-                      ? Append(Object{new Line{}})
-                      : Append(Particles{new Line{}, glm::ivec3{5}});
-      break;
-    case Essentials::EntityShape::SQUARE:
-      entity_id =
-          entity_type == Essentials::EntityType::OBJECT
-              ? Append(Object{new Square{}})
-              : Append(Particles{new Square{Vertex{}, 1.f}, glm::ivec3{5}});
-      break;
     case Essentials::EntityShape::CUBE:
       entity_id =
           entity_type == Essentials::EntityType::OBJECT
@@ -192,6 +176,11 @@ void Simulator::CreateEntity(Essentials::EntityType entity_type,
           entity_type == Essentials::EntityType::OBJECT
               ? Append(Object{new Sphere{}})
               : Append(Particles{new Sphere{Vertex{}, 1.f}, glm::ivec3{5}});
+      break;
+    case Essentials::EntityShape::LINE:
+      entity_id = entity_type == Essentials::EntityType::OBJECT
+                      ? Append(Object{new Line{}})
+                      : Append(Particles{new Line{}, glm::ivec3{5}});
       break;
     default:
       break;

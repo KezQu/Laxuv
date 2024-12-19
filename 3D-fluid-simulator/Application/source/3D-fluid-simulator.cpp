@@ -2,7 +2,6 @@
 
 int main()
 {
-  std::srand(0);
   try
   {
     Window mainWindow({1600, 900}, "3D-fluid-simulator");

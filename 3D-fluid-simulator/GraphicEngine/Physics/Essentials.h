@@ -24,11 +24,9 @@ char const* EntityTypeTolist() noexcept;
 enum class EntityShape : uint32_t
 {
   NONE,
-  POINT,
-  LINE,
-  SQUARE,
   CUBE,
-  SPHERE
+  SPHERE,
+  LINE,
 };
 char const* EntityShapeTolist() noexcept;
 

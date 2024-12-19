@@ -10,12 +10,12 @@ char const* Essentials::EntityTypeTolist() noexcept
 
 char const* Essentials::EntityShapeTolist() noexcept
 {
-  return " \0POINT\0LINE\0SQUARE\0CUBE\0SPHERE\0";
+  return " \0CUBE\0SPHERE\0";
 }
 
 char const* Essentials::DistShapeTolist() noexcept
 {
-  return "UNDEFINED\0LINE\0CIRCLE\0SQUARE\0DISK\0CUBE\0SPHERE\0";
+  return "UNDEFINED\0LINE\0SQUARE\0CUBE\0";
 }
 
 char const* Essentials::WorldTypeTolist() noexcept
