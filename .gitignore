@@ -40,3 +40,4 @@ build/
 3D-fluid-simulator/Dependencies/glm/doc/
 #cache data
 3D-fluid-simulator/GraphicEngine/Physics/*.dat
+imgui.ini

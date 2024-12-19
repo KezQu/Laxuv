@@ -27,7 +27,6 @@ class Window
   void Render();
   void FramebufferResizeCheck();
   void ProcessKeyInputs();
-  void LoadFont(std::vector<std::string> const& font_paths);
   static void GLFWErrorCallback(int error, const char* description);
   static void OpenGLErrorCallback(GLenum source, GLenum type, GLuint id,
                                   GLenum severity, GLsizei length,

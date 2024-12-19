@@ -16,10 +16,12 @@ class console
   std::ostringstream log;
 
  public:
+  // Create conversion formula to allow easier logging mechanism
   operator std::ostringstream&()
   {
     return log;
   }
+  // Create a log message out of received message and store it in console cache
   template <is_streamable T>
   std::ostringstream& operator<<(T const& LogMessage)
   {
@@ -34,15 +36,16 @@ class console
 
 extern console LOG;
 
-#define _(x) x;
-// {                                                                         \
-  //   GLenum err = glGetError();                                              \
-  //   if (err != GL_NO_ERROR)                                                 \
-  //   {                                                                       \
-  //     LOG << "Error " << std::hex << err << " in file : " << __FILE__       \
-  //         << " line : " << __LINE__ << std::endl;                           \
-  //     std::cout << "Error " << std::hex << err << " in file : " << __FILE__ \
-  //               << " line : " << __LINE__ << std::endl;                     \
-  //     __debugbreak();                                                       \
-  //   }                                                                       \
-  // }
+// Macro for easier debugging OpenGL runtime errors
+#define _(x)                                                                \
+  x;                                                                        \
+  {                                                                         \
+    GLenum err = glGetError();                                              \
+    if (err != GL_NO_ERROR)                                                 \
+    {                                                                       \
+      LOG << "Error " << std::hex << err << " in file : " << __FILE__       \
+          << " line : " << __LINE__ << std::endl;                           \
+      std::cout << "Error " << std::hex << err << " in file : " << __FILE__ \
+                << " line : " << __LINE__ << std::endl;                     \
+    }                                                                       \
+  }

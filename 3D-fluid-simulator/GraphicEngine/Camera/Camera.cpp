@@ -2,33 +2,45 @@
 
 #include "Uniform.h"
 
+// Initialize camera with a way that the simulation scene is perceived
 Camera::Camera(WorldSpace area)
     : _worldSize{area},
       _projection{glm::infinitePerspective(
           glm::radians(60.f), _worldSize.width / _worldSize.height, 10.f)}
 {
 }
+
 Camera& Camera::GetCamera()
 {
+  // Create a singleton camera object since only one camera can be present in
+  // the scene
   static Camera cameraObj({2.f, 2.f, 2.f});
   return cameraObj;
 }
+
 Uniform<glm::mat4, float> Camera::View()
 {
+  // Create a view matrix based on the camera position and orientation, needed
+  // to calculate which objects are visible by the camera
   auto view = glm::lookAt(_position, _position + _forwardDir, _upDir);
   return Uniform<glm::mat4, float>{view, "view"};
 }
+
 Uniform<glm::mat4, float> const Camera::Projection() const
 {
+  // Create a matrix that translates object to the perspective way the camera
+  // perceives world
   return Uniform<glm::mat4, float>{_projection, "projection"};
 }
 Uniform<glm::vec2, float> const Camera::Viewport() const
 {
+  // Retrieve cached OpenGL context size
   return Uniform<glm::vec2, float>{
       glm::vec2{_worldSize.width, _worldSize.height}, "viewport"};
 }
 void Camera::ProjectionRescale(int width, int height)
 {
+  // Recalculate world projection depending on a updated viewport size
   _worldSize.width = width;
   _worldSize.height = height;
   _worldSize.depth = 3 * glm::max(_worldSize.width, _worldSize.height);
@@ -37,6 +49,7 @@ void Camera::ProjectionRescale(int width, int height)
 }
 void Camera::Move(ImGuiKey direction)
 {
+  // Process user input to move the camera around the scene
   auto tmpRightDir = glm::normalize(glm::cross(_forwardDir, _upDir));
   glm::vec3 moveDir{0.f};
   switch (direction)
@@ -66,6 +79,8 @@ void Camera::Move(ImGuiKey direction)
 }
 void Camera::Rotate(glm::vec3 rotation)
 {
+  // Process user input to change the camera orientation based on the vectors
+  // that specify where the camera looks at
   rotation *= 0.1;
   glm::qua<float> lookingSpot = {0.f, _forwardDir};
   auto angle = glm::atan(rotation);
@@ -87,6 +102,7 @@ void Camera::Rotate(glm::vec3 rotation)
 
 void Camera::AddMoveSpeed(float delta_speed)
 {
+  // Increase camera movement speed based on user preferences
   if (_moveSpeed <= 1)
   {
     _moveSpeed += delta_speed * 1e-1;
@@ -103,5 +119,6 @@ void Camera::AddMoveSpeed(float delta_speed)
 
 float Camera::GetMoveSpeed()
 {
+  // Allow retrieving camera speed to expose value to user interface
   return _moveSpeed;
 }

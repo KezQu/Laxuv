@@ -22,6 +22,8 @@
 Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     : _windowSize{windowSize}, _windowTitle{windowTitle}
 {
+  // Initialize GLFW and register callback for easier debugging problems related
+  // to window operations
   glfwSetErrorCallback(Window::GLFWErrorCallback);
   if (glfwInit() == GLFW_FALSE)
   {
@@ -30,11 +32,13 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
   }
   else
   {
+    // Specify OpenGL context version, profiling and enable debuging
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    // Create main window used for displaying controls and simulation context
     _window = glfwCreateWindow(_windowSize.x, _windowSize.y,
                                _windowTitle.c_str(), nullptr, nullptr);
     if (_window == nullptr)
@@ -42,9 +46,12 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
       throw std::runtime_error("Unable to create window");
     }
 
+    // Set OpenGL context to the current window and enable vertical
+    // synchronization for stable frame rate
     glfwMakeContextCurrent(_window);
     glfwSwapInterval(1);
 
+    // Initialize library responsible for providing OpenGL functions
     GLenum errorCode = glewInit();
     if (errorCode != GLEW_OK)
     {
@@ -53,6 +60,8 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     }
     LOG << "OpenGL version : " << glGetString(GL_VERSION) << std::endl;
 
+    // Enable basic OpenGL features and specify blending function needed for
+    // drawing commands
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_SCISSOR_TEST);
@@ -62,20 +71,27 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CW);
 
+    // Specify the part of a window to be used for rendering simulation frames
     auto viewportSize = CalculateViewport(_windowSize);
     glViewport(viewportSize.x, viewportSize.y, viewportSize.z, viewportSize.w);
     glScissor(viewportSize.x, viewportSize.y, viewportSize.z, viewportSize.w);
     Camera::GetCamera().ProjectionRescale(viewportSize.z, viewportSize.w);
 
+    // Register OpenGL error callback for debugging purposes and window resize
+    // callback to recalculate OpenGL context size
     _(glDebugMessageCallback(Window::OpenGLErrorCallback, nullptr));
     glfwSetFramebufferSizeCallback(_window,
                                    Window::GLFWFrameBufferResizeCallback);
+
+    // Initialize Imgui library responsible for user interface and specify
+    // configuration options
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
+    // Initialize Imgui with OpenGL and GLFW backend for rendering UI
     ImGui_ImplGlfw_InitForOpenGL(_window, true);
     ImGui_ImplOpenGL3_Init();
   }
@@ -83,6 +99,7 @@ Window::Window(ImVec2 const& windowSize, std::string const& windowTitle)
 
 Window::~Window()
 {
+  // Perform safe destruction of respective libraries to avoid memory leaks
   Simulator::CleanUp();
   ProgramDispatch::CleanUp();
   ImGui_ImplOpenGL3_Shutdown();
@@ -94,11 +111,15 @@ Window::~Window()
 
 void Window::EventLoop()
 {
+  // Initialize X,Y,Z axes and retrieve simulation object responsible for
+  // handling drawing and calculating simulation frames
   WorldAxes Axes{};
   auto& SimulationInstance = Simulator::GetInstance();
 
+  // Main event loop running until user requests to close the application window
   while (glfwWindowShouldClose(_window) == GLFW_FALSE)
   {
+    // Clear window and generate user interface
     Refresh();
     Toolbar(ImVec2{_windowSize.x, 20}, ImVec2{0, 0}).Generate();
     Explorer(ImVec2{_windowSize.x / 4.f, _windowSize.y - 20}, ImVec2{0, 20})
@@ -107,10 +128,14 @@ void Window::EventLoop()
            ImVec2{_windowSize.x / 4.f, _windowSize.y - 200})
         .Generate();
 
+    // Choose behaviour of the simulator depending on the requested simulation
+    // state
     switch (SimulationInstance->GetSimulationState())
     {
+      // Skip calculating simulation frames and fall back to drawing entities
       case Essentials::SimulationState::IDLE:
         break;
+      // State responsible for initializing or setting entities to initial state
       case Essentials::SimulationState::INIT:
         for (auto& [id, entity] : SimulationInstance->GetEntities())
         {
@@ -119,12 +144,16 @@ void Window::EventLoop()
         SimulationInstance->SetSimulationState(
             Essentials::SimulationState::IDLE);
         break;
+      // State present during simulation runtime, responsible for calculating
+      // physics present in the scene
       case Essentials::SimulationState::SIMULATION:
         for (auto& [id, entity] : SimulationInstance->GetEntities())
         {
           entity->Calculate();
         }
         break;
+      // State that generates single frame of simulation and falls back to idle
+      // state, good for step by step analysis
       case Essentials::SimulationState::GEN_FRAME:
         for (auto& [id, entity] : SimulationInstance->GetEntities())
         {
@@ -134,17 +163,22 @@ void Window::EventLoop()
             Essentials::SimulationState::IDLE);
         break;
     }
+    // Draw all entities present in the scene
     for (auto& [id, entity] : SimulationInstance->GetEntities())
     {
       entity->Draw();
     }
-
+    // Show X,Y,Z axes in the scene for better orientation
     Axes.Draw();
+    // Generate drawn frame and user input
     Render();
   }
 }
+
 void Window::Refresh()
 {
+  // Clear OpenGL context from the previous frame, refresh user interface and
+  // check whether window size has changed
   glClearColor(0x23 / 255., 0x65 / 255., 0xA0 / 255., 1.f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   FramebufferResizeCheck();
@@ -152,23 +186,30 @@ void Window::Refresh()
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
 }
+
 void Window::Render()
 {
+  // Render created user inteface using OpenGL backend
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+  // Display generated frame to the window and process user inputs
   glfwSwapBuffers(_window);
   glfwPollEvents();
   ProcessKeyInputs();
 }
+
 void Window::FramebufferResizeCheck()
 {
+  // Retrieve window size for proper UI generating
   int width, height;
   glfwGetFramebufferSize(_window, &width, &height);
   _windowSize = {static_cast<float>(width), static_cast<float>(height)};
 }
+
 void Window::ProcessKeyInputs()
 {
+  // Process user input responsible camera movement speed
   if (ImGui::IsKeyPressed(ImGuiKey_MouseWheelY) &&
       ImGui::IsMouseDown(ImGuiMouseButton_Right))
   {
@@ -179,6 +220,7 @@ void Window::ProcessKeyInputs()
     }
     Camera::GetCamera().AddMoveSpeed(delta_speed);
   }
+  // Process input related to camera position
   if (ImGui::IsKeyPressed(ImGuiKey_W))
   {
     Camera::GetCamera().Move(ImGuiKey_W);
@@ -203,6 +245,7 @@ void Window::ProcessKeyInputs()
   {
     Camera::GetCamera().Move(ImGuiKey_Q);
   }
+  // Process mouse rotation and orientation
   if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
   {
     if (ImGui::IsMouseHoveringRect({_windowSize.x / 4.f, 20},
@@ -231,42 +274,11 @@ void Window::ProcessKeyInputs()
     glfwSetInputMode(glfwGetCurrentContext(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   }
 }
+
 void Window::GLFWErrorCallback(int error, const char* description)
 {
+  // Log errors related to window context
   std::cerr << "Error " << error << ": " << description << std::endl;
-}
-void Window::LoadFont(std::vector<std::string> const& font_paths)
-{
-  for (auto& font_path : font_paths)
-  {
-    if (std::filesystem::exists(font_path))
-    {
-      ImGuiIO& io = ImGui::GetIO();
-      const ImWchar ranges[] = {
-          static_cast<uint16_t>(0x2300),
-          static_cast<uint16_t>(0x23ff),
-          // Miscellaneous Technical
-          static_cast<uint16_t>(0x1f300),
-          static_cast<uint16_t>(0x1f5ff),
-          // Miscellaneous Symbols and Pictograms
-          static_cast<uint16_t>(0x020),
-          static_cast<uint16_t>(0x007f),
-          // Latin
-          0U,
-      };
-      ImFontConfig config;
-      config.OversampleH = 1;
-      auto& gui_style = ImGui::GetStyle();
-      gui_style.FramePadding = {5, 0};
-
-      io.Fonts->AddFontFromFileTTF(font_path.c_str(), 24.f, &config, ranges);
-      io.Fonts->Build();
-    }
-    else
-    {
-      LOG << "Unable to load font: " + font_path << std::endl;
-    }
-  }
 }
 
 void Window::OpenGLErrorCallback(GLenum source, GLenum type, GLuint id,
@@ -274,6 +286,7 @@ void Window::OpenGLErrorCallback(GLenum source, GLenum type, GLuint id,
                                  const GLchar* message, const void* userParam)
 {
   std::string messageType;
+  // Generate log message based on the error callback message type
   switch (type)
   {
     case GL_DEBUG_TYPE_ERROR:
@@ -306,6 +319,7 @@ void Window::OpenGLErrorCallback(GLenum source, GLenum type, GLuint id,
 void Window::GLFWFrameBufferResizeCallback(GLFWwindow* window, int width,
                                            int height)
 {
+  // Update OpenGL rendering context size whether window is not minimized
   if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_FALSE)
   {
     auto viewportSize = CalculateViewport(
@@ -318,6 +332,7 @@ void Window::GLFWFrameBufferResizeCallback(GLFWwindow* window, int width,
 void Window::GLFWKeyCallback(GLFWwindow* window, int key, int scancode,
                              int action, int mods)
 {
+  // Process closing application request
   if (glfwGetKey(glfwGetCurrentContext(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
   {
     glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -325,6 +340,7 @@ void Window::GLFWKeyCallback(GLFWwindow* window, int key, int scancode,
 }
 ImVec4 Window::CalculateViewport(ImVec2 const& windowSize)
 {
+  // Calculate OpenGL rendering context size based on the window size
   return {windowSize.x / 4.f, 200, 3.f * windowSize.x / 4.f,
           windowSize.y - 220};
 }
