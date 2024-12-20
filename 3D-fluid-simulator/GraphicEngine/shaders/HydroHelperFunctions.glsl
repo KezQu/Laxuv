@@ -16,11 +16,9 @@ const uint NONE = 0;
 const uint W_CUBE = 1;
 const uint W_SPHERE = 2;
 
-const uint S_POINT = 1;
-const uint S_LINE = 2;
-const uint S_SQUARE = 3;
-const uint S_CUBE = 4;
-const uint S_SPHERE = 5;
+const uint S_CUBE = 1;
+const uint S_SPHERE = 2;
+const uint S_LINE = 3;
 
 uniform mat4 model;
 uniform vec3 scale;
