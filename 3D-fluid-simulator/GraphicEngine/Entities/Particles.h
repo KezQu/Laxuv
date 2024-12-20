@@ -25,6 +25,7 @@ class Particles : public Entity
   void Bind(uint32_t program_id) const override;
   Essentials::DetailControls Details() override;
   Essentials::ColorProperty GetColorType() const override;
+  Essentials::ShapeProperties GetShapeProperties() override;
 };
 
 template <GLenum Prim>
@@ -162,4 +163,10 @@ Essentials::ColorProperty Particles<Prim>::GetColorType() const
 {
   return static_cast<Essentials::ColorProperty>(
       this->_particleShape->GetShapeProperties()._color.first.GetValue());
+}
+
+template <GLenum Prim>
+Essentials::ShapeProperties Particles<Prim>::GetShapeProperties()
+{
+  return this->_particleShape->GetShapeProperties();
 }

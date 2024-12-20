@@ -31,6 +31,7 @@ class Object : public Entity
   void Calculate() override;
   void Draw() const override;
   Essentials::DetailControls Details() override;
+  Essentials::ShapeProperties GetShapeProperties() override;
 };
 
 template <GLenum Prim>
@@ -126,4 +127,10 @@ Essentials::DetailControls Object<Prim>::Details()
       {"Color", shape_properties._color.second.ExposeToUI(ui_callback)});
   details.push_back({"Radius", shape_properties._radius.ExposeToUI()});
   return details;
+}
+
+template <GLenum Prim>
+Essentials::ShapeProperties Object<Prim>::GetShapeProperties()
+{
+  return _shape->GetShapeProperties();
 }

@@ -62,10 +62,9 @@ void main()
         particle[index].position = vec4(0, 0, 0, shapeRadius);
         particle[index].MassDensityPressureDro_Dt = vec4(0);
         particle[index].color = vec4(0);
-        particle[index].position =
-            vec4(InitDefaultShape(index, MaxParticles) * particleSpacing * 2,
-                 1) *
-            shapeRadius;
+        particle[index].position = vec4(InitDefaultShape(index, MaxParticles) *
+                                            particleSpacing * 2 * shapeRadius,
+                                        1);
       }
       if (physicsType == DYNAMIC)
       {

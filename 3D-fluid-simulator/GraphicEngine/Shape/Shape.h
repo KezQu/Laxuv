@@ -24,7 +24,6 @@ class Shape
   Shape& operator=(Shape&& obj_move) = default;
   virtual ~Shape() = default;
   Essentials::ShapeProperties& GetShapeProperties();
-  Uniform<glm::mat4, float> Model() const;
   void Bind(uint32_t program_id) const;
   void BindUniforms(uint32_t program_id) const;
   GLenum GetDrawPrimitive() const;

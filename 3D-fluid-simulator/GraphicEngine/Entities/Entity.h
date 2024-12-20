@@ -66,7 +66,15 @@ class Entity
   {
     return Essentials::ColorProperty::NONE;
   }
+  virtual Essentials::PhysicsType GetPhysicsType() const
+  {
+    return static_cast<Essentials::PhysicsType>(_physics_type.GetValue());
+  }
   void SetTerrainId(uint64_t const terrain_id);
+  virtual Essentials::ShapeProperties GetShapeProperties()
+  {
+    return Essentials::ShapeProperties{};
+  }
 
  protected:
   Entity(Essentials::PhysicsType physics,

@@ -5,13 +5,6 @@
 #include "Uniform.h"
 #include "glm/vec3.hpp"
 
-enum Projection : uint32_t
-{
-  XY,
-  YZ,
-  XZ
-};
-
 struct GraphsHandler
 {
   float granularity{0.1f};
