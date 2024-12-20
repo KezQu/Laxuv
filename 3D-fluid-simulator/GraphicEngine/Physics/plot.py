@@ -5,6 +5,25 @@ import matplotlib.ticker as ticker
 import numpy as np
 import argparse
 import os
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
+
+
+def CreateMesh(i, pos_data, color_data, min_pos, max_pos, offset_size):
+    mesh = np.zeros(
+        [(max_pos[i] - min_pos[i] + 2 * offset_size + 1), (max_pos[(i + 1) % 3] - min_pos[(i + 1) % 3] + 2 * offset_size + 1), 4])
+    flatten_axis = (i+2) % 3
+    sort_indices = np.argsort(pos_data[i][:, flatten_axis])
+    for j in range(color_data.shape[1]):
+        for offset_x in range(0, 2 * offset_size):
+            for offset_y in range(0, 2 * offset_size):
+                x_pos = pos_data[i][sort_indices][j][(
+                    flatten_axis - 2) % 3] - min_pos[(flatten_axis - 2) % 3]
+                y_pos = pos_data[i][sort_indices][j][(
+                    flatten_axis - 1) % 3] - min_pos[(flatten_axis - 1) % 3]
+                mesh[x_pos + offset_x][y_pos +
+                                       offset_y] = color_data[i][sort_indices][j]
+    return mesh
 
 
 def ReadData(filename, granularity):
@@ -30,28 +49,17 @@ def ReadData(filename, granularity):
 
         offset_size = int(1 // granularity)
 
-        mesh = []
-        for i in range(pos_data.shape[0]):
-            mesh.append(np.zeros(
-                [(max_pos[i] - min_pos[i] + 2 * offset_size + 1), (max_pos[(i + 1) % 3] - min_pos[(i + 1) % 3] + 2 * offset_size + 1), 4]))
-
         color_data = np.array(
             [colormap.to_rgba(values_data[i].tolist(), alpha=1)
              for i in range(values_data.shape[0])])
 
-        for i in range(color_data.shape[0]):
-            flatten_axis = (i+2) % 3
-            sort_indices = np.argsort(pos_data[i][:, flatten_axis])
-            for j in range(color_data.shape[1]):
-                for offset_x in range(0, 2 * offset_size):
-                    for offset_y in range(0, 2 * offset_size):
-                        x_pos = pos_data[i][sort_indices][j][(
-                            flatten_axis - 2) % 3] - min_pos[(flatten_axis - 2) % 3]
-                        y_pos = pos_data[i][sort_indices][j][(
-                            flatten_axis - 1) % 3] - min_pos[(flatten_axis - 1) % 3]
-                        mesh[i][x_pos + offset_x][y_pos +
-                                                  offset_y] = color_data[i][sort_indices][j]
+        CreateMeshPartial = partial(
+            CreateMesh, pos_data=pos_data, color_data=color_data, min_pos=min_pos, max_pos=max_pos, offset_size=offset_size)
+        with ProcessPoolExecutor() as executor:
+            mesh = list(executor.map(CreateMeshPartial, range(3)))
 
+        for i in range(3):
+            mesh[i] = mesh[i].astype(np.float32)
         mesh[0] = np.transpose(mesh[0], (1, 0, 2))
         mesh[2] = np.flip(mesh[2], axis=0)
         return mesh, values_data, (np.min(values_data[1]), np.max(values_data[1])), (min_pos, max_pos)

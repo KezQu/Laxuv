@@ -95,9 +95,9 @@ void GraphsHandler::GenerateGraphs(GraphsHandler::HeatmapData_t const data,
   file.write(reinterpret_cast<char const* const>(data.data()), data.size());
   file.close();
 
-  std::system(("python3 " + script_path + " --filename " + data_filepath +
-               " --granularity " + std::to_string(granularity))
-                  .c_str());
+  // std::system(("python3 " + script_path + " --filename " + data_filepath +
+  //              " --granularity " + std::to_string(granularity))
+  //                 .c_str());
 }
 void GraphsHandler::InsertColorValue(
     GraphsHandler::HeatmapData_t& heatmap_data,
