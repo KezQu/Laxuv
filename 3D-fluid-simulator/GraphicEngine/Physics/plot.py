@@ -14,15 +14,17 @@ def CreateMesh(i, pos_data, color_data, min_pos, max_pos, offset_size):
         [(max_pos[i] - min_pos[i] + 2 * offset_size + 1), (max_pos[(i + 1) % 3] - min_pos[(i + 1) % 3] + 2 * offset_size + 1), 4])
     flatten_axis = (i+2) % 3
     sort_indices = np.argsort(pos_data[i][:, flatten_axis])
+    sorted_pos = pos_data[i][sort_indices]
+    sorted_color = color_data[i][sort_indices]
     for j in range(color_data.shape[1]):
         for offset_x in range(0, 2 * offset_size):
             for offset_y in range(0, 2 * offset_size):
-                x_pos = pos_data[i][sort_indices][j][(
+                x_pos = sorted_pos[j][(
                     flatten_axis - 2) % 3] - min_pos[(flatten_axis - 2) % 3]
-                y_pos = pos_data[i][sort_indices][j][(
+                y_pos = sorted_pos[j][(
                     flatten_axis - 1) % 3] - min_pos[(flatten_axis - 1) % 3]
                 mesh[x_pos + offset_x][y_pos +
-                                       offset_y] = color_data[i][sort_indices][j]
+                                       offset_y] = sorted_color[j]
     return mesh
 
 

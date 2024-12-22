@@ -10,6 +10,7 @@ uint64_t Entity::_internalID = 0U;
 
 Essentials::DetailControls Entity::Details()
 {
+  // Create a map of controls with corresponding name to later expose to UI
   Essentials::DetailControls details;
   details.push_back({"Name", [this]() { ImGui::Text(this->Name().c_str()); }});
   return details;
@@ -31,6 +32,8 @@ Entity::GetPhysicsBuffer()
 }
 void Entity::Bind(uint32_t program_id) const
 {
+  // Register entity specific uniforms to the given program to be able to
+  // retrieve their values on a GPU side
   _physics_type.MapUniform(program_id);
   _terrain_id.MapUniform(program_id);
   _mesh_size.MapUniform(program_id);
