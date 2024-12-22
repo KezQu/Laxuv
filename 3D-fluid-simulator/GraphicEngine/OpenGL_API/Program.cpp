@@ -34,7 +34,7 @@ Program::Program(Program&& objMove)
 Program& Program::operator=(Program&& objMove)
 {
   // Prevent trying to move object to ifself
-  if (this->_id != objMove._id)
+  if ((glIsProgram(this->_id) == GL_TRUE) && (this->_id != objMove._id))
   {
     this->~Program();
     // Move program id to preserve bound to it OpenGL program and exchange it
@@ -49,7 +49,7 @@ Program::~Program()
 {
   // Request OpenGL to delete program bound to the id if id points to the valid
   // program
-  if (_id != 0)
+  if (glIsProgram(_id) == GL_TRUE)
   {
     _(glDeleteProgram(_id));
   }

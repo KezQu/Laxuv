@@ -84,9 +84,29 @@ class VertexArray
    * @return VertexBufferData const&
    */
   VertexBufferData const& Data() const;
+  /**
+   * @brief Binds current vertex array object and contained buffers to the
+   * OpenGL context
+   */
   void Bind() const;
+  /**
+   * @brief Unbinds current vertex array object from the OpenGL context
+   */
   void Unbind() const;
+  /**
+   * @brief Returns the number of drawn vertices
+   */
   uint64_t Size() const;
+  /**
+   * @brief Returns internal index buffer type
+   *
+   * @return GLenum
+   */
   GLenum IndexBufferType() const;
+  /**
+   * @brief Getter for the unique vertex array object ID
+   *
+   * @return uint32_t const
+   */
   uint32_t const ID() const;
 };

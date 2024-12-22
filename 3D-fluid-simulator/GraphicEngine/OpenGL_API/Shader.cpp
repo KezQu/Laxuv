@@ -33,7 +33,7 @@ Shader::~Shader()
 {
   // Request OpenGL to delete shader bound to the id if id points to the valid
   // shader object
-  if (glIsShader(_id))
+  if (glIsShader(_id) == GL_TRUE)
   {
     _(glDeleteShader(_id));
   }

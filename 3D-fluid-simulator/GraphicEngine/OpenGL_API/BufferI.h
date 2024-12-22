@@ -143,7 +143,7 @@ template <GLenum target, typename T>
 inline BufferI<target, T>::~BufferI()
 {
   // Request OpenGL to delete buffer if it is bound to the _id
-  if (glIsBuffer(_id))
+  if (glIsBuffer(_id) == GL_TRUE)
   {
     _(glDeleteBuffers(1, &_id));
   }
@@ -155,7 +155,7 @@ template <GLenum target, typename T>
 inline void BufferI<target, T>::Bind() const
 {
   // Bind buffer to the current vertex array if _id represents an OpenGL buffer
-  if (glIsBuffer(_id))
+  if (glIsBuffer(_id) == GL_TRUE)
   {
     _(glBindBuffer(target, _id));
   }
