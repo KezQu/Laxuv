@@ -40,10 +40,16 @@ char const* Essentials::ColorPropertyTolistObject() noexcept
 
 Uniform<glm::mat4, float> Essentials::ShapeProperties::Model() const
 {
+  // Create init model matrix out of identity matrix
   auto const I = glm::identity<glm::mat4>();
+  // Retrieve raw values out of uniform wrapper
   auto const rotation = _rotation.GetValue();
   auto const location = _location.GetValue();
+  // Use glm mathematics library to create translation matrix out of provided
+  // offset vector
   auto T = glm::translate(I, location);
+  // Use glm mathematics library to create rotation matrix out of given rotation
+  // vector
   auto Rx = glm::rotate(I, glm::radians(rotation.x), glm::vec3{1, 0, 0});
   auto Rxy = glm::rotate(Rx, glm::radians(rotation.y), glm::vec3{0, 1, 0});
   auto Rxyz = glm::rotate(Rxy, glm::radians(rotation.z), glm::vec3{0, 0, 1});

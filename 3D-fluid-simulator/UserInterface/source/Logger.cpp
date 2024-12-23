@@ -9,6 +9,7 @@ Logger::Logger(std::ostringstream& log, ImVec2 const& size,
                     ImGuiWindowFlags_NoTitleBar |
                     ImGuiWindowFlags_AlwaysAutoResize)
 {
+  // Trim outdated logs to speed up generation
   if (_logHistory.size() > 10) _logHistory.pop_front();
   if (log.str() != "")
     _logHistory.push_back(std::exchange(log, std::ostringstream()).str());
@@ -16,21 +17,26 @@ Logger::Logger(std::ostringstream& log, ImVec2 const& size,
 
 void Logger::Generate()
 {
+  // Specify the position and size of the next imgui window to be displayed in
+  // the application window
   ImGui::SetNextWindowPos(_position);
   ImGui::SetNextWindowSize(_size);
 
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
+  // Create a main logger window
   if (ImGui::Begin("Console ##LogConsole", nullptr, _flags))
   {
+    // Display the log history retrieved from the stream
     if (ImGui::BeginChild("##content", ImVec2(0, 0), ImGuiChildFlags_None,
                           ImGuiWindowFlags_HorizontalScrollbar))
     {
       for (auto& message : _logHistory)
       {
-        ImGui::TextWrapped(message.c_str());
+        ImGui::TextWrapped("%s", message.c_str());
       }
     }
   }
+  // Allow for auto scrolling for better user experience
   if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
     ImGui::SetScrollHereY(1.0f);
   ImGui::EndChild();

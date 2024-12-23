@@ -9,18 +9,32 @@
 
 namespace Essentials
 {
-
 constexpr uint32_t MaxNeighbours = 512;
 constexpr float length_scale = 1;
 
+/**
+ * @brief Helper enum to provide information about entity types to the shaders
+ *
+ */
 enum class EntityType : uint32_t
 {
   NONE,
   OBJECT,
   PARTICLES
 };
+/**
+ * @brief Helper function to map entity type enum to list as string with null
+ * terminated elements
+ *
+ * @return char const*
+ */
 char const* EntityTypeTolist() noexcept;
 
+/**
+ * @brief Helper enum to provide information about available entity shapes to
+ * the shaders
+ *
+ */
 enum class EntityShape : uint32_t
 {
   NONE,
@@ -28,8 +42,19 @@ enum class EntityShape : uint32_t
   SPHERE,
   LINE,
 };
+/**
+ * @brief Helper function to map entity shape enums to list as string with null
+ * terminated elements
+ *
+ * @return char const*
+ */
 char const* EntityShapeTolist() noexcept;
 
+/**
+ * @brief Helper enum to provide information about available distribution shapes
+ * for particles to the shaders
+ *
+ */
 enum class DistributionShape : uint32_t
 {
   UNDEFINED,
@@ -37,8 +62,19 @@ enum class DistributionShape : uint32_t
   SQUARE,
   CUBE
 };
+/**
+ * @brief Helper function to map distribution shape enums to list as string with
+ * null terminated elements
+ *
+ * @return char const*
+ */
 char const* DistShapeTolist() noexcept;
 
+/**
+ * @brief Helper enum to provide information about available simulation states
+ * to the shaders
+ *
+ */
 enum class SimulationState : uint32_t
 {
   NONE,
@@ -49,22 +85,49 @@ enum class SimulationState : uint32_t
   GRAPHS
 };
 
+/**
+ * @brief Helper enum to provide information about available world bounds shape
+ * to the shaders
+ *
+ */
 enum class WorldType : uint32_t
 {
   NONE,
   CUBE_T,
-  SHPERE_T
+  SPHERE_T
 };
+/**
+ * @brief Helper function to map world bounds shape enums to list as string with
+ * null terminated elements
+ *
+ * @return char const*
+ */
 char const* WorldTypeTolist() noexcept;
 
+/**
+ * @brief Helper enum to provide information about available physics types
+ * to the shaders
+ *
+ */
 enum class PhysicsType : uint32_t
 {
   NONE,
   STATIC,
   DYNAMIC
 };
+/**
+ * @brief Helper function to map physics type enums to list as string with null
+ * terminated elements
+ *
+ * @return char const*
+ */
 char const* PhysTypesTolist() noexcept;
 
+/**
+ * @brief Helper enum to provide information about available colors based on the
+ * specified particle property to the shaders
+ *
+ */
 enum class ColorProperty : uint32_t
 {
   NONE,
@@ -74,9 +137,25 @@ enum class ColorProperty : uint32_t
   DIVERGENCE_ERROR,
   PRESSURE,
 };
+/**
+ * @brief Helper function to map available color enums for particles  to list
+ * as string with null terminated elements
+ *
+ * @return char const*
+ */
 char const* ColorPropertyTolistParticles() noexcept;
+/**
+ * @brief Helper function to map available color enums for objects to list as
+ * string with null terminated elements
+ *
+ * @return char const*
+ */
 char const* ColorPropertyTolistObject() noexcept;
 
+/**
+ * @brief Helper struct encapsulating properties for terrain entities
+ *
+ */
 struct TerrainBufferProperties
 {
   glm::vec4 center{0};
@@ -84,6 +163,10 @@ struct TerrainBufferProperties
   glm::mat4 model{0};
 };
 
+/**
+ * @brief Helper struct encapsulating properties of a single particle
+ *
+ */
 struct ParticleBufferProperties
 {
   glm::vec4 velocityDFSPHfactor{0};
@@ -95,6 +178,10 @@ struct ParticleBufferProperties
 
 auto const colorDefaultProperties = ValueProperties{0.f, 1.f, 1.f, "%.2f"};
 
+/**
+ * @brief Helper struct encapsulating properties of a global simulation light
+ *
+ */
 struct Light
 {
   Uniform<glm::vec3, float> ambient_color{glm::vec3{.2f}, "ambientColor",
@@ -109,6 +196,11 @@ struct Light
   } diffuse;
 };
 
+/**
+ * @brief Helper struct encapsulating global properties shared across all
+ * particles
+ *
+ */
 struct ParticleProperties
 {
   Uniform<glm::vec3, float> init_velocity{
@@ -131,6 +223,10 @@ struct ParticleProperties
       ValueProperties{0.f, 1000.f, 1e-3f, "%.1f mPa*s"}};
 };
 
+/**
+ * @brief Helper struct encapsulating properties of a shape
+ *
+ */
 struct ShapeProperties
 {
   Uniform<glm::vec3, float> _location{
@@ -153,6 +249,11 @@ struct ShapeProperties
   bool _enableTesselation{false};
   bool _enableLight{true};
 
+  /**
+   * @brief Method providing model matrix for a given shape
+   *
+   * @return Uniform<glm::mat4, float>
+   */
   Uniform<glm::mat4, float> Model() const;
 };
 

@@ -1,4 +1,6 @@
-﻿set(APP_INC_DIR ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/Application/include)
+﻿cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+set (CMAKE_CXX_STANDARD 20)
+set(APP_INC_DIR ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/Application/include)
 set(APP_SRC_DIR ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/Application/source)
 
 file(GLOB APP_SRC_FILES ${APP_SRC_DIR}/*.cpp)

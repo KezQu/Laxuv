@@ -12,7 +12,8 @@ Essentials::DetailControls Entity::Details()
 {
   // Create a map of controls with corresponding name to later expose to UI
   Essentials::DetailControls details;
-  details.push_back({"Name", [this]() { ImGui::Text(this->Name().c_str()); }});
+  details.push_back(
+      {"Name", [this]() { ImGui::Text("%s", this->Name().c_str()); }});
   return details;
 }
 

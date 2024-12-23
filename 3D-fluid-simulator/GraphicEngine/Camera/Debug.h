@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <iomanip>
 #include <iostream>
 
 #include "GL/glew.h"
@@ -41,12 +42,34 @@ class console
   template <is_streamable T>
   std::ostringstream& operator<<(T const& LogMessage)
   {
-    auto timestamp = std::chrono::system_clock().now();
-    log << "["
-        << std::format("{:%T}",
-                       std::chrono::floor<std::chrono::seconds>(timestamp))
-        << "] " << LogMessage;
+    auto const timestamp = RetrieveTimestamp();
+    log << timestamp << LogMessage;
     return log;
+  }
+
+  std::ostringstream& operator<<(char const* const LogMessage)
+  {
+    auto const timestamp = RetrieveTimestamp();
+    log << timestamp << LogMessage;
+    return log;
+  }
+  /**
+   * @brief Helper method to create a timestamp for a log
+   *
+   * @return std::string
+   */
+  std::string RetrieveTimestamp()
+  {
+    auto const timestamp = std::chrono::system_clock().now().time_since_epoch();
+    auto const hours =
+        timestamp - std::chrono::duration_cast<std::chrono::days>(timestamp);
+    auto const minutes =
+        hours - std::chrono::duration_cast<std::chrono::hours>(timestamp);
+    auto const seconds =
+        minutes - std::chrono::duration_cast<std::chrono::minutes>(timestamp);
+    return std::string{"["} + std::to_string(hours.count()) + ":" +
+           std::to_string(minutes.count()) + ":" +
+           std::to_string(seconds.count()) + "] ";
   }
 };
 

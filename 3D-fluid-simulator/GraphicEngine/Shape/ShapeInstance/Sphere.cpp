@@ -5,6 +5,7 @@
 #include "VertexArray.h"
 
 Sphere::Sphere(Vertex center, float radius, bool enableTess)
+    // Recreating sphere out of Icosahedron
     // clang-format off
   :Shape(VertexArray({
       { (center.coordinate) + (1.f / radiusScaler) * glm::vec3{ 0, glm::golden_ratio<float>(), -1 } },
@@ -20,6 +21,8 @@ Sphere::Sphere(Vertex center, float radius, bool enableTess)
       { (center.coordinate) + (1.f / radiusScaler) * glm::vec3{ 0, -glm::golden_ratio<float>(), -1 }},
       { (center.coordinate) + (1.f / radiusScaler) * glm::vec3{ 0, -glm::golden_ratio<float>(), 1 } },
       },
+    // Raw data representing order of the vertices to be processed in rendering pipeline further 
+    // stored inside IndexBuffer
       { 0,1,2,
         0,2,4,
         0,4,5,

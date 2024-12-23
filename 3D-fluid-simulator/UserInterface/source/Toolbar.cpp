@@ -19,17 +19,22 @@ Toolbar::Toolbar(ImVec2 const& size, ImVec2 const& position)
 
 void Toolbar::Generate()
 {
+  // Specify the position and size of the next imgui window to be displayed in
+  // the application window
   ImGui::SetNextWindowPos(_position);
   ImGui::SetNextWindowSize(_size);
 
   auto& simulatorInstance = Simulator::GetInstance();
 
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
+  // Define the main toolbar window
   if (ImGui::Begin("##Toolbar", nullptr, _flags))
   {
+    // Define different controls based on the simulation state
     if (simulatorInstance->GetSimulationState() !=
         Essentials::SimulationState::GRAPHS)
     {
+      // Define Buttons allowing to manipulate simulation state
       if (ImGui::Button(simulatorInstance->GetSimulationState() !=
                                 Essentials::SimulationState::SIMULATION
                             ? "Start"
@@ -62,9 +67,12 @@ void Toolbar::Generate()
       }
       ImGui::SameLine();
       ImGui::PushItemWidth(100.f);
+      // Define a control for static timestep to be changed by the user
       ImGui::DragFloat("##timestep_value", &static_timestep, 0.1f, 0.1f, 1000.f,
                        "%.1f ms", ImGuiSliderFlags_AlwaysClamp);
       ImGui::SameLine();
+      // Allow user to change between static and dynamic timestep further used
+      // in the simulation
       if (ImGui::Button(simulatorInstance->IsStaticDtUsed()
                             ? "Use program latency"
                             : "Use static timestep"))
@@ -75,6 +83,7 @@ void Toolbar::Generate()
       simulatorInstance->UpdateDeltaTime(static_timestep);
 
       ImGui::SameLine();
+      // Allow user to change into the graphs mode
       if (ImGui::Button("Graphs mode"))
       {
         simulatorInstance->SetSimulationState(
@@ -83,11 +92,13 @@ void Toolbar::Generate()
     }
     else
     {
+      // Define controls for the graphs mode
       if (ImGui::Button("Generate graphs"))
       {
         simulatorInstance->CreateGraphs();
       }
       ImGui::SameLine();
+      // Allow user to get back to the paused simulation
       if (ImGui::Button("Simulation mode"))
       {
         simulatorInstance->SetSimulationState(
@@ -96,12 +107,14 @@ void Toolbar::Generate()
     }
 
     ImGui::SameLine(_size.x - 200);
+    // Display current camera movement speed
     ImGui::Text("mouse speed: %.1f", Camera::GetCamera().GetMoveSpeed());
+    // Process framerate form the imgui library and display it to the user
     std::string framerate =
         std::to_string(static_cast<int>(ImGui::GetIO().Framerate)) + " FPS";
     auto FPS_text_size = ImGui::CalcTextSize(framerate.c_str()).x;
     ImGui::SameLine(_size.x - FPS_text_size);
-    ImGui::Text(framerate.c_str());
+    ImGui::Text("%s", framerate.c_str());
   }
   ImGui::End();
   ImGui::PopStyleVar();

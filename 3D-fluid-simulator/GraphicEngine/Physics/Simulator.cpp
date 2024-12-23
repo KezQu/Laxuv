@@ -27,6 +27,7 @@ Simulator::Simulator() : _terrain{"terrainBuffer"} {}
 
 std::unique_ptr<Simulator>& Simulator::GetInstance()
 {
+  // Create an instance at the first call
   static std::unique_ptr<Simulator> instance{nullptr};
   if (instance == nullptr)
   {
@@ -37,6 +38,8 @@ std::unique_ptr<Simulator>& Simulator::GetInstance()
 
 void Simulator::CleanUp()
 {
+  // Explicit clear of the simulator instance to prevent destroying instance
+  // when OpenGL context is not available
   GetInstance().reset(nullptr);
 }
 
@@ -47,12 +50,14 @@ Essentials::EntityContainer& Simulator::GetEntities()
 
 Essentials::SimulationState Simulator::GetSimulationState()
 {
+  // Retrieve raw simulation state from the uniform wrapper
   return static_cast<Essentials::SimulationState>(
       _global_simulation_state.GetValue());
 }
 
 void Simulator::UpdateDeltaTime(float dt)
 {
+  // Set value of the time step uniform based on the used method
   if (_static_timestep)
   {
     _global_delta_time = dt;
@@ -65,15 +70,13 @@ void Simulator::UpdateDeltaTime(float dt)
 
 void Simulator::CreateGraphs()
 {
+  // Retrieve properties of the entities registered in the simulator
   auto const simulation_data = _graphs.GetGraphData(_entitiesContainer);
-  std::thread{[simulation_data, this]()
-              {
-                auto const heatmap_data = _graphs.SerializeData(
-                    simulation_data, _space_boundries.GetValue() * 2);
-                _graphs.GenerateGraphs(heatmap_data,
-                                       _space_boundries.GetValue() * 2);
-              }}
-      .detach();
+  // Launch graph creation in a separate thread to unblock main event loop
+  std::thread{[simulation_data, this]() {
+    auto const heatmap_data = _graphs.SerializeData(simulation_data);
+    _graphs.GenerateGraphs(heatmap_data);
+  }}.detach();
 }
 
 Uniform<float>& Simulator::GetDeltaTime()
@@ -88,16 +91,17 @@ bool Simulator::IsStaticDtUsed()
 
 void Simulator::ToggleTimesetType()
 {
+  // Changed internal flag indicating method of retrieving time step
   _static_timestep = !_static_timestep;
 }
 
 Essentials::DetailControls Simulator::GetDetails()
 {
+  // Expose properties specific to the world space and simulator
   Essentials::DetailControls details;
-  details.push_back({"Space bounds", this->_space_boundries.ExposeToUI()});
+  details.push_back({"Space bounds", this->_space_boundaries.ExposeToUI()});
   details.push_back({"Bounds viscosity", this->_bounds_viscosity.ExposeToUI()});
-  details.push_back({"World shape", [this]()
-                     {
+  details.push_back({"World shape", [this]() {
                        ImGui::Combo(
                            "##World_shape",
                            (int32_t*)&this->_global_world_type.GetValue(),
@@ -114,13 +118,14 @@ Essentials::DetailControls Simulator::GetDetails()
 
 void Simulator::BindUniforms(uint32_t program_id)
 {
+  // Map global uniform specific to the whole simulation
   _global_delta_time.MapUniform(program_id);
   _global_simulation_state.MapUniform(program_id);
   _global_world_type.MapUniform(program_id);
 
   _obstacles_number.MapUniform(program_id);
 
-  _space_boundries.MapUniform(program_id);
+  _space_boundaries.MapUniform(program_id);
   _bounds_viscosity.MapUniform(program_id);
 
   _simulaton_light.ambient_color.MapUniform(program_id);
@@ -130,6 +135,8 @@ void Simulator::BindUniforms(uint32_t program_id)
 
 void Simulator::BindTerrain(uint32_t program_id)
 {
+  // Bind terrain buffer to a given program to access terrain data during
+  // calculating simulation frame
   _terrain.Bind(program_id);
 }
 
@@ -141,6 +148,7 @@ void Simulator::SetSimulationState(Essentials::SimulationState new_global_state)
 uint32_t Simulator::AddObstacle(
     Essentials::TerrainBufferProperties const& terrain_properties)
 {
+  // Add new terrain properties to the terrain buffer
   _terrain.AddToBufferMemory(terrain_properties);
   _obstacles_number = _terrain.Size();
 
@@ -149,6 +157,7 @@ uint32_t Simulator::AddObstacle(
 
 void Simulator::RemoveObstacle(Essentials::EntityContainer::key_type id)
 {
+  // Remove terrain for buffer if provided id points to valid id
   if (id != std::numeric_limits<uint64_t>::max())
   {
     _terrain.RemoveFromBufferMemory(id);
@@ -159,10 +168,13 @@ void Simulator::RemoveObstacle(Essentials::EntityContainer::key_type id)
 void Simulator::CreateEntity(Essentials::EntityType entity_type,
                              Essentials::EntityShape entity_shape)
 {
+  // Save current simulation state to be able to get back to it
   auto old_sim_state_saved = _global_simulation_state;
+  // Set simulation to init state to enable adding new entities
   Simulator::GetInstance()->SetSimulationState(
       Essentials::SimulationState::INIT);
   Essentials::EntityContainer::key_type entity_id{};
+  // Create specific entity based on a provided type and shape
   switch (entity_shape)
   {
     case Essentials::EntityShape::CUBE:
@@ -185,6 +197,7 @@ void Simulator::CreateEntity(Essentials::EntityType entity_type,
     default:
       break;
   }
+  // Add objects to the terrain buffer
   if (entity_type == Essentials::EntityType::OBJECT)
   {
     Essentials::TerrainBufferProperties initial_properties{};
@@ -197,6 +210,7 @@ void Simulator::CreateEntity(Essentials::EntityType entity_type,
 
 void Simulator::Delete(Essentials::EntityContainer::key_type id)
 {
+  // Delete entity present at the specified id
   RemoveObstacle(_entitiesContainer[id]->GetTerrainId());
   if (id != 0)
   {

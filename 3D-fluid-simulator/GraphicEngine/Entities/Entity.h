@@ -19,7 +19,7 @@ using DetailControls =
     std::vector<std::pair<std::string, std::function<void()>>>;
 using EntityContainer = std::unordered_map<uint64_t, std::unique_ptr<Entity>>;
 
-};  // namespace Essentials
+}  // namespace Essentials
 
 /**
  * @brief Base class representing an abstract called entity

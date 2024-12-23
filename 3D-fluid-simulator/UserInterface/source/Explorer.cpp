@@ -22,14 +22,17 @@ Explorer::Explorer(ImVec2 const& size, ImVec2 const& position)
 
 void Explorer::Generate()
 {
+  // Schedule position and size of the next imgui window
   ImGui::SetNextWindowPos(_position);
   ImGui::SetNextWindowSize(_size);
 
+  // Specify global style of generating the controls
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
   ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, {0, 0});
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {0, 0});
   ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, {5, 0});
 
+  // Create imgui main Explorer window
   if (ImGui::Begin("##Explorer", nullptr, _flags))
   {
     CreateEntitySelector();
@@ -44,6 +47,8 @@ void Explorer::Generate()
 
 void Explorer::CreateEntitySelector()
 {
+  // Create child window with the specified size, responsible for containing
+  // controls which allow to create new entities
   if (ImGui::BeginChild("##SelectEntity", ImVec2(_size.x, 20)))
   {
     ImGui::SameLine();
@@ -55,6 +60,8 @@ void Explorer::CreateEntitySelector()
     ImGui::Combo("##EntityShape", (int32_t*)&entity_select.second,
                  Essentials::EntityShapeTolist());
     ImGui::SameLine();
+    // Create new Entity with a selected shape after it was submitted by
+    // clicking the button
     if (ImGui::Button("Add Entity##AddEntity", {_size.x / 3.f, 0.f}) &&
         entity_select.first != Essentials::EntityType::NONE &&
         entity_select.second != Essentials::EntityShape::NONE)
@@ -68,18 +75,25 @@ void Explorer::CreateEntitySelector()
 
 void Explorer::CreateEntityExplorer()
 {
+  // Create a child window containing scrollable list of present entities inside
+  // a Simulator
   if (ImGui::BeginChild("##ObjectExplorer", ImVec2(_size.x, _size.y / 4 - 10)))
   {
+    // Create a table of entities based on the Entities stored within Simulator
+    // instance
     if (ImGui::BeginTable("##NamesTable", 2, ImGuiTableFlags_Borders,
                           ImVec2(_size.x, _size.y / 4 - 10)))
     {
-      ImGui::TableSetupColumn("##Visibilty", ImGuiTableColumnFlags_WidthFixed,
+      // Create table definition with sizing flags
+      ImGui::TableSetupColumn("##Visibility", ImGuiTableColumnFlags_WidthFixed,
                               20.);
       ImGui::TableSetupColumn("##Name", ImGuiTableColumnFlags_WidthStretch);
+      // Create rows based on the current entities
       for (auto& [k, v] : Simulator::GetInstance()->GetEntities())
       {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
+        // Create a checkbox allowing to hide entity in the simulation context
         ImGui::Checkbox(("##visible" + std::to_string(v->ID())).c_str(),
                         &v->Visible());
         ImGui::TableSetColumnIndex(1);
@@ -98,8 +112,11 @@ void Explorer::CreateEntityExplorer()
 
 void Explorer::CreateWorldControls()
 {
+  // Define a child window containing exposed world and simulator properties
   if (ImGui::BeginChild("##WorldDetails", ImVec2(_size.x, _size.y / 4 - 10)))
   {
+    // Define a table containing exposed global properties with a short
+    // description
     if (ImGui::BeginTable("##WorldDetailsTable", 2, ImGuiTableFlags_Borders,
                           ImVec2(_size.x, _size.y / 4 - 10)))
     {
@@ -111,7 +128,7 @@ void Explorer::CreateWorldControls()
       {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        ImGui::Text(info.first.c_str());
+        ImGui::Text("%s", info.first.c_str());
 
         ImGui::TableSetColumnIndex(1);
         ImGui::SetNextItemWidth(-1);
@@ -127,8 +144,12 @@ void Explorer::CreateWorldControls()
 
 void Explorer::CreateEntityControls()
 {
+  // Create a child window containing dynamic controls based on the chosen
+  // entity
   if (ImGui::BeginChild("##EntityControls", ImVec2(_size.x, _size.y / 2 - 10)))
   {
+    // Create a table with properties based on the entity type for a selected
+    // entity from the explorer
     if (ImGui::BeginTable("##ControlsTable", 2, ImGuiTableFlags_Borders,
                           ImVec2(_size.x, _size.y / 2 - 10)) &&
         selected != 0)
@@ -144,7 +165,7 @@ void Explorer::CreateEntityControls()
       {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        ImGui::Text(info.first.c_str());
+        ImGui::Text("%s", info.first.c_str());
 
         ImGui::TableSetColumnIndex(1);
         ImGui::SetNextItemWidth(-1);
@@ -154,12 +175,15 @@ void Explorer::CreateEntityControls()
       }
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
+      // Define a "delete" button allowing to delete entity from the simulation
       if (ImGui::Button("Delete", ImVec2(-1, 50)))
       {
         simulatorInstance->Delete(selected);
         selected = 0;
       }
       ImGui::TableSetColumnIndex(1);
+      // Define "Recompile" button to restore initial state of the entity when
+      // artifacts occur in the simulation
       if (ImGui::Button("Recompile", ImVec2(-1, 50)))
       {
         auto old_sim_state_saved =
