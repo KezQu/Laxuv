@@ -104,7 +104,7 @@ def plot(data, values, min_max):
         fig.colorbar(imgXZ, ax=ax[0, 1])
 
         # Draw a distribution of a requested values
-        imgHist = ax[1, 1].hist(values[0], bins=20)
+        imgHist = ax[1, 1].hist(values, bins=20)
         ax[1, 1].set_title("Values distribution")
 
         plt.show()

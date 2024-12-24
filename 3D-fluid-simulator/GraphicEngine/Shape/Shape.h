@@ -12,6 +12,7 @@
  * which define the model displayed in the simulation context
  *
  */
+template <GLenum Prim>
 class Shape
 {
  protected:

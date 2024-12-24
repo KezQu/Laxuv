@@ -7,8 +7,7 @@
 #include "GL/glew.h"
 
 template <typename T>
-concept is_streamable = requires(std::ostringstream stream, T value)
-{
+concept is_streamable = requires(std::ostringstream stream, T value) {
   stream << value << std::endl;
 };
 
@@ -28,7 +27,7 @@ class console
    *
    * @return std::ostringstream&
    */
-  operator std::ostringstream &()
+  operator std::ostringstream&()
   {
     return log;
   }
@@ -62,11 +61,14 @@ class console
   {
     auto const timestamp = std::chrono::system_clock().now().time_since_epoch();
     auto const hours =
-        timestamp - std::chrono::duration_cast<std::chrono::days>(timestamp);
+        std::chrono::duration_cast<std::chrono::hours>(timestamp) -
+        std::chrono::duration_cast<std::chrono::days>(timestamp);
     auto const minutes =
-        hours - std::chrono::duration_cast<std::chrono::hours>(timestamp);
+        std::chrono::duration_cast<std::chrono::minutes>(timestamp) -
+        std::chrono::duration_cast<std::chrono::hours>(timestamp);
     auto const seconds =
-        minutes - std::chrono::duration_cast<std::chrono::minutes>(timestamp);
+        std::chrono::duration_cast<std::chrono::seconds>(timestamp) -
+        std::chrono::duration_cast<std::chrono::minutes>(timestamp);
     return std::string{"["} + std::to_string(hours.count()) + ":" +
            std::to_string(minutes.count()) + ":" +
            std::to_string(seconds.count()) + "] ";
