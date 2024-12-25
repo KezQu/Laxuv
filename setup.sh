@@ -52,7 +52,7 @@ if [[ -z $(cat cmake_log.txt | grep 'Generating done' && cat cmake_log.txt | gre
 fi
 
 avail_cpus=$(nproc --all)
-echo Using $avail_cpus CPUs
+echo Using $avail_cpus cores
 cd build
 make -j$avail_cpus > make_log.txt
 
