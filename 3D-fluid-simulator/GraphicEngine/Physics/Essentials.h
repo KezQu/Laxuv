@@ -9,7 +9,7 @@
 
 namespace Essentials
 {
-constexpr uint32_t MaxNeighbours = 512;
+constexpr uint32_t MaxNeighbors = 512;
 constexpr float length_scale = 1;
 
 /**
@@ -173,7 +173,7 @@ struct ParticleBufferProperties
   glm::vec4 position{0};
   glm::vec4 MassDensityPressureDro_Dt{0};
   glm::vec4 color{0};
-  uint32_t neighbours[MaxNeighbours];
+  uint32_t neighbors[MaxNeighbors];
 };
 
 auto const colorDefaultProperties = ValueProperties{0.f, 1.f, 1.f, "%.2f"};

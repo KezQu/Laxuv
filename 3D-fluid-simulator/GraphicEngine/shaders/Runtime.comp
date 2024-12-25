@@ -1,8 +1,9 @@
 #version 460 core
 
+// Specify the size of the work group used for calculating physics
 layout(local_size_x = 10, local_size_y = 10, local_size_z = 10) in;
 
-const uint MaxNeighbours = 512;
+const uint MaxNeighbors = 512;
 const uint MaxGranularity = 16;
 
 const uint NONE = 0;
@@ -27,15 +28,17 @@ uniform float shapeRadius;
 uniform float particleSpacing;
 uniform float init_mass;
 
+// Struct matching the properties of a single particle
 struct ParticleProperties
 {
   vec4 velocityDFSPHfactor;
   vec4 position;
   vec4 MassDensityPressureDro_Dt;
   vec4 color;
-  uint neighbours[MaxNeighbours];
+  uint neighbors[MaxNeighbors];
 };
 
+// Struct defining the properties of the terrain
 struct TerrainProperties
 {
   vec4 center;
@@ -43,6 +46,7 @@ struct TerrainProperties
   mat4 model;
 };
 
+// Define the buffers needed during simulation runtime
 layout(std430, binding = 0) buffer dataBuffer
 {
   restrict ParticleProperties particle[];
@@ -58,11 +62,12 @@ layout(std430, binding = 2) buffer terrainBuffer
   restrict TerrainProperties terrain[];
 };
 
+// Declare functions needed for the runtime stage
 vec4 ChooseColor(uint index_x);
 float CalculateDensity(uint index_x);
 float CalculateDFSPHFactor(uint index_x);
 void UpdateTerrainOrientation(uint index_x);
-void FindNeighbours(uint index_x, uint MaxParticles);
+void FindNeighbors(uint index_x, uint MaxParticles);
 vec3 CalculateViscosity(uint index_x);
 float GetInternalDensity(uint index_x);
 float CalculateDerivDensity(uint index_x);
@@ -70,12 +75,15 @@ void CheckWorldBounds(uint index_x);
 void CheckCollisions(uint index_x);
 vec3 CalculateGradPressure(uint index_x);
 
+// Helper function to check if the index of the particle to be retrieved is
+// valid
 bool CheckI(int i)
 {
   return i < MaxGranularity &&
          granularity[gl_LocalInvocationIndex][i] < 0xffffffff;
 }
 
+// Helper function to retrieve the index of the particle to be processed
 uint GetIndex(int i)
 {
   return granularity[gl_LocalInvocationIndex][i];
@@ -83,110 +91,162 @@ uint GetIndex(int i)
 
 void main()
 {
+  // Apply DFSPH algorithm for the dynamic entities
   if (physicsType == DYNAMIC)
   {
+    // Transform particle to the simulation coordinate system
     for (int i = 0; CheckI(i); i++)
     {
       particle[GetIndex(i)].position.xyz =
           (model * vec4(particle[GetIndex(i)].position.xyz * scale, 1.0)).xyz;
     }
+    // Await for all invocations to finish transforming particles
     barrier();
     //----------------------------------------------------------------------------------
+    // Calculate external force accelerations for the particles
     for (int i = 0; CheckI(i); i++)
     {
+      // Calculate the acceleration caused by the viscosity
       vec3 viscosity_acceleration = CalculateViscosity(GetIndex(i));
+      // Apply accelerations to the particles
       particle[GetIndex(i)].velocityDFSPHfactor.xyz +=
           dt * (viscosity_acceleration - vec3(0, g, 0) * 1e+3);
     }
+    // Await for all invocations to finish applying external forces
     barrier();
     //----------------------------------------------------------------------------------
     float density0;
+    // Solve the density error using the dynamically set number of iterations
+    // based on the particle masses
     for (int iter = 0; iter < int(1e-5 / init_mass); iter++)
     {
+      // Apply the algorithm for every particle to be processed in this
+      // invocation
       for (int i = 0; CheckI(i); i++)
       {
+        // Retrieve the kappa factor and particle internal density
         const float factor_x = particle[GetIndex(i)].velocityDFSPHfactor.w;
         density0 = GetInternalDensity(GetIndex(i));
 
+        // Calculate the new possible density of a particle
         float ro_hash = particle[GetIndex(i)].MassDensityPressureDro_Dt.y +
                         dt * CalculateDerivDensity(GetIndex(i));
+        // Calculate the pressure based on the calculated density
         particle[GetIndex(i)].MassDensityPressureDro_Dt.z =
             (ro_hash - density0) * factor_x / pow(dt, 2);
       }
+      // Await for all invocations to finish calculating pressure
       barrier();
       //----------------------------------------------------------------------------------
+      // Apply the algorithm for every particle to be processed in this
+      // invocation
       for (int i = 0; CheckI(i); i++)
       {
+        // Correct the particle velocity based on the calculated pressure
+        // gradient
         particle[GetIndex(i)].velocityDFSPHfactor.xyz -=
             dt * CalculateGradPressure(GetIndex(i));
       }
+      // Await for all invocations to finish correcting the velocity
       barrier();
     }
     //----------------------------------------------------------------------------------
+    // Update the position of every particle to be processed in current
+    // invocation
     for (int i = 0; CheckI(i); i++)
     {
+      // Update the position based on the calcualted velocity
       particle[GetIndex(i)].position.xyz +=
           dt * particle[GetIndex(i)].velocityDFSPHfactor.xyz;
     }
+    // Await for all invocations to finish transforming particles
     barrier();
     //----------------------------------------------------------------------------------
+    // Update the neighbors for the particles processed in the invocation
     for (int i = 0; CheckI(i); i++)
     {
-      FindNeighbours(GetIndex(i), MaxParticles);
+      FindNeighbors(GetIndex(i), MaxParticles);
     }
+    // Await for all invocations to finish updating particle neighbors
     barrier();
     //----------------------------------------------------------------------------------
+    // Update the kappa factor and the density of a given particle present in
+    // the invocation
     for (int i = 0; CheckI(i); i++)
     {
+      // Update density and kappa factor using helper function
       particle[GetIndex(i)].velocityDFSPHfactor.w =
           CalculateDFSPHFactor(GetIndex(i));
       particle[GetIndex(i)].MassDensityPressureDro_Dt.y =
           CalculateDensity(GetIndex(i));
     }
+    // Await for all invocations to finish updating specified particle
+    // properties
     barrier();
     //----------------------------------------------------------------------------------
+    // Apply the algorithm solving the divergence error for every particle in
+    // current invocation for a given number of iterations
     for (int iter = 0; iter < 50; iter++)
     {
       for (int i = 0; CheckI(i); i++)
       {
+        // Retrieve kappa factor
         const float factor_x = particle[GetIndex(i)].velocityDFSPHfactor.w;
 
+        // Calculate the pressure based on the density change
         float d_ro = CalculateDerivDensity(GetIndex(i));
         particle[GetIndex(i)].MassDensityPressureDro_Dt.z =
             d_ro * factor_x / dt;
       }
+      // Await for all invocations to finish updating particle pressure
       barrier();
       //----------------------------------------------------------------------------------
+      // Correct the velocity of every particle being processed by current
+      // invocation
       for (int i = 0; CheckI(i); i++)
       {
+        // Correct the particle velocity based on the calculated pressure
+        // gradient
         particle[GetIndex(i)].velocityDFSPHfactor.xyz -=
             dt * CalculateGradPressure(GetIndex(i));
       }
+      // Await for all invocations to finish transforming particles
       barrier();
     }
     //----------------------------------------------------------------------------------
+    // Check the world bounds and collisions for every particle in the current
+    // invocation
     for (int i = 0; CheckI(i); i++)
     {
+      // Check collision against simulation world bounds
       CheckWorldBounds(GetIndex(i));
+      // Check collision against terrain
       CheckCollisions(GetIndex(i));
     }
+    // Await for all invocations to finish handing collisions
     barrier();
     //----------------------------------------------------------------------------------
+    // Transform particle back to the model coordinate system
     for (int i = 0; CheckI(i); i++)
     {
       particle[GetIndex(i)].position.xyz =
           (inverse(model) * vec4(particle[GetIndex(i)].position.xyz, 1.0)).xyz /
           scale;
     }
+    // Await for all invocations to finish transforming particles
     barrier();
   }
+  // Handle runtime pipeline for the static entities
   else if (physicsType == STATIC)
   {
     for (int i = 0; CheckI(i); i++)
     {
+      // For every static entity registered as a terrain updated terrain buffer
+      // based on the used input for a given entity
       UpdateTerrainOrientation(GetIndex(i));
     }
   }
+  // Apply color for every particle present in current invocation
   for (int i = 0; CheckI(i); i++)
   {
     particle[GetIndex(i)].color = ChooseColor(GetIndex(i));

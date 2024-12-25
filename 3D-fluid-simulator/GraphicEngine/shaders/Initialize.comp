@@ -1,10 +1,12 @@
 #version 460 core
 
+// Specify the size of the work group used for calculating physics
 layout(local_size_x = 10, local_size_y = 10, local_size_z = 10) in;
 
-const uint MaxNeighbours = 512;
+const uint MaxNeighbors = 512;
 const uint MaxGranularity = 16;
 
+// Create enum-like variables to match ones used in the C++ interfaces
 const uint NONE = 0;
 const uint STATIC = 1;
 const uint DYNAMIC = 2;
@@ -23,15 +25,17 @@ uniform float shapeRadius;
 uniform float particleSpacing;
 uniform float init_mass;
 
+// Struct matching the properties of a single particle
 struct ParticleProperties
 {
   vec4 velocityDFSPHfactor;
   vec4 position;
   vec4 MassDensityPressureDro_Dt;
   vec4 color;
-  uint neighbours[MaxNeighbours];
+  uint neighbors[MaxNeighbors];
 };
 
+// Define the buffers in the initialization stage
 layout(std430, binding = 0) buffer dataBuffer
 {
   restrict ParticleProperties particle[];
@@ -42,22 +46,27 @@ layout(std430, binding = 1) buffer granularityBuffer
   restrict uint granularity[][MaxGranularity];
 };
 
+// Declate functions needed for the initialization stage
 vec4 ChooseColor(uint index_x);
 vec3 InitDefaultShape(in uint idx, in uint maxParticles);
 float CalculateDensity(uint index_x);
 float CalculateDFSPHFactor(uint index_x);
 void UpdateTerrainOrientation(uint index_x);
-void FindNeighbours(uint index_x, uint MaxParticles);
+void FindNeighbors(uint index_x, uint MaxParticles);
 
 void main()
 {
+  // Process every particle registered to be handled by this invocation
   for (int iter = 0; iter < MaxGranularity; iter++)
   {
     uint index = granularity[gl_LocalInvocationIndex][iter];
+    // Process every particle until the flag value is reached
     if (index < 0xffffffff)
     {
+      // Handle the initialization for the entities with not NONE physics type
       if (physicsType != NONE && SimulatorState == INIT)
       {
+        // Specify default values for the particle properties
         particle[index].velocityDFSPHfactor = vec4(initVelocity, 0);
         particle[index].position = vec4(0, 0, 0, shapeRadius);
         particle[index].MassDensityPressureDro_Dt = vec4(0);
@@ -66,9 +75,11 @@ void main()
                                             particleSpacing * 2 * shapeRadius,
                                         1);
       }
+      // Additionally initialize different properties based on the entity
+      // physics type
       if (physicsType == DYNAMIC)
       {
-        FindNeighbours(index, MaxParticles);
+        FindNeighbors(index, MaxParticles);
 
         particle[index].MassDensityPressureDro_Dt.x = init_mass;
         particle[index].MassDensityPressureDro_Dt.y = CalculateDensity(index);
@@ -78,6 +89,7 @@ void main()
       {
         UpdateTerrainOrientation(index);
       }
+      // Specify the color of the entity
       particle[index].color = ChooseColor(index);
     }
   }
