@@ -8,15 +8,15 @@ if ! [[ -f CMakeLists.txt ]]; then
 fi
 
 echo "Checking needed dependencies"
-if [[ -z $(g++ --version | grep 'g++ .* 1[0-9]') ]]; then
-    echo "g++ version 10 or higher is required"
+if [[ -z $(g++ --version | grep -E 'g++.*1[0-9]') ]]; then
+    echo "g++ version 10 or higher is required, exiting..."
     exit 1
     else
     echo "Correct g++ version found, continuing..."
 fi
 
 if [[ -z $(python3 --version) ]]; then
-    echo "python3 is required"
+    echo "python3 is required, exiting..."
     exit 1
     else
     echo "Python3 found, continuing..."
@@ -35,7 +35,14 @@ fi
 
 echo "Configuring cmake project"
 
-cmake -S . -B build > cmake_log.txt
+if [[ $(uname) == "Linux"  ]];then
+    echo "Building for Linux."
+    cmake -S . -B build > cmake_log.txt
+    else
+    echo "Building for Windows."
+    cmake -S . -B build -G "MinGW Makefiles" > cmake_log.txt
+fi
+
 
 if [[ -z $(cat cmake_log.txt | grep 'Generating done' && cat cmake_log.txt | grep 'Configuring done') ]]; then
     echo "ERROR: Cmake configuration failed!!! Check \'cmake_log.txt\'"
@@ -49,14 +56,13 @@ echo Using $avail_cpus CPUs
 cd build
 make -j$avail_cpus > make_log.txt
 
-if [[ -z $(cat ./build/make_log.txt | grep '\[100\%\] Built target 3D-fluid-simulator') ]]; then
+if [[ -z $(cat make_log.txt | grep '\[100\%\] Built target 3D-fluid-simulator') ]]; then
     echo "ERROR: Building executable failed. Check \'./build/make_log.txt\'"
-    else
-    echo ""
 fi
 
-cd../
-exec_path=$(find . -executable -type f | grep -E '3D-fluid-simulator$')
+exec_path=$(find . -executable -type f | grep -E '3D-fluid-simulator(\.exe)?$')
+
+echo $exec_path
 
 if [[ -z $exec_path ]]; then
     echo "ERROR: Unknown error, simulator executable not found."
