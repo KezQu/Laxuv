@@ -23,7 +23,7 @@ if [[ -z $(python3 --version) ]]; then
 fi
 
 echo "Installing needed python modules"
-pip3 install -r 3D-fluid-simulator/requirements.txt
+pip3 install -r requirements.txt
 
 echo "Creating build directory"
 mkdir -p build
@@ -45,7 +45,7 @@ fi
 
 
 if [[ -z $(cat cmake_log.txt | grep 'Generating done' && cat cmake_log.txt | grep 'Configuring done') ]]; then
-    echo "ERROR: Cmake configuration failed!!! Check \'cmake_log.txt\'"
+    echo "ERROR: Cmake configuration failed!!! Check 'cmake_log.txt'"
     else
     echo "Cmake configured successfully. Installing executable."
     rm cmake_log.txt
@@ -57,7 +57,7 @@ cd build
 make -j$avail_cpus > make_log.txt
 
 if [[ -z $(cat make_log.txt | grep '\[100\%\] Built target 3D-fluid-simulator') ]]; then
-    echo "ERROR: Building executable failed. Check \'./build/make_log.txt\'"
+    echo "ERROR: Building executable failed. Check './build/make_log.txt' and terminal output."
 fi
 
 exec_path=$(find . -executable -type f | grep -E '3D-fluid-simulator(\.exe)?$')
