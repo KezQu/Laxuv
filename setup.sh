@@ -23,7 +23,15 @@ if [[ -z $(python3 --version) ]]; then
 fi
 
 echo "Installing needed python modules"
-pip3 install -r requirements.txt
+pip3 install -r requirements.txt > pip_log.txt 2>&1
+
+if [[ -z $(pip list | grep matplotlib) ]]; then
+    echo "ERROR: Installing python modules failed. Check 'pip_log.txt'"
+    exit 1
+    else
+    echo "Python modules installed successfully, continuing..."
+    rm pip_log.txt
+fi
 
 echo "Creating build directory"
 mkdir -p build
@@ -33,36 +41,43 @@ if ! [[ -z $(ls build) ]]; then
     rm -r build/*
 fi
 
-echo "Configuring cmake project"
+echo "Configuring CMake project"
 
 if [[ $(uname) == "Linux"  ]];then
     echo "Building for Linux."
-    cmake -S . -B build -DCMAKE_CXX_COMPILER=g++ > cmake_log.txt
+    cmake -S . -B build -DCMAKE_CXX_COMPILER=g++ > cmake_log.txt 2>&1
     else
     echo "Building for Windows."
-    cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER=g++ > cmake_log.txt
+    cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER=g++ > cmake_log.txt 2>&1
 fi
 
-
-if [[ -z $(cat cmake_log.txt | grep 'Generating done' && cat cmake_log.txt | grep 'Configuring done') ]]; then
-    echo "ERROR: Cmake configuration failed!!! Check 'cmake_log.txt'"
+if [[ -z $(cat cmake_log.txt | grep 'Configuring done') ]]; then
+    echo "ERROR: CMake configuration failed!!! Check 'cmake_log.txt'"
+    exit 1
     else
-    echo "Cmake configured successfully. Installing executable."
+    echo "Cmake configured successfully. generating..."
+fi
+
+if [[ -z $(cat cmake_log.txt | grep 'Generating done') ]]; then
+    echo "ERROR: CMake generation failed!!! Check 'cmake_log.txt'"
+    exit 1
+    else
+    echo "Cmake generated done. Installing executable..."
     rm cmake_log.txt
 fi
 
 avail_cpus=$(nproc --all)
 echo Using $avail_cpus cores
 cd build
-make -j$avail_cpus > make_log.txt
+make -j$avail_cpus > make_log.txt 2>&1
 
 if [[ -z $(cat make_log.txt | grep '\[100\%\] Built target 3D-fluid-simulator') ]]; then
-    echo "ERROR: Building executable failed. Check './build/make_log.txt' and terminal output."
+    echo "ERROR: Building executable failed. Check './build/make_log.txt'."
+    exit 1
 fi
 
+cd ..
 exec_path=$(find . -executable -type f | grep -E '3D-fluid-simulator(\.exe)?$')
-
-echo $exec_path
 
 if [[ -z $exec_path ]]; then
     echo "ERROR: Unknown error, simulator executable not found."
