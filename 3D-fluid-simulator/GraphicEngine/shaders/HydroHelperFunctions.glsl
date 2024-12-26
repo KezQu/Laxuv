@@ -167,7 +167,7 @@ void FindNeighbors(uint index_x, uint MaxParticles)
   }
 }
 
-// Function responsible for calculating the kappa factor used in divergence-free
+// Function responsible for calculating the alpha factor used in divergence-free
 // smoothing particle hydrodynamics algorithm
 float CalculateDFSPHFactor(uint index_x)
 {
@@ -190,7 +190,7 @@ float CalculateDFSPHFactor(uint index_x)
     sum += float(m_j) * gradW_ij;
     sum_of_squared += pow(float(length(m_j * gradW_ij)), 2);
   }
-  // Apply the equation used for calculating kappa factor
+  // Apply the equation used for calculating alpha factor
   return pow(float(particle[index_x].MassDensityPressureDro_Dt.y), 2) /
          (pow(length(sum), 2) + sum_of_squared + 1e-6);
 }

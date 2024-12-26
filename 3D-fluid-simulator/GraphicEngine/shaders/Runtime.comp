@@ -124,7 +124,7 @@ void main()
       // invocation
       for (int i = 0; CheckI(i); i++)
       {
-        // Retrieve the kappa factor and particle internal density
+        // Retrieve the alpha factor and particle internal density
         const float factor_x = particle[GetIndex(i)].velocityDFSPHfactor.w;
         density0 = GetInternalDensity(GetIndex(i));
 
@@ -170,11 +170,11 @@ void main()
     // Await for all invocations to finish updating particle neighbors
     barrier();
     //----------------------------------------------------------------------------------
-    // Update the kappa factor and the density of a given particle present in
+    // Update the alpha factor and the density of a given particle present in
     // the invocation
     for (int i = 0; CheckI(i); i++)
     {
-      // Update density and kappa factor using helper function
+      // Update density and alpha factor using helper function
       particle[GetIndex(i)].velocityDFSPHfactor.w =
           CalculateDFSPHFactor(GetIndex(i));
       particle[GetIndex(i)].MassDensityPressureDro_Dt.y =
@@ -190,7 +190,7 @@ void main()
     {
       for (int i = 0; CheckI(i); i++)
       {
-        // Retrieve kappa factor
+        // Retrieve alpha factor
         const float factor_x = particle[GetIndex(i)].velocityDFSPHfactor.w;
 
         // Calculate the pressure based on the density change

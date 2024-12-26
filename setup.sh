@@ -37,10 +37,10 @@ echo "Configuring cmake project"
 
 if [[ $(uname) == "Linux"  ]];then
     echo "Building for Linux."
-    cmake -S . -B build > cmake_log.txt
+    cmake -S . -B build -DCMAKE_CXX_COMPILER=g++ > cmake_log.txt
     else
     echo "Building for Windows."
-    cmake -S . -B build -G "MinGW Makefiles" > cmake_log.txt
+    cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER=g++ > cmake_log.txt
 fi
 
 
