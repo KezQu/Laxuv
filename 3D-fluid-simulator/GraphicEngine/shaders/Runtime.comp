@@ -155,7 +155,7 @@ void main()
     // invocation
     for (int i = 0; CheckI(i); i++)
     {
-      // Update the position based on the calcualted velocity
+      // Update the position based on the calculated velocity
       particle[GetIndex(i)].position.xyz +=
           dt * particle[GetIndex(i)].velocityDFSPHfactor.xyz;
     }
