@@ -13,7 +13,7 @@ from functools import partial
 def CreateMesh(i, pos_data, color_data, min_pos, max_pos, offset_size):
     # Initialize an empty mesh with a given size
     mesh = np.zeros(
-        [(max_pos[i] - min_pos[i] + 2 * offset_size + 1), (max_pos[(i + 1) % 3] - min_pos[(i + 1) % 3] + 2 * offset_size + 1), 4])
+        [(max_pos[i] - min_pos[i] + 2 * offset_size), (max_pos[(i + 1) % 3] - min_pos[(i + 1) % 3] + 2 * offset_size), 4])
     # Specify an axis to be squashed based on the invocation index
     flatten_axis = (i+2) % 3
     # Sort positions and color values based on a position in a flattened axis to draw for furthest to nearest
@@ -70,43 +70,52 @@ def ReadData(filename, granularity):
         # Transform XY and XZ planes to preserve correct orientation
         mesh[0] = np.transpose(mesh[0], (1, 0, 2))
         mesh[2] = np.flip(mesh[2], axis=0)
-        return mesh, values_data, (np.min(values_data), np.max(values_data))
+        return mesh, values_data, (np.min(values_data), np.max(values_data)), (min_pos, max_pos)
     return None, None, None, None
 
 
 # Function responsible for drawing provided data
-def plot(data, values, min_max):
+def plot(data, values, unit, min_max, bounds):
     if data is not None:
-        fig, ax = plt.subplots(2, 2, figsize=(16, 9))
+        fig, ((ax_xy, ax_yz), (ax_xz, ax_dist)
+              ) = plt.subplots(2, 2, figsize=(16, 9))
 
+        xy_bounds = (bounds[0][0] * granularity, bounds[1][0] * granularity,
+                     bounds[0][1] * granularity, bounds[1][1] * granularity)
         # Draw particles visible in XY plane
-        imgXY = ax[0, 0].imshow(data[0], origin='lower',
-                                cmap='jet', vmin=min_max[0], vmax=min_max[1])
-        ax[0, 0].set_title("Projection XY")
-        plt.setp(ax[0, 0], xticks=[],
-                 yticks=[],  xlabel="axis X", ylabel="axis Y")
-        fig.colorbar(imgXY, ax=ax[0, 0])
+        imgXY = ax_xy.imshow(data[0], origin='lower',
+                             cmap='jet', vmin=min_max[0], vmax=min_max[1], extent=xy_bounds, interpolation='none')
+        ax_xy.set_title("Projection XY")
+        plt.setp(ax_xy, xlabel="axis X [mm]", ylabel="axis Y [mm]")
+        cbar_xy = fig.colorbar(imgXY, ax=ax_xy)
+        cbar_xy.set_label("Value range in " + unit)
 
+        yz_bounds = (bounds[0][2] * granularity, bounds[1][2] * granularity,
+                     bounds[0][1] * granularity, bounds[1][1] * granularity)
         # Draw particles visible in YZ plane
-        imgYZ = ax[1, 0].imshow(
-            data[1], origin='lower', cmap='jet', vmin=min_max[0], vmax=min_max[1])
-        ax[1, 0].set_title("Projection YZ")
-        plt.setp(ax[1, 0], xticks=[],
-                 yticks=[], xlabel="axis Z", ylabel="axis Y")
-        fig.colorbar(imgYZ, ax=ax[1, 0])
+        imgYZ = ax_yz.imshow(
+            data[1], origin='lower', cmap='jet', vmin=min_max[0], vmax=min_max[1], extent=yz_bounds, interpolation='none')
+        ax_yz.set_title("Projection YZ")
+        plt.setp(ax_yz, xlabel="axis Z [mm]", ylabel="axis Y [mm]")
+        cbar_yz = fig.colorbar(imgYZ, ax=ax_yz)
+        cbar_yz.set_label("Value range in " + unit)
 
+        xz_bounds = (bounds[0][0] * granularity, bounds[1][0] * granularity,
+                     bounds[0][2] * granularity, bounds[1][2] * granularity)
         # Draw particles visible in XZ plane
-        imgXZ = ax[0, 1].imshow(
-            data[2], origin='lower', cmap='jet', vmin=min_max[0], vmax=min_max[1])
-        ax[0, 1].set_title("Projection XZ")
-        plt.setp(ax[0, 1], xticks=[],
-                 yticks=[], xlabel="axis X", ylabel="axis Z")
-        fig.colorbar(imgXZ, ax=ax[0, 1])
+        imgXZ = ax_xz.imshow(
+            data[2], origin='lower', cmap='jet', vmin=min_max[0], vmax=min_max[1], extent=xz_bounds, interpolation='none')
+        ax_xz.set_title("Projection XZ")
+        plt.setp(ax_xz, xlabel="axis X [mm]", ylabel="axis Z [mm]")
+        cbar_xz = fig.colorbar(imgXZ, ax=ax_xz)
+        cbar_xz.set_label("Value range in " + unit)
 
         # Draw a distribution of a requested values
-        imgHist = ax[1, 1].hist(values, bins=20)
-        ax[1, 1].set_title("Values distribution")
+        imgHist = ax_dist.hist(values, bins=20)
+        ax_dist.set_title("Values distribution")
+        ax_dist.set_xlabel("Value range in " + unit)
 
+        plt.tight_layout()
         plt.show()
 
 
@@ -114,7 +123,9 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--filename", type=str, required=True)
     arg_parser.add_argument("--granularity", type=float, required=True)
+    arg_parser.add_argument("--unit", type=str, required=True)
     data_filepath = arg_parser.parse_args().filename
     granularity = arg_parser.parse_args().granularity
-    data, values, min_max = ReadData(data_filepath, granularity)
-    plot(data, values, min_max)
+    unit = arg_parser.parse_args().unit
+    data, values, min_max, bounds = ReadData(data_filepath, granularity)
+    plot(data, values, unit, min_max, bounds)

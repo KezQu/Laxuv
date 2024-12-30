@@ -11,10 +11,11 @@
  */
 struct GraphsHandler
 {
-  float granularity{0.1f};
-  Essentials::ColorProperty color_type{Essentials::ColorProperty::NONE};
   using HeatmapData_t = std::vector<uint8_t>;
   using HeatmapData = Essentials::ParticleBufferProperties;
+  float granularity{0.1f};
+  std::string value_unit{};
+  Essentials::ColorProperty color_type{Essentials::ColorProperty::NONE};
 
   /**
    * @brief Retrieve particle position based on a defined granularity

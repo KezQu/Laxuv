@@ -37,7 +37,8 @@ std::vector<GraphsHandler::HeatmapData> GraphsHandler::GetGraphData(
           physics_buffer.GetBufferSubData(0U, physics_buffer.Size());
       // Transform every object and particle to the world space
       std::for_each(buffer_data.begin(), buffer_data.end(),
-                    [&entity_shape_properties](auto& entity_data) {
+                    [&entity_shape_properties](auto& entity_data)
+                    {
                       entity_data.position =
                           entity_shape_properties.Model() *
                           entity_data.position *
@@ -57,7 +58,8 @@ GraphsHandler::HeatmapData_t const GraphsHandler::SerializeData(
   auto insert_data = [&heatmap_data, this](
                          glm::ivec3 position,
                          Essentials::ParticleBufferProperties const& properties,
-                         float data_radius) {
+                         float data_radius)
+  {
     // Convert position into binary format
     std::span<uint8_t> pos_x{reinterpret_cast<uint8_t*>(&position.x), 4};
     std::span<uint8_t> pos_y{reinterpret_cast<uint8_t*>(&position.y), 4};
@@ -70,7 +72,8 @@ GraphsHandler::HeatmapData_t const GraphsHandler::SerializeData(
   };
   // Serialize each entity marked for serialization using lambda
   std::for_each(data.begin(), data.end(),
-                [&heatmap_data, this, &insert_data](auto const& data) {
+                [&heatmap_data, this, &insert_data](auto const& data)
+                {
                   auto const position = GetDataPosition(data);
                   insert_data(position, data, data.position.w / granularity);
                 });
@@ -91,7 +94,8 @@ void GraphsHandler::GenerateGraphs(GraphsHandler::HeatmapData_t const data)
 
   // Run graph drawing script
   std::system(("python3 " + script_path + " --filename " + data_filepath +
-               " --granularity " + std::to_string(granularity))
+               " --granularity " + std::to_string(granularity) + " --unit " +
+               value_unit)
                   .c_str());
 }
 void GraphsHandler::InsertColorValue(
@@ -107,17 +111,21 @@ void GraphsHandler::InsertColorValue(
     case Essentials::ColorProperty::CUSTOM:
       break;
     case Essentials::ColorProperty::VELOCITY:
+      value_unit = "[mm/s]";
       value_to_draw = glm::length(glm::vec3{properties.velocityDFSPHfactor.x,
                                             properties.velocityDFSPHfactor.y,
                                             properties.velocityDFSPHfactor.z});
       break;
     case Essentials::ColorProperty::DENSITY_ERROR:
+      value_unit = "[kg/m^3]";
       value_to_draw = properties.MassDensityPressureDro_Dt.y;
       break;
     case Essentials::ColorProperty::DIVERGENCE_ERROR:
+      value_unit = "[1/s]";
       value_to_draw = properties.MassDensityPressureDro_Dt.w;
       break;
     case Essentials::ColorProperty::PRESSURE:
+      value_unit = "[Pa]";
       value_to_draw = glm::abs(properties.MassDensityPressureDro_Dt.z);
       break;
   }
