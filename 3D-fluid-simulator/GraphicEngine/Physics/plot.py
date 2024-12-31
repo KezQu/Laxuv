@@ -101,7 +101,7 @@ def plot(data, values, unit, min_max, bounds):
         cbar_yz.set_label("Value range in " + unit)
 
         xz_bounds = (bounds[0][0] * granularity, bounds[1][0] * granularity,
-                     bounds[0][2] * granularity, bounds[1][2] * granularity)
+                     bounds[1][2] * granularity, bounds[0][2] * granularity)
         # Draw particles visible in XZ plane
         imgXZ = ax_xz.imshow(
             data[2], origin='lower', cmap='jet', vmin=min_max[0], vmax=min_max[1], extent=xz_bounds, interpolation='none')
