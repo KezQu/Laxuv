@@ -73,10 +73,13 @@ void Simulator::CreateGraphs()
   // Retrieve properties of the entities registered in the simulator
   auto const simulation_data = _graphs.GetGraphData(_entitiesContainer);
   // Launch graph creation in a separate thread to unblock main event loop
-  std::thread{[simulation_data, this]() {
-    auto const heatmap_data = _graphs.SerializeData(simulation_data);
-    _graphs.GenerateGraphs(heatmap_data);
-  }}.detach();
+  std::thread{[simulation_data, this]()
+              {
+                auto const heatmap_data =
+                    _graphs.SerializeData(simulation_data);
+                _graphs.GenerateGraphs(heatmap_data);
+              }}
+      .detach();
 }
 
 Uniform<float>& Simulator::GetDeltaTime()
@@ -101,18 +104,19 @@ Essentials::DetailControls Simulator::GetDetails()
   Essentials::DetailControls details;
   details.push_back({"Space bounds", this->_space_boundaries.ExposeToUI()});
   details.push_back({"Bounds viscosity", this->_bounds_viscosity.ExposeToUI()});
-  details.push_back({"World shape", [this]() {
+  details.push_back({"World shape", [this]()
+                     {
                        ImGui::Combo(
                            "##World_shape",
                            (int32_t*)&this->_global_world_type.GetValue(),
                            Essentials::WorldTypeTolist());
                      }});
   details.push_back({"Ambient light color",
-                     this->_simulaton_light.ambient_color.ExposeToUI()});
+                     this->_simulation_light.ambient_color.ExposeToUI()});
   details.push_back({"Diffuse light color",
-                     this->_simulaton_light.diffuse.color.ExposeToUI()});
+                     this->_simulation_light.diffuse.color.ExposeToUI()});
   details.push_back({"Diffuse light direction",
-                     this->_simulaton_light.diffuse.direction.ExposeToUI()});
+                     this->_simulation_light.diffuse.direction.ExposeToUI()});
   return details;
 }
 
@@ -128,9 +132,9 @@ void Simulator::BindUniforms(uint32_t program_id)
   _space_boundaries.MapUniform(program_id);
   _bounds_viscosity.MapUniform(program_id);
 
-  _simulaton_light.ambient_color.MapUniform(program_id);
-  _simulaton_light.diffuse.color.MapUniform(program_id);
-  _simulaton_light.diffuse.direction.MapUniform(program_id);
+  _simulation_light.ambient_color.MapUniform(program_id);
+  _simulation_light.diffuse.color.MapUniform(program_id);
+  _simulation_light.diffuse.direction.MapUniform(program_id);
 }
 
 void Simulator::BindTerrain(uint32_t program_id)
@@ -161,7 +165,25 @@ void Simulator::RemoveObstacle(Essentials::EntityContainer::key_type id)
   if (id != std::numeric_limits<uint64_t>::max())
   {
     _terrain.RemoveFromBufferMemory(id);
+    ReindexObstacles(id);
     _obstacles_number = _terrain.Size();
+  }
+}
+void Simulator::ReindexObstacles(
+    Essentials::EntityContainer::key_type removed_id)
+{
+  // Iterate through all entities to find the ones that are registered as
+  // terrain
+  for (auto& [uniq_id, entity] : _entitiesContainer)
+  {
+    // Check if the entity is registered as terrain and if its index appear
+    // after the removed one
+    if ((entity->GetTerrainId() > removed_id) &&
+        (entity->GetTerrainId() != std::numeric_limits<uint64_t>::max()))
+    {
+      // Decrease the terrain id to keep the correct order of the terrain
+      entity->SetTerrainId(entity->GetTerrainId() - 1);
+    }
   }
 }
 

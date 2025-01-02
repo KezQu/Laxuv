@@ -22,7 +22,7 @@ class Simulator
   GraphsHandler _graphs;
   Essentials::EntityContainer _entitiesContainer;
   ShaderStorageBuffer<Essentials::TerrainBufferProperties, CPUBuffer> _terrain;
-  Essentials::Light _simulaton_light;
+  Essentials::Light _simulation_light;
   Uniform<uint32_t> _obstacles_number{0, "MaxObstacles"};
   Uniform<float> _space_boundaries{
       100.f, "spaceLimiter",
@@ -67,6 +67,12 @@ class Simulator
    * @param id id of the element to remove from terrain
    */
   void RemoveObstacle(Essentials::EntityContainer::key_type id);
+  /**
+   * @brief Reindex obstacles after removal of a specific obstacle
+   *
+   * @param removed_id id of the removed obstacle to start reindexing from
+   */
+  void ReindexObstacles(Essentials::EntityContainer::key_type removed_id);
 
  public:
   /**
