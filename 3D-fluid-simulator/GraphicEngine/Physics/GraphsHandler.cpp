@@ -117,15 +117,16 @@ void GraphsHandler::InsertColorValue(
                                             properties.velocityDFSPHfactor.z});
       break;
     case Essentials::ColorProperty::DENSITY_ERROR:
-      value_unit = "[kg/m^3]";
+      value_unit = "[kg/mm^3]";
       value_to_draw = properties.MassDensityPressureDro_Dt.y;
       break;
     case Essentials::ColorProperty::DIVERGENCE_ERROR:
       value_unit = "[1/s]";
-      value_to_draw = properties.MassDensityPressureDro_Dt.w;
+      value_to_draw = -properties.MassDensityPressureDro_Dt.w /
+                      properties.MassDensityPressureDro_Dt.y;
       break;
     case Essentials::ColorProperty::PRESSURE:
-      value_unit = "[Pa]";
+      value_unit = "[kPa]";
       value_to_draw = glm::abs(properties.MassDensityPressureDro_Dt.z);
       break;
   }

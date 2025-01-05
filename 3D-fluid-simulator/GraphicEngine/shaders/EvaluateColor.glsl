@@ -96,8 +96,8 @@ vec4 ChooseColor(uint index_x)
     case DIVERGENCE_ERROR:
       // Calculate color based on the normalized divergence error
       chosen_color = CalculateColor(
-          1e-2 * sqrt(abs(particle[index_x].MassDensityPressureDro_Dt.w)) /
-          particle[index_x].MassDensityPressureDro_Dt.x);
+          1e-1 * abs(particle[index_x].MassDensityPressureDro_Dt.w) /
+          particle[index_x].MassDensityPressureDro_Dt.y);
       break;
     case PRESSURE:
       // Calculate color based on the normalized pressure value

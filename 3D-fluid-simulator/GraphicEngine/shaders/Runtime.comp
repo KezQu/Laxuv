@@ -207,6 +207,8 @@ void main()
       {
         // Correct the particle velocity based on the calculated pressure
         // gradient
+        particle[GetIndex(i)].MassDensityPressureDro_Dt.w =
+            CalculateDerivDensity(GetIndex(i));
         particle[GetIndex(i)].velocityDFSPHfactor.xyz -=
             dt * CalculateGradPressure(GetIndex(i));
       }
